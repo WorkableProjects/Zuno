@@ -523,3 +523,10 @@
   color: var(--game-ink);
   opacity: 0.8;
 }
+
+.builder-game {
+  display: grid;
+  gap: 8px;
+  max-width: 360px;
+  margin: 32px 0 24px;
+}

@@ -181,3 +181,20 @@
   margin: 0 8px;
   color: var(--text-3);
 }
+
+.import-online {
+  display: grid;
+  gap: 8px;
+  margin-top: 32px;
+  padding: 16px;
+  max-width: 420px;
+}
+.import-online-title {
+  font-weight: 600;
+}
+.import-online-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}

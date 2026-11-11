@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CircleAlert, CircleCheck, FileJson, Play, Upload } from "lucide-react";
 import { LIMITS, formatBytes } from "../../game-files/schema/common";
-import { countClues, type JeopardyFile } from "../../game-files/schema/jeopardy";
+import { getEngine } from "../../games/registry";
 import { loadGameFile, loadGameText, type LoadResult, type LoadedGame } from "./loadGame";
 import "./import.css";
 
@@ -73,7 +73,7 @@ export function GameImporter({ gameType, seed, allowPaste, onHost, onBuilder, on
   };
 
   const loadSample = async () => {
-    const filename = "science-review.zuno.json";
+    const filename = getEngine(gameType)?.sampleFile ?? "science-review.zuno.json";
     const work = fetch(`${import.meta.env.BASE_URL}samples/${filename}`)
       .then((r) => {
         if (!r.ok) throw new Error();
@@ -227,10 +227,11 @@ export function GameImporter({ gameType, seed, allowPaste, onHost, onBuilder, on
 
 /** Title, counts and cover of a validated file. All text renders as plain text. */
 export function GamePreview({ game }: { game: LoadedGame }) {
-  const file = game.file as JeopardyFile;
+  const file = game.file;
+  const engine = getEngine(file.gameType);
   const [coverFailed, setCoverFailed] = useState(false);
   const cover = file.metadata.coverImage;
-  const categories = file.content.categories;
+  const listing = engine?.listing(file) ?? null;
   return (
     <div className="preview card game-scope" style={{ "--game": file.appearance.accentColor } as React.CSSProperties}>
       <div className="preview-head">
@@ -251,24 +252,20 @@ export function GamePreview({ game }: { game: LoadedGame }) {
       </div>
       {file.metadata.description && <p className="preview-desc">{file.metadata.description}</p>}
       <dl className="preview-stats">
-        <div>
-          <dt>Categories</dt>
-          <dd>{categories.length}</dd>
-        </div>
-        <div>
-          <dt>Clues</dt>
-          <dd>{countClues(file)}</dd>
-        </div>
-        <div>
-          <dt>Final round</dt>
-          <dd>{file.content.finalJeopardy.enabled ? "Yes" : "No"}</dd>
-        </div>
-      </dl>
-      <ul className="preview-cats" aria-label="Categories">
-        {categories.map((c) => (
-          <li key={c.id}>{c.title}</li>
+        {(engine?.stats(file) ?? []).map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
         ))}
-      </ul>
+      </dl>
+      {listing && (
+        <ul className="preview-cats" aria-label={listing.label}>
+          {listing.items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      )}
       {cover && coverFailed && <p className="meta">The cover image could not be loaded, so Zuno will use a generated background.</p>}
       {game.warnings.length > 0 && (
         <div className="notice">
