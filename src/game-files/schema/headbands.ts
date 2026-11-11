@@ -294,3 +294,15 @@ My deck:
 - Audience: [for example, a 6th grade class, family game night]
 - Anything else: [optional requests]`;
 }
+
+/** A deck with no identities, for games where players write their own. */
+export function blankHeadbandsFile(): HeadbandsFile {
+  return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    gameType: HEADBANDS_TYPE,
+    metadata: { title: "Headbands", description: "", author: "", coverImage: null },
+    appearance: { accentColor: "#FFB454", backgroundPreset: "horizon" },
+    content: { identities: [] },
+    settings: { ...DEFAULT_HEADBANDS_SETTINGS },
+  };
+}

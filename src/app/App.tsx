@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BuilderHome } from "../components/builder/BuilderHome";
 import { HeadbandsAIGuide } from "../components/builder/HeadbandsAIGuide";
 import { HeadbandsVisualEditor } from "../components/builder/HeadbandsVisualEditor";
@@ -13,10 +13,13 @@ import type { LoadedGame } from "../components/import/loadGame";
 import { useSpatialNav } from "../components/navigation/spatialNav";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
-import { HEADBANDS_TYPE, type HeadbandsFile } from "../game-files/schema/headbands";
+import { HEADBANDS_TYPE, blankHeadbandsFile, type HeadbandsFile } from "../game-files/schema/headbands";
 import { JEOPARDY_TYPE, type JeopardyFile } from "../game-files/schema/jeopardy";
 import { HeadbandsGame } from "../games/headbands/HeadbandsGame";
+import { HeadbandsJoin } from "../games/headbands/HeadbandsJoin";
+import { HeadbandsLobby } from "../games/headbands/HeadbandsLobby";
 import { HeadbandsSetup, type HeadbandsStart } from "../games/headbands/HeadbandsSetup";
+import { closeLobby, codeFromHash, lobbiesAvailable } from "../games/headbands/lobby";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
@@ -30,6 +33,8 @@ type Screen =
   | { name: "play"; game: LoadedGame<JeopardyFile>; teams: TeamSetup[]; allowNegativeScores: boolean; timeLimitSeconds: number }
   | { name: "hbSetup"; game: LoadedGame<HeadbandsFile> }
   | { name: "hbPlay"; game: LoadedGame<HeadbandsFile>; start: HeadbandsStart }
+  | { name: "hbLobby"; base: HeadbandsFile; code: string | null }
+  | { name: "hbJoin"; code: string | null }
   | { name: "builder" }
   | { name: "editor"; gameType: string }
   | { name: "ai"; gameType: string };
@@ -50,7 +55,14 @@ export function App() {
 
   const [theme, setTheme] = useState<Theme>(loadTheme);
   const [recent, setRecent] = useState(loadRecent);
-  const [stack, setStack] = useState<Screen[]>([{ name: "dashboard" }]);
+  const [stack, setStack] = useState<Screen[]>(() => {
+    // A phone opened from a lobby's QR code or link goes straight to joining.
+    const code = lobbiesAvailable() ? codeFromHash(window.location.hash) : null;
+    if (code) history.replaceState(null, "", window.location.pathname + window.location.search);
+    return code ? [{ name: "dashboard" }, { name: "hbJoin", code }] : [{ name: "dashboard" }];
+  });
+  /** The online lobby this device is hosting, closed when the host goes home. */
+  const hostedLobby = useRef<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState<LoadedGame | null>(null);
   const [draftBackdrop, setDraftBackdrop] = useState<BackdropSpec | null>(null);
@@ -67,6 +79,8 @@ export function App() {
   const push = useCallback((next: Screen) => setStack((s) => [...s, next]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
   const home = useCallback(() => {
+    if (hostedLobby.current) void closeLobby(hostedLobby.current).catch(() => undefined);
+    hostedLobby.current = null;
     setLoaded(null);
     setStack([{ name: "dashboard" }]);
   }, []);
@@ -152,6 +166,7 @@ export function App() {
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
   else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "hbLobby") backdrop = backdropForGame({ file: screen.base, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
 
   const toBuilder = useCallback(
@@ -178,13 +193,24 @@ export function App() {
           onSelect={select}
           onLoad={(gameType) => push({ name: "import", gameType })}
           onBuild={toBuilder}
+          onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
           onOpenRecent={openRecent}
           onForgetRecent={forgetRecent}
           onSettings={() => setSettingsOpen(true)}
         />
       )}
       {screen.name === "import" && (
-        <ImportScreen key={stack.length} gameType={screen.gameType} seed={screen.seed} onBack={back} onHost={host} onBuilder={() => toBuilder(screen.gameType)} onLoaded={setLoaded} />
+        <ImportScreen
+          key={stack.length}
+          gameType={screen.gameType}
+          seed={screen.seed}
+          onBack={back}
+          onHost={host}
+          onBuilder={() => toBuilder(screen.gameType)}
+          onLoaded={setLoaded}
+          onLobby={screen.gameType === HEADBANDS_TYPE && lobbiesAvailable() ? () => push({ name: "hbLobby", base: blankHeadbandsFile(), code: null }) : undefined}
+          onJoin={screen.gameType === HEADBANDS_TYPE && lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
+        />
       )}
       {screen.name === "setup" && (
         <JeopardySetup
@@ -196,7 +222,31 @@ export function App() {
       {screen.name === "play" && (
         <JeopardyGame file={screen.game.file} teams={screen.teams} allowNegativeScores={screen.allowNegativeScores} timeLimitSeconds={screen.timeLimitSeconds} onExit={home} />
       )}
-      {screen.name === "hbSetup" && <HeadbandsSetup game={screen.game} onBack={pop} onStart={(start) => push({ name: "hbPlay", game: screen.game, start })} />}
+      {screen.name === "hbSetup" && (
+        <HeadbandsSetup
+          game={screen.game}
+          onBack={pop}
+          onStart={(start) => push({ name: "hbPlay", game: screen.game, start })}
+          onLobby={lobbiesAvailable() ? () => push({ name: "hbLobby", base: screen.game.file, code: null }) : undefined}
+        />
+      )}
+      {screen.name === "hbLobby" && (
+        <HeadbandsLobby
+          key={stack.length}
+          base={screen.base}
+          code={screen.code}
+          onCode={(code) => {
+            hostedLobby.current = code;
+            setStack((s) => s.map((x, i) => (i === s.length - 1 && x.name === "hbLobby" ? { ...x, code } : x)));
+          }}
+          onBack={() => {
+            hostedLobby.current = null;
+            pop();
+          }}
+          onStart={(file, start) => push({ name: "hbPlay", game: { file, filename: "lobby", text: "", warnings: [] }, start })}
+        />
+      )}
+      {screen.name === "hbJoin" && <HeadbandsJoin code={screen.code} onExit={home} />}
       {screen.name === "hbPlay" && <HeadbandsGame key={stack.length} file={screen.game.file} start={screen.start} onAgain={pop} onExit={home} />}
       {screen.name === "builder" && (
         <BuilderHome

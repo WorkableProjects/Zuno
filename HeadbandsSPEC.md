@@ -1019,3 +1019,17 @@ Text Mode uses written words or phrases. Image Mode uses a picture with its answ
 The entire feature runs in the browser. Game files and embedded images are loaded locally; no account, backend, database, API key, or external hosting service is required.
 
 **Headbands — See everyone else's identity. Discover your own.**
+
+---
+
+## 17. Version 1.0.1: Online Lobby
+
+Version 1.0.1 adds an optional online lobby where players join the host from their own devices and write the identities for each other. This is a deliberate, opt-in exception to the no-backend rules in sections 1.2 and 9.1: it uses Firebase Realtime Database (free Spark plan) for the lobby only. Without Firebase configuration, Headbands works exactly as in 1.0 and the online entry points are hidden.
+
+- The host opens a lobby and gets a five-character room code, a QR code and a join link.
+- Players join with a name. They sit in a circle the host can reorder, shuffle, or remove people from. Each player writes for the next player, and the last writes for the first. The circle is the turn order.
+- The host chooses Text (any topic, free text) or Image (an uploaded or linked picture plus the answer label under it).
+- A player's device shows only the identity they are writing and who it is for. The host screen shows only who has finished, never the content.
+- The game starts when every player has written a valid identity. It then runs on the host screen with the standard session engine.
+- The lobby is deleted when the host leaves, closes the tab or returns to the dashboard.
+- Database rules restrict writes to the lobby shape, label lengths and raster or https images.

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, CircleAlert, CircleCheck, Eye, EyeOff, Minus, Play, Plus, Shuffle } from "lucide-react";
+import { ArrowLeft, CircleAlert, CircleCheck, Eye, EyeOff, Minus, Play, Plus, Radio, Shuffle } from "lucide-react";
 import {
   HEADBANDS_LIMITS,
   eligibleIdentities,
@@ -26,13 +26,15 @@ interface Props {
   game: LoadedGame<HeadbandsFile>;
   onBack: () => void;
   onStart: (start: HeadbandsStart) => void;
+  /** Opens an online lobby where players write identities for each other. */
+  onLobby?: () => void;
 }
 
 type Method = "random" | "manual";
 
 const PLAYER_ROW_BASE = 20;
 
-export function HeadbandsSetup({ game, onBack, onStart }: Props) {
+export function HeadbandsSetup({ game, onBack, onStart, onLobby }: Props) {
   const { file } = game;
   const deck = useMemo(() => deckOf(file.content.identities), [file]);
   const textCount = eligibleIdentities(file, "text").length;
@@ -166,6 +168,14 @@ export function HeadbandsSetup({ game, onBack, onStart }: Props) {
                 Pick for each player
               </button>
             </div>
+            {onLobby && (
+              <div className="hb-deal-tools" data-nav-row="5">
+                <button type="button" className="btn btn-quiet btn-sm" onClick={onLobby}>
+                  <Radio size={16} strokeWidth={1.5} />
+                  Let players write them on their phones instead
+                </button>
+              </div>
+            )}
             {method === "random" && (
               <div className="hb-deal-tools" data-nav-row="4">
                 <button type="button" className="btn btn-secondary btn-sm" disabled={eligible.length === 0} onClick={() => setAssigned(deal(names.length, mode))}>

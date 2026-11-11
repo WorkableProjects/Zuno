@@ -133,16 +133,41 @@ export interface SetupCheck {
   deck: Deck;
   allowDuplicates: boolean;
   maxPlayers: number;
+  /** Players write the identities after setup, so the deck is not checked. */
+  custom?: boolean;
+}
+
+/**
+ * Players write for each other around a circle: the player at position i
+ * writes the identity for the player at position i + 1, and the last writes
+ * for the first. `circle` holds player indexes in writing order.
+ * Returns, for each writing step, who writes and who it is for.
+ */
+export function writingPairs(circle: readonly number[]): Array<{ writer: number; target: number }> {
+  if (circle.length < 2) return [];
+  return circle.map((writer, i) => ({ writer, target: circle[(i + 1) % circle.length] }));
+}
+
+/** Problems with one written identity, or [] when it can be played in the mode. */
+export function customIdentityProblems(entry: { text: string; image: string | null; subtext: string | null }, mode: HeadbandsMode): string[] {
+  const out: string[] = [];
+  const label = mode === "image" ? (entry.subtext ?? "") : entry.text;
+  if (mode === "image" && !entry.image) out.push("Add a picture.");
+  if (label.trim() === "") out.push(mode === "image" ? "Write the answer that goes under the picture." : "Write something for them to guess.");
+  if (label.trim().length > HEADBANDS_LIMITS.maxLabelLength) out.push(`Keep it under ${HEADBANDS_LIMITS.maxLabelLength} characters.`);
+  if (/<\s*script\b/i.test(label)) out.push("Plain text only, no code.");
+  return out;
 }
 
 /** Everything that stops a session from starting, in words the host can act on. */
-export function setupProblems({ players, mode, deck, allowDuplicates, maxPlayers }: SetupCheck): string[] {
+export function setupProblems({ players, mode, deck, allowDuplicates, maxPlayers, custom }: SetupCheck): string[] {
   const problems: string[] = [];
   const max = Math.min(maxPlayers, HEADBANDS_LIMITS.maxPlayers);
   if (players.length < HEADBANDS_LIMITS.minPlayers) problems.push(`Add at least ${HEADBANDS_LIMITS.minPlayers} players to start.`);
   if (players.length > max) problems.push(`This game allows up to ${max} players.`);
   const blanks = players.filter((p) => p.name.trim() === "").length;
   if (blanks > 0) problems.push(blanks === 1 ? "One player has no name." : `${blanks} players have no name.`);
+  if (custom) return problems;
 
   const eligible = [...deck.values()].filter((i) => isEligible(i, mode));
   const short = shortfall(players.length, eligible, allowDuplicates);

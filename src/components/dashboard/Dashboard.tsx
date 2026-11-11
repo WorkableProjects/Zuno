@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, PencilRuler, Play, Settings, Sticker, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, LogIn, PencilRuler, Play, Settings, Sticker, Trash2 } from "lucide-react";
 import { ZunoLogo } from "../brand/Logo";
 import { GameTile } from "./GameTile";
 import type { RailItem } from "./railItems";
@@ -13,6 +13,8 @@ interface Props {
   /** Opens the builder, with a game type picked when the user came from an engine. */
   onBuild: (gameType?: string) => void;
   onOpenRecent: (item: RailItem) => void;
+  /** Join an online Headbands lobby. Absent when lobbies are not set up. */
+  onJoin?: () => void;
   onForgetRecent: (item: RailItem) => void;
   onSettings: () => void;
 }
@@ -75,6 +77,12 @@ export function Dashboard(props: Props) {
                 <PencilRuler size={18} strokeWidth={1.5} />
                 Build a game
               </button>
+              {selected.gameType === "headbands" && props.onJoin && (
+                <button type="button" className="btn btn-quiet" onClick={props.onJoin}>
+                  <LogIn size={18} strokeWidth={1.5} />
+                  Join a game
+                </button>
+              )}
             </>
           )}
           {selected.kind === "build" && (

@@ -527,3 +527,109 @@
 .hb-copy-text {
   justify-self: start;
 }
+
+/* ---------- Online lobby (host) ---------- */
+.hb-join-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  margin-top: 24px;
+}
+.hb-qr {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--r-card);
+  background: #fff;
+  image-rendering: pixelated;
+}
+.hb-join-text {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  min-width: 0;
+}
+.hb-code {
+  font: 600 clamp(44px, 6vw, 72px) / 1 var(--font-display);
+  letter-spacing: 0.12em;
+  color: var(--game);
+}
+.hb-link {
+  max-width: 100%;
+  color: var(--text-2);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.hb-circle {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hb-circle-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 4px 4px 8px;
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.hb-circle-who {
+  overflow-wrap: anywhere;
+  color: var(--text-2);
+}
+.hb-circle-who strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.hb-circle-tools {
+  display: flex;
+  gap: 2px;
+}
+.hb-circle-status {
+  padding-right: 8px;
+  color: var(--text-3);
+  font-size: 14px;
+}
+.hb-circle-status.is-done {
+  color: var(--positive);
+}
+.hb-lobby-actions {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Online lobby (player's phone) ---------- */
+.hb-phone {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: clamp(8px, 4vh, 48px) 0 48px;
+}
+.hb-phone-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+.hb-phone-card .page-title {
+  font-size: clamp(26px, 6vw, 36px);
+  overflow-wrap: anywhere;
+}
+.hb-code-input {
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.hb-sent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--positive);
+  font-weight: 600;
+}

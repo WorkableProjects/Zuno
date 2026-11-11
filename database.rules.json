@@ -1,0 +1,36 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "hb": {
+      "$code": {
+        ".read": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".write": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".validate": "!newData.exists() || newData.hasChildren(['phase', 'mode'])",
+        "phase": { ".validate": "newData.isString() && newData.val().matches(/^(lobby|writing|playing|over)$/)" },
+        "mode": { ".validate": "newData.isString() && newData.val().matches(/^(text|image)$/)" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "circle": {
+          "$i": { ".validate": "newData.isString() && newData.val().length <= 40" }
+        },
+        "players": {
+          "$player": {
+            ".validate": "newData.hasChildren(['name']) && $player.length <= 40",
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "entries": {
+          "$writer": {
+            "text": { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "subtext": { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "image": { ".validate": "newData.isString() && newData.val().length <= 4500000 && (newData.val().beginsWith('https://') || newData.val().matches(/^data:image\\/(png|jpeg|webp|gif);base64,/))" },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

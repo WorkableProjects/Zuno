@@ -7,7 +7,7 @@
 
 <p align="center"><em>Pick. Build. Play.</em></p>
 
-Zuno is a browser-based, console-style game launcher and game builder. It ships two game engines, Jeopardy and Headbands. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server.
+Zuno is a browser-based, console-style game launcher and game builder. It ships two game engines, Jeopardy and Headbands. Everything runs in the browser; the optional Headbands online lobby uses a free Firebase Realtime Database. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server of its own.
 
 The full product specification is in [Zuno_SPEC.md](Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](HeadbandsSPEC.md).
 
@@ -44,6 +44,32 @@ The build is fully static, so any static host works.
 - **Settings**: Dark Mode (default) and Light Mode, saved on the device
 
 Sample games live in `public/samples/` (`science-review.zuno.json` for Jeopardy, `everyday-things.zuno.json` for Headbands) and can be loaded from each import screen.
+
+## Headbands online lobby (v1.0.1)
+
+Players can join the host from their own phones and write each other's identities, instead of using a deck from a file. In a lobby:
+
+- The host screen shows a room code, a QR code and a join link. Players scan it, or open Zuno, pick Headbands, choose **Join a game** and type the code.
+- Players sit in a circle the host can reorder or shuffle. Each player writes for the next one, and the last writes for the first. The circle is also the turn order.
+- The host picks **Text, any topic** (players type any word, name or phrase) or **A picture with its answer** (players upload or take a photo and write the answer shown under it).
+- Each phone only shows who it is writing for. Nobody sees what was written for them, and the host screen only shows who has finished.
+- When everyone has written, the host starts the game and it runs on the host screen as usual. **Play again** goes back to the lobby for a fresh round of writing.
+
+Start a lobby from the Headbands load screen (**Host an online lobby**, no file needed) or from session setup (**Let players write them on their phones instead**, which keeps the loaded game's title and colors).
+
+### Setting up Firebase (free)
+
+Lobbies use Firebase Realtime Database. The free Spark plan (100 simultaneous connections, 1 GB stored, 10 GB a month downloaded) is plenty, and no card is needed. Without this setup Zuno still works, and the online buttons are hidden.
+
+1. In the [Firebase console](https://console.firebase.google.com/), create a project, then **Build → Realtime Database → Create database** (start in locked mode).
+2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish.
+3. **Project settings → Your apps → Add app → Web**, and note `apiKey`, `databaseURL`, `projectId` and `appId`.
+4. For local use, copy `.env.example` to `.env.local` and fill them in.
+5. For GitHub Pages, add them as repository **variables** (Settings → Secrets and variables → Actions → Variables): `FIREBASE_API_KEY`, `FIREBASE_DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`. The deploy workflow passes them to the build.
+
+These web config values are public by design; the rules limit what can be written. Lobbies live under `/hb/{code}` and are removed when the host leaves or closes the tab.
+
+To try it without a project: `npx firebase-tools emulators:start --only database --project demo-zuno`, then build with `VITE_FIREBASE_EMULATOR=127.0.0.1:9000` and the other variables set to any placeholder (for example `VITE_FIREBASE_PROJECT_ID=demo-zuno`).
 
 ## Keyboard
 

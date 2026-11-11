@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogIn, Radio } from "lucide-react";
 import { getEngine } from "../../games/registry";
 import { useEscape } from "../navigation/spatialNav";
 import { useAutoFocus } from "../ui/useAutoFocus";
@@ -12,9 +12,13 @@ interface Props {
   onHost: (game: LoadedGame) => void;
   onBuilder: () => void;
   onLoaded: (game: LoadedGame | null) => void;
+  /** Headbands: open an online lobby where players write the identities. */
+  onLobby?: () => void;
+  /** Headbands: join someone else's lobby from this device. */
+  onJoin?: () => void;
 }
 
-export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoaded }: Props) {
+export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoaded, onLobby, onJoin }: Props) {
   const engine = getEngine(gameType);
   const root = useAutoFocus<HTMLElement>();
   useEscape(onBack);
@@ -32,6 +36,26 @@ export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoad
           <p className="page-lede">
             Every {engine?.title} session runs from a file. It holds {engine?.fileHolds ?? "the game content"}. Zuno checks it before you host.
           </p>
+          {(onLobby || onJoin) && (
+            <div className="import-online card" data-nav-row="5">
+              <p className="import-online-title">No file needed</p>
+              <p className="meta">Players join on their phones and write each other's identities.</p>
+              <div className="import-online-actions">
+                {onLobby && (
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={onLobby}>
+                    <Radio size={16} strokeWidth={1.5} />
+                    Host an online lobby
+                  </button>
+                )}
+                {onJoin && (
+                  <button type="button" className="btn btn-quiet btn-sm" onClick={onJoin}>
+                    <LogIn size={16} strokeWidth={1.5} />
+                    Join a game
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <GameImporter gameType={gameType} seed={seed} onHost={onHost} onBuilder={onBuilder} onLoaded={onLoaded} />
       </div>
