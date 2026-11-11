@@ -65,7 +65,7 @@ Zuno is a short, friendly, memorable platform name that is not tied to one organ
 
 **Tagline:** *Pick. Build. Play.*
 
-**Organization:** Dutch & Friends
+**Organization:** Workable Projects; Dutch & His Friends (main = Workable)
 
 ### 2.2 Brand direction
 
