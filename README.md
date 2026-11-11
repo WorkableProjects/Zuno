@@ -96,3 +96,12 @@ Adding a game type means registering an engine in `src/games/registry.ts` with i
 Zuno is a Workable Projects product with Dutch & Friends.
 
 The interface was designed with the unslop method by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), CC BY 4.0.
+
+## Deploying to GitHub Pages
+
+The site must be built before it can be served, so Pages has to deploy from the workflow, not straight from the branch:
+
+1. Go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
+2. Push to `main` (or run **Deploy to GitHub Pages** from the Actions tab).
+
+If Source is left on "Deploy from a branch", Pages serves the raw source and the browser shows 404 errors for `main.tsx` and `favicon.svg`.
