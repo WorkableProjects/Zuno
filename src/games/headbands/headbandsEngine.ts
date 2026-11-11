@@ -12,6 +12,8 @@ export interface Rules {
 export interface PlayerSetup {
   name: string;
   identityId: string;
+  /** Stable id, such as an online lobby player id. Defaults to p1, p2… */
+  id?: string;
 }
 
 export interface Player {
@@ -37,6 +39,27 @@ export interface QuestionRecord {
 
 export type GuessOutcome = { playerId: string; correct: boolean; guess: string };
 
+/** One line of the activity log. Never holds an unsolved identity. */
+export type LogEntry = { turn: number } & (
+  | { kind: "ask"; playerId: string; question: string; answer: GroupAnswer; by: string | null }
+  | { kind: "guess"; playerId: string; guess: string; correct: boolean }
+  | { kind: "skip"; playerId: string; byHost: boolean }
+  | { kind: "solved"; playerId: string }
+  | { kind: "removed"; playerId: string }
+  | { kind: "undo" }
+  | { kind: "pause" }
+  | { kind: "resume" }
+  | { kind: "end" }
+);
+
+/** A question the current player asked on their device, waiting for the group's answer. Empty when asked out loud. */
+export interface PendingQuestion {
+  playerId: string;
+  question: string;
+}
+
+const MAX_LOG = 300;
+
 export interface SessionState {
   mode: HeadbandsMode;
   rules: Rules;
@@ -58,20 +81,31 @@ export interface SessionState {
   lastGuess: GuessOutcome | null;
   /** The state before the latest host override, while it can still be undone. */
   undo: SessionState | null;
+  /** Everything that happened, oldest first. */
+  log: LogEntry[];
+  pending: PendingQuestion | null;
 }
 
+/**
+ * `from` is set when a player sent the action from their own device. The
+ * reducer then checks it is theirs to make: only the current player poses,
+ * guesses, skips or continues, and never answers their own question.
+ * Without `from`, the action came from the host.
+ */
 export type SessionAction =
   | { type: "showCard" }
   | { type: "hideCard" }
   | { type: "pause" }
   | { type: "resume" }
-  | { type: "ask"; question: string; answer: GroupAnswer }
-  | { type: "guess"; text: string }
+  | { type: "pose"; question: string; from?: string }
+  /** The group's answer. With no question, the pending one is used. */
+  | { type: "ask"; question?: string; answer: GroupAnswer; from?: string }
+  | { type: "guess"; text: string; from?: string }
   | { type: "markCorrect"; playerId?: string }
   | { type: "undoOverride" }
   /** Leave the guess feedback. Ends the turn unless Unlimited Guesses keeps it. */
-  | { type: "continue" }
-  | { type: "skip" }
+  | { type: "continue"; from?: string }
+  | { type: "skip"; from?: string }
   | { type: "move"; playerId: string; by: -1 | 1 }
   | { type: "remove"; playerId: string }
   | { type: "end" }
@@ -191,7 +225,7 @@ export function setupProblems({ players, mode, deck, allowDuplicates, maxPlayers
 
 export function createSession(players: PlayerSetup[], mode: HeadbandsMode, rules: Rules): SessionState {
   const list: Player[] = players.map((p, i) => ({
-    id: `p${i + 1}`,
+    id: p.id ?? `p${i + 1}`,
     name: p.name.trim(),
     identityId: p.identityId,
     solved: false,
@@ -216,6 +250,8 @@ export function createSession(players: PlayerSetup[], mode: HeadbandsMode, rules
     history: [],
     lastGuess: null,
     undo: null,
+    log: [],
+    pending: null,
   };
 }
 
@@ -250,12 +286,17 @@ function patchPlayer(state: SessionState, id: string, change: Partial<Player>): 
 function advance(state: SessionState): SessionState {
   const next = nextUnsolved(state, state.current);
   if (next === null) return finish(state);
-  return { ...state, current: next, turn: state.turn + 1, cardVisible: false, lastGuess: null };
+  return { ...state, current: next, turn: state.turn + 1, cardVisible: false, lastGuess: null, pending: null };
+}
+
+function logged(state: SessionState, entry: LogEntry): SessionState {
+  const log = [...state.log, entry];
+  return { ...state, log: log.length > MAX_LOG ? log.slice(-MAX_LOG) : log };
 }
 
 function finish(state: SessionState): SessionState {
   const everyoneSolved = state.players.every((p) => p.solved || p.removed);
-  return { ...state, phase: "over", current: null, cardVisible: false, paused: false, lastGuess: null, revealed: everyoneSolved || state.revealed };
+  return { ...state, phase: "over", current: null, cardVisible: false, paused: false, lastGuess: null, pending: null, revealed: everyoneSolved || state.revealed };
 }
 
 function solve(state: SessionState, id: string, byHost: boolean): SessionState {
@@ -267,6 +308,14 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
   // Only an override can be undone, and only until something else happens.
   const s = action.type === "undoOverride" || action.type === "continue" ? state : { ...state, undo: null };
   const current = getPlayer(s, s.current);
+  // A player's device may only act for the current player, and may not answer its own question.
+  const from = "from" in action ? action.from : undefined;
+  if (from !== undefined) {
+    if (!getPlayer(s, from) || getPlayer(s, from)!.removed) return state;
+    if (action.type === "ask" ? from === s.current : from !== s.current) return state;
+    // Phones answer only a typed question that is waiting, so a second tap cannot answer the next turn.
+    if (action.type === "ask" && s.pending?.playerId !== s.current) return state;
+  }
 
   switch (action.type) {
     case "showCard":
@@ -274,14 +323,22 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
     case "hideCard":
       return { ...s, cardVisible: false };
     case "pause":
-      return s.phase === "play" ? { ...s, paused: true, cardVisible: false } : s;
+      return s.phase === "play" && !s.paused ? logged({ ...s, paused: true, cardVisible: false }, { kind: "pause", turn: s.turn }) : s;
     case "resume":
-      return { ...s, paused: false };
+      return s.paused ? logged({ ...s, paused: false }, { kind: "resume", turn: s.turn }) : s;
+
+    case "pose": {
+      if (s.phase !== "play" || s.paused || !current || s.lastGuess) return s;
+      // An empty question is fine: the player asked it out loud.
+      return { ...s, pending: { playerId: current.id, question: action.question.trim().slice(0, 200) } };
+    }
 
     case "ask": {
-      if (s.phase !== "play" || s.paused || !current) return s;
-      const record: QuestionRecord = { playerId: current.id, question: action.question.trim(), answer: action.answer, turn: s.turn };
-      const next = { ...patchPlayer(s, current.id, { questions: current.questions + 1 }), history: [...s.history, record], lastGuess: null };
+      if (s.phase !== "play" || s.paused || !current || s.lastGuess) return s;
+      const question = (action.question ?? "").trim() || (s.pending?.playerId === current.id ? s.pending.question : "");
+      const record: QuestionRecord = { playerId: current.id, question, answer: action.answer, turn: s.turn };
+      let next: SessionState = { ...patchPlayer(s, current.id, { questions: current.questions + 1 }), history: [...s.history, record], lastGuess: null, pending: null };
+      next = logged(next, { kind: "ask", playerId: current.id, question, answer: action.answer, by: from ?? null, turn: s.turn });
       // "Unsure" lets the player rephrase. "Yes" keeps the turn only when the house rule says so.
       if (action.answer === "unsure") return next;
       if (action.answer === "yes" && s.rules.continueAfterYes) return next;
@@ -289,12 +346,14 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
     }
 
     case "guess": {
-      if (s.phase !== "play" || s.paused || !current) return s;
+      if (s.phase !== "play" || s.paused || !current || s.lastGuess) return s;
       if (action.text.trim() === "") return s;
       const identity = deck.get(current.identityId);
       const correct = !!identity && isCorrectGuess(action.text, identity, s.mode);
+      const guess = action.text.trim().slice(0, 200);
       let next = patchPlayer(s, current.id, { guesses: current.guesses + 1 });
-      next = { ...next, lastGuess: { playerId: current.id, correct, guess: action.text.trim() } };
+      next = { ...next, pending: null, lastGuess: { playerId: current.id, correct, guess } };
+      next = logged(next, { kind: "guess", playerId: current.id, guess, correct, turn: s.turn });
       return correct ? solve(next, current.id, false) : next;
     }
 
@@ -308,15 +367,15 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
       const id = action.playerId ?? s.current;
       const target = getPlayer(s, id);
       if (s.phase !== "play" || !target || target.solved || target.removed) return s;
-      const solved = solve(s, target.id, true);
+      const solved = logged(solve(s, target.id, true), { kind: "solved", playerId: target.id, turn: s.turn });
       return { ...solved, lastGuess: target.id === s.current ? { playerId: target.id, correct: true, guess: s.lastGuess?.guess ?? "" } : solved.lastGuess, undo: state };
     }
 
     case "undoOverride":
-      return state.undo ?? state;
+      return state.undo ? logged(state.undo, { kind: "undo", turn: state.undo.turn }) : state;
 
     case "skip":
-      return s.phase === "play" && current ? advance(s) : s;
+      return s.phase === "play" && current && !s.paused ? advance(logged(s, { kind: "skip", playerId: current.id, byHost: from === undefined, turn: s.turn })) : s;
 
     case "move": {
       const i = s.order.indexOf(action.playerId);
@@ -330,18 +389,18 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
     case "remove": {
       const target = getPlayer(s, action.playerId);
       if (!target || target.removed || s.phase !== "play") return s;
-      const next = patchPlayer(s, target.id, { removed: true });
+      const next = logged(patchPlayer(s, target.id, { removed: true }), { kind: "removed", playerId: target.id, turn: s.turn });
       if (target.id !== s.current) return next;
       return advance(next);
     }
 
     case "end":
-      return s.phase === "play" ? { ...finish(s), endedEarly: true } : s;
+      return s.phase === "play" ? { ...finish(logged(s, { kind: "end", turn: s.turn })), endedEarly: true } : s;
     case "reveal":
       return s.phase === "over" ? { ...s, revealed: true } : s;
     case "restart":
       return createSession(
-        s.players.filter((p) => !p.removed).map((p) => ({ name: p.name, identityId: p.identityId })),
+        s.players.filter((p) => !p.removed).map((p) => ({ name: p.name, identityId: p.identityId, id: p.id })),
         s.mode,
         s.rules,
       );
@@ -356,4 +415,31 @@ export function solvedCount(state: SessionState): number {
 export function turnPosition(state: SessionState): { index: number; total: number } {
   const list = activePlayers(state);
   return { index: Math.max(0, list.findIndex((p) => p.id === state.current)) + 1, total: list.length };
+}
+
+/** One log line in plain words, such as "Maya guessed “Owl”, not it". */
+export function describeLog(entry: LogEntry, nameOf: (id: string) => string): string {
+  const answer = (a: GroupAnswer) => (a === "yes" ? "Yes" : a === "no" ? "No" : "Not sure");
+  switch (entry.kind) {
+    case "ask": {
+      const q = entry.question ? `“${entry.question}”` : "a question out loud";
+      return `${nameOf(entry.playerId)} asked ${q}: ${answer(entry.answer)}${entry.by ? ` (${nameOf(entry.by)})` : ""}`;
+    }
+    case "guess":
+      return `${nameOf(entry.playerId)} guessed “${entry.guess}”${entry.correct ? ", correct" : ", not it"}`;
+    case "skip":
+      return entry.byHost ? `The host skipped ${nameOf(entry.playerId)}’s turn` : `${nameOf(entry.playerId)} skipped their turn`;
+    case "solved":
+      return `The host marked ${nameOf(entry.playerId)} solved`;
+    case "removed":
+      return `${nameOf(entry.playerId)} left the game`;
+    case "undo":
+      return "The host undid the last change";
+    case "pause":
+      return "The host paused the game";
+    case "resume":
+      return "The game resumed";
+    case "end":
+      return "The host ended the game";
+  }
 }

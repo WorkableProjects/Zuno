@@ -29,6 +29,18 @@
             "$other": { ".validate": false }
           }
         },
+        "game": { ".validate": "newData.isString() && newData.val().length <= 200000" },
+        "actions": {
+          "$move": {
+            ".validate": "newData.hasChildren(['by', 'type'])",
+            "by": { ".validate": "newData.isString() && newData.val().length <= 40" },
+            "type": { ".validate": "newData.isString() && newData.val().matches(/^(pose|ask|guess|skip|continue)$/)" },
+            "question": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "text": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "answer": { ".validate": "newData.isString() && newData.val().matches(/^(yes|no|unsure)$/)" },
+            "$other": { ".validate": false }
+          }
+        },
         "$other": { ".validate": false }
       }
     }
