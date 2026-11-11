@@ -217,6 +217,7 @@
   padding: 16px 0 24px;
 }
 .score {
+  position: relative;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -227,6 +228,18 @@
   background: color-mix(in oklab, var(--surface) 88%, transparent);
   border: 1px solid var(--hairline);
 }
+.score-who {
+  display: grid;
+  min-width: 0;
+}
+.members {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-3);
+}
 .score-name {
   min-width: 0;
   overflow: hidden;
@@ -236,6 +249,52 @@
 }
 .score-value {
   font: 500 clamp(20px, 2.2vw, 32px) / 1 var(--font-display);
+}
+.score-edit {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: none;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 8px;
+  color: inherit;
+}
+.score-pencil {
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease);
+}
+.score-edit:hover .score-pencil,
+.score-edit:focus-visible .score-pencil {
+  opacity: 1;
+}
+.score-edit:hover {
+  background: var(--surface-2);
+}
+@media (hover: none) {
+  .score-pencil {
+    opacity: 0.6;
+  }
+}
+.score-editor {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  animation: fade-in 120ms var(--ease) both;
+}
+.score-input {
+  width: 112px;
+  text-align: right;
 }
 @media (max-width: 720px) {
   .scoreboard {
@@ -437,4 +496,157 @@
 }
 .standing.is-first .standing-score {
   color: var(--game-ink);
+}
+
+/* ---------- Rich content ---------- */
+.clue-image {
+  display: block;
+  max-width: 100%;
+  max-height: 40vh;
+  margin-top: 20px;
+  object-fit: contain;
+  border-radius: var(--r-card);
+}
+.math-display {
+  display: block;
+  margin: 8px 0;
+  text-align: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ---------- Award rows: team members, dimmed teams ---------- */
+.award-who {
+  display: grid;
+  min-width: 0;
+}
+.award-row.is-out {
+  opacity: 0.45;
+}
+.final-note {
+  margin-top: 16px;
+  color: var(--text-2);
+}
+
+/* ---------- Timer ---------- */
+.timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  color: var(--text-2);
+}
+.timer-readout {
+  min-width: 4.5ch;
+  font: 500 20px/1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.timer-bar {
+  width: 96px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+.timer-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--game);
+  transform-origin: left center;
+  transition: transform 1000ms linear;
+}
+.timer.is-done .timer-readout {
+  color: var(--negative);
+  animation: timer-flash 600ms var(--ease) 3;
+}
+@keyframes timer-flash {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---------- Daily Double ---------- */
+.dd-splash {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.dd-splash-text {
+  font: 600 clamp(48px, 11vw, 144px) / 1 var(--font-display);
+  letter-spacing: -0.03em;
+  color: var(--game);
+  animation: dd-pop 1500ms var(--ease) both;
+}
+@keyframes dd-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: brightness(1.6);
+  }
+  40% {
+    transform: scale(1);
+    filter: none;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dd-splash-text {
+    animation: dd-fade 1500ms linear both;
+  }
+  @keyframes dd-fade {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    20%,
+    80% {
+      opacity: 1;
+    }
+  }
+}
+.dd-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(16px, 5vh, 64px) 0 24px;
+}
+.dd-teams {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 28px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.dd-team {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.dd-team.is-on {
+  background: color-mix(in oklab, var(--game) 28%, var(--surface));
+  box-shadow: inset 0 0 0 1.5px var(--game);
+  color: var(--text);
+}
+.dd-wager {
+  margin-top: 20px;
 }
