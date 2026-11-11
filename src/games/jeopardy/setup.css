@@ -1,0 +1,56 @@
+.team-cards {
+  display: grid;
+  gap: 12px;
+}
+.team-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.member-list {
+  display: grid;
+  gap: 6px;
+  padding-left: 32px;
+}
+.member-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px;
+}
+.member-add {
+  display: flex;
+}
+.setup-field {
+  display: grid;
+  gap: 8px;
+}
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.segment {
+  flex: 1 1 0;
+  min-width: 44px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2, inherit);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.segment.is-active {
+  background: var(--game, var(--accent));
+  color: #fff;
+  font-weight: 500;
+}

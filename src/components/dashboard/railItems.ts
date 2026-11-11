@@ -5,7 +5,7 @@ import type { BackdropSpec } from "./AmbientBackground";
 /** What the dashboard knows about a tile. Common metadata only, never game content. */
 export interface RailItem {
   id: string;
-  kind: "engine" | "build" | "file";
+  kind: "engine" | "build" | "file" | "soon";
   gameType: string;
   title: string;
   eyebrow: string;
@@ -33,6 +33,16 @@ export function buildRailItems(recent: RecentGame[]): RailItem[] {
       artwork: "board",
     },
   }));
+
+  items.push({
+    id: "soon:headbands",
+    kind: "soon",
+    gameType: "headbands",
+    title: "Headbands",
+    eyebrow: "Coming soon",
+    description: "Everyone wears a secret word they can't see. Ask yes-or-no questions and guess who you are before time runs out.",
+    backdrop: { key: "soon:headbands", cover: null, accent: "#FFB454", preset: "horizon", artwork: null },
+  });
 
   items.push({
     id: BUILD_TILE_ID,

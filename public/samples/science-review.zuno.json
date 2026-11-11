@@ -77,7 +77,7 @@
           {
             "id": "forces-and-motion-400",
             "value": 400,
-            "clue": "Force equals mass times this.",
+            "clue": "In $F = m \\times a$, this quantity is measured in $\\mathrm{m/s^2}$.",
             "answer": "What is acceleration?"
           },
           {
@@ -120,7 +120,8 @@
             "id": "cells-500",
             "value": 500,
             "clue": "The movement of water across a membrane toward higher solute concentration.",
-            "answer": "What is osmosis?"
+            "answer": "What is osmosis?",
+            "dailyDouble": true
           }
         ]
       },
@@ -201,6 +202,7 @@
     ],
     "finalJeopardy": {
       "enabled": true,
+      "mode": "always",
       "category": "Famous scientists",
       "clue": "She won Nobel Prizes in both physics and chemistry for her work on radioactivity.",
       "answer": "Who is Marie Curie?"
@@ -208,6 +210,8 @@
   },
   "settings": {
     "allowNegativeScores": false,
-    "showExplanations": true
+    "showExplanations": true,
+    "timeLimitSeconds": 30,
+    "finalTimeLimitSeconds": 60
   }
 }

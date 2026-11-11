@@ -1,5 +1,5 @@
 import { CURRENT_SCHEMA_VERSION, isRecord } from "../../game-files/schema/common";
-import { JEOPARDY_TYPE, type JeopardyCategory, type JeopardyFile, type JeopardyQuestion } from "../../game-files/schema/jeopardy";
+import { FINAL_MODES, JEOPARDY_TYPE, type JeopardyCategory, type JeopardyFile, type JeopardyQuestion } from "../../game-files/schema/jeopardy";
 
 /** The editor works on the file shape directly, with throwaway IDs until export. */
 export type Draft = JeopardyFile;
@@ -25,9 +25,9 @@ export function newDraft(): Draft {
     appearance: { accentColor: "#79B8FF", backgroundPreset: "aurora" },
     content: {
       categories: Array.from({ length: 5 }, newCategory),
-      finalJeopardy: { enabled: false, category: "", clue: "", answer: "" },
+      finalJeopardy: { enabled: false, mode: "always", category: "", clue: "", answer: "" },
     },
-    settings: { allowNegativeScores: false, showExplanations: true },
+    settings: { allowNegativeScores: false, showExplanations: true, timeLimitSeconds: 0, finalTimeLimitSeconds: 0 },
   };
 }
 
@@ -36,7 +36,19 @@ export function reviveDraft(saved: unknown): Draft | null {
   if (!isRecord(saved) || !isRecord(saved.metadata) || !isRecord(saved.appearance) || !isRecord(saved.settings)) return null;
   if (!isRecord(saved.content) || !Array.isArray(saved.content.categories) || !isRecord(saved.content.finalJeopardy)) return null;
   const ok = saved.content.categories.every((c) => isRecord(c) && typeof c.id === "string" && Array.isArray(c.questions) && c.questions.every((q) => isRecord(q) && typeof q.id === "string"));
-  return ok ? (saved as unknown as Draft) : null;
+  if (!ok) return null;
+  const draft = saved as unknown as Draft;
+  const f = draft.content.finalJeopardy as Partial<Draft["content"]["finalJeopardy"]>;
+  const s = draft.settings as Partial<Draft["settings"]>;
+  const seconds = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : 0);
+  return {
+    ...draft,
+    content: {
+      ...draft.content,
+      finalJeopardy: { ...draft.content.finalJeopardy, mode: (FINAL_MODES as readonly unknown[]).includes(f.mode) ? f.mode! : "always" },
+    },
+    settings: { ...draft.settings, timeLimitSeconds: seconds(s.timeLimitSeconds), finalTimeLimitSeconds: seconds(s.finalTimeLimitSeconds) },
+  };
 }
 
 /** Turns a validated file into an editable draft. */
@@ -57,6 +69,19 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
+}
+
+function finalOut(f: Draft["content"]["finalJeopardy"]): Draft["content"]["finalJeopardy"] {
+  const out: Draft["content"]["finalJeopardy"] = {
+    enabled: f.enabled,
+    mode: f.mode === "tiebreaker" ? "tiebreaker" : "always",
+    category: f.category.trim(),
+    clue: f.clue.trim(),
+    answer: f.answer.trim(),
+  };
+  if (f.clueImage?.trim()) out.clueImage = f.clueImage.trim();
+  if (f.answerImage?.trim()) out.answerImage = f.answerImage.trim();
+  return out;
 }
 
 /** Converts the editor state into the shared Zuno JSON shape with clean, unique IDs. */
@@ -93,16 +118,15 @@ export function draftToFile(draft: Draft): JeopardyFile {
               answer: q.answer.trim(),
             };
             if (q.explanation?.trim()) out.explanation = q.explanation.trim();
+            if (q.dailyDouble === true) out.dailyDouble = true;
+            if (q.clueImage?.trim()) out.clueImage = q.clueImage.trim();
+            if (q.answerImage?.trim()) out.answerImage = q.answerImage.trim();
+            if (typeof q.timeLimit === "number" && Number.isInteger(q.timeLimit)) out.timeLimit = q.timeLimit;
             return out;
           }),
         };
       }),
-      finalJeopardy: {
-        enabled: draft.content.finalJeopardy.enabled,
-        category: draft.content.finalJeopardy.category.trim(),
-        clue: draft.content.finalJeopardy.clue.trim(),
-        answer: draft.content.finalJeopardy.answer.trim(),
-      },
+      finalJeopardy: finalOut(draft.content.finalJeopardy),
     },
     settings: { ...draft.settings },
   };

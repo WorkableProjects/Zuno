@@ -68,20 +68,22 @@ export function dataUrlBytes(url: string): number {
 }
 
 /**
- * A cover image may be an https URL or an embedded raster image.
+ * An image may be an https URL or an embedded raster image. The label names
+ * it in messages, such as "The cover image".
  * Returns an error message, or null when the value is usable.
  */
-export function checkCoverImage(value: unknown): string | null {
+export function checkImage(value: unknown, label: string): string | null {
   if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "string") return "The cover image must be an image link or left empty.";
+  if (typeof value !== "string") return `${label} must be an image link or left empty.`;
   if (value.startsWith("data:")) {
     const match = /^data:([a-z0-9.+/-]+);base64,/i.exec(value);
     const mime = match?.[1]?.toLowerCase();
     if (!mime || !(ALLOWED_IMAGE_MIME as readonly string[]).includes(mime)) {
-      return "The cover image uses an unsupported format. Use PNG, JPEG, WebP or GIF.";
+      return `${label} uses an unsupported format. Use PNG, JPEG, WebP or GIF.`;
     }
     if (dataUrlBytes(value) > LIMITS.maxImageBytes) {
-      return `The embedded cover image is too large. The limit is ${formatBytes(LIMITS.maxImageBytes)}.`;
+      const embedded = label.startsWith("The ") ? `The embedded ${label.slice(4)}` : label;
+      return `${embedded} is too large. The limit is ${formatBytes(LIMITS.maxImageBytes)}.`;
     }
     return null;
   }
@@ -89,12 +91,17 @@ export function checkCoverImage(value: unknown): string | null {
   try {
     url = new URL(value);
   } catch {
-    return "The cover image link is not a valid address.";
+    return `${label} link is not a valid address.`;
   }
   if (url.protocol !== "https:") {
-    return "The cover image link must start with https://. Other link types are not allowed.";
+    return `${label} link must start with https://. Other link types are not allowed.`;
   }
   return null;
+}
+
+/** A cover image may be an https URL or an embedded raster image. */
+export function checkCoverImage(value: unknown): string | null {
+  return checkImage(value, "The cover image");
 }
 
 export function isHexColor(value: unknown): value is string {

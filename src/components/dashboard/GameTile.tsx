@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Sticker } from "lucide-react";
 import type { RailItem } from "./railItems";
 
 /** Cover for the Jeopardy engine: a small board with one clue picked. */
@@ -44,7 +44,14 @@ interface Props {
 
 export function GameTile({ item, active, onSelect, onActivate }: Props) {
   const wasActive = useRef(false);
-  const label = item.kind === "file" ? `${item.title}, recent game file` : item.kind === "build" ? "Build a game" : `${item.title}, game engine`;
+  const label =
+    item.kind === "file"
+      ? `${item.title}, recent game file`
+      : item.kind === "build"
+        ? "Build a game"
+        : item.kind === "soon"
+          ? `${item.title}, coming soon`
+          : `${item.title}, game engine`;
 
   return (
     <button
@@ -87,9 +94,15 @@ export function GameTile({ item, active, onSelect, onActivate }: Props) {
             <span>Build</span>
           </span>
         )}
+        {item.kind === "soon" && (
+          <span className="tile-img tile-soon-cover">
+            <Sticker size={48} strokeWidth={1.5} />
+          </span>
+        )}
         <span className="tile-shade" />
         <span className="tile-gloss" />
         <span className="tile-sheen" />
+        {item.kind === "soon" && <span className="tile-badge">COMING SOON</span>}
       </span>
       <span className="tile-ring" />
       <span className="tile-beam tile-beam-glow" />

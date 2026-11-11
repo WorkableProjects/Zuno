@@ -164,3 +164,95 @@ describe("builder output", () => {
     expect(guide).toContain('"spotlight"');
   });
 });
+
+describe("jeopardy expansion fields", () => {
+  const ok = (raw: unknown) => {
+    const r = validateGameFile(raw, "jeopardy");
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    return { file: r.file as JeopardyFile, warnings: r.warnings };
+  };
+
+  it("accepts the new fields and keeps them", () => {
+    const f = sample();
+    f.content.categories[0].questions[0].clueImage = "https://example.com/a.png";
+    f.content.categories[0].questions[0].answerImage = "https://example.com/b.png";
+    f.content.categories[0].questions[0].timeLimit = 45;
+    f.content.finalJeopardy.clueImage = "https://example.com/c.png";
+    const { file } = ok(f);
+    const q = file.content.categories[0].questions[0];
+    expect(q.clueImage).toBe("https://example.com/a.png");
+    expect(q.answerImage).toBe("https://example.com/b.png");
+    expect(q.timeLimit).toBe(45);
+    expect(file.content.finalJeopardy.clueImage).toBe("https://example.com/c.png");
+    expect(file.content.finalJeopardy.mode).toBe("always");
+    expect(file.settings.timeLimitSeconds).toBe(30);
+    expect(file.settings.finalTimeLimitSeconds).toBe(60);
+    const dd = file.content.categories.flatMap((c) => c.questions).filter((x) => x.dailyDouble);
+    expect(dd).toHaveLength(1);
+  });
+
+  it("only sets optional question keys when present", () => {
+    const f = sample();
+    f.content.categories[0].questions[0].clueImage = "";
+    f.content.categories[0].questions[0].timeLimit = null;
+    f.content.categories[0].questions[0].dailyDouble = false;
+    const q = ok(f).file.content.categories[0].questions[0];
+    expect(Object.keys(q).sort()).toEqual(["answer", "clue", "explanation", "id", "value"]);
+  });
+
+  it("rejects a bad dailyDouble, time limit or image", () => {
+    const bad = (mutate: (f: ReturnType<typeof sample>) => void) => {
+      const f = sample();
+      mutate(f);
+      return errorsOf(f);
+    };
+    const q = (f: ReturnType<typeof sample>) => f.content.categories[0].questions[1];
+    expect(bad((f) => (q(f).dailyDouble = "yes"))[0]).toMatch(/^Category 1, question 2 has a dailyDouble/);
+    expect(bad((f) => (q(f).timeLimit = 12.5))[0]).toMatch(/^Category 1, question 2 has a time limit/);
+    expect(bad((f) => (q(f).timeLimit = -1))[0]).toMatch(/time limit/);
+    expect(bad((f) => (q(f).timeLimit = 601))[0]).toMatch(/time limit/);
+    expect(bad((f) => (q(f).timeLimit = "30"))[0]).toMatch(/time limit/);
+    expect(bad((f) => (q(f).clueImage = "http://example.com/a.png"))[0]).toBe("Category 1, question 2's clue image link must start with https://. Other link types are not allowed.");
+    expect(bad((f) => (q(f).answerImage = "not a url"))[0]).toBe("Category 1, question 2's answer image link is not a valid address.");
+    expect(bad((f) => (q(f).answerImage = 5))[0]).toBe("Category 1, question 2's answer image must be an image link or left empty.");
+    expect(bad((f) => (f.content.finalJeopardy.answerImage = "ftp://x.com/a.png"))[0]).toMatch(/^The Final Jeopardy answer image link/);
+    expect(bad((f) => (f.settings.timeLimitSeconds = 601))[0]).toMatch(/timeLimitSeconds/);
+    expect(bad((f) => (f.settings.finalTimeLimitSeconds = 1.5))[0]).toMatch(/finalTimeLimitSeconds/);
+  });
+
+  it("defaults a missing final mode to always, and settings timers to 0", () => {
+    const f = sample();
+    delete f.content.finalJeopardy.mode;
+    delete f.settings.timeLimitSeconds;
+    delete f.settings.finalTimeLimitSeconds;
+    const { file, warnings } = ok(f);
+    expect(file.content.finalJeopardy.mode).toBe("always");
+    expect(file.settings.timeLimitSeconds).toBe(0);
+    expect(file.settings.finalTimeLimitSeconds).toBe(0);
+    expect(warnings).toEqual([]);
+    delete f.content.finalJeopardy;
+    expect(ok(f).file.content.finalJeopardy.mode).toBe("always");
+  });
+
+  it("accepts tiebreaker mode and warns on an unknown mode", () => {
+    const f = sample();
+    f.content.finalJeopardy.mode = "tiebreaker";
+    expect(ok(f).file.content.finalJeopardy.mode).toBe("tiebreaker");
+    f.content.finalJeopardy.mode = "sometimes";
+    const { file, warnings } = ok(f);
+    expect(file.content.finalJeopardy.mode).toBe("always");
+    expect(warnings.some((w) => /mode was not recognized/.test(w))).toBe(true);
+  });
+
+  it("warns when every question is a daily double", () => {
+    const f = sample();
+    for (const c of f.content.categories) for (const q of c.questions) q.dailyDouble = true;
+    expect(ok(f).warnings.some((w) => /Every question is a Daily Double/.test(w))).toBe(true);
+  });
+
+  it("describes the new fields in the AI guide", () => {
+    const g = buildJeopardyGuide();
+    for (const word of ["dailyDouble", "clueImage", "answerImage", "timeLimit", "timeLimitSeconds", "finalTimeLimitSeconds", '"mode"', "LaTeX"]) expect(g).toContain(word);
+  });
+});
+

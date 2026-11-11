@@ -3,6 +3,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   LIMITS,
   checkCoverImage,
+  checkImage,
   isHexColor,
   isRecord,
   type BackgroundPreset,
@@ -19,6 +20,9 @@ export const JEOPARDY_LIMITS = {
   maxValue: 1_000_000,
   minTeams: 1,
   maxTeams: 6,
+  maxMembersPerTeam: 8,
+  /** Seconds. 0 means no timer. */
+  maxTimeLimit: 600,
 };
 
 export interface JeopardyQuestion {
@@ -27,6 +31,14 @@ export interface JeopardyQuestion {
   clue: string;
   answer: string;
   explanation?: string;
+  /** The board hides this; opening it asks one team for a wager. */
+  dailyDouble?: boolean;
+  /** https URL or embedded data URL, shown with the clue. */
+  clueImage?: string;
+  /** https URL or embedded data URL, shown with the answer. */
+  answerImage?: string;
+  /** Seconds; overrides settings.timeLimitSeconds for this clue. 0 = no timer. */
+  timeLimit?: number;
 }
 
 export interface JeopardyCategory {
@@ -35,11 +47,23 @@ export interface JeopardyCategory {
   questions: JeopardyQuestion[];
 }
 
+/**
+ * "always": the final question is played by every team at the end, with wagers.
+ * "tiebreaker": it is only offered when teams are tied for first; only the tied
+ * teams play, no wagers, a right answer adds 1 point.
+ */
+export const FINAL_MODES = ["always", "tiebreaker"] as const;
+export type FinalMode = (typeof FINAL_MODES)[number];
+
+/** The One Final Question (OFQ). JSON key stays finalJeopardy for compatibility. */
 export interface FinalJeopardy {
   enabled: boolean;
+  mode: FinalMode;
   category: string;
   clue: string;
   answer: string;
+  clueImage?: string;
+  answerImage?: string;
 }
 
 export interface JeopardyContent {
@@ -50,11 +74,19 @@ export interface JeopardyContent {
 export interface JeopardySettings {
   allowNegativeScores: boolean;
   showExplanations: boolean;
+  /** Default seconds per clue. 0 = no timer. */
+  timeLimitSeconds: number;
+  /** Seconds for the final question. 0 = no timer. */
+  finalTimeLimitSeconds: number;
 }
 
 export type JeopardyFile = GameFile<JeopardyContent, JeopardySettings>;
 
 const SCRIPT_PATTERN = /<\s*script\b/i;
+
+function isTimeLimit(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= JEOPARDY_LIMITS.maxTimeLimit;
+}
 
 function text(value: unknown): string | null {
   return typeof value === "string" ? value : null;
@@ -136,7 +168,7 @@ export function validateJeopardy(raw: Record<string, unknown>): ValidationResult
 
   // Content
   const categories: JeopardyCategory[] = [];
-  let finalJeopardy: FinalJeopardy = { enabled: false, category: "", clue: "", answer: "" };
+  let finalJeopardy: FinalJeopardy = { enabled: false, mode: "always", category: "", clue: "", answer: "" };
   if (!isRecord(raw.content)) {
     errors.push("The file is missing its content section.");
   } else {
@@ -219,6 +251,20 @@ export function validateJeopardy(raw: Record<string, unknown>): ValidationResult
                 question.explanation = ex.trim();
               }
             }
+            if (rawQ.dailyDouble !== undefined && rawQ.dailyDouble !== null) {
+              if (typeof rawQ.dailyDouble !== "boolean") errors.push(`${qName} has a dailyDouble setting that must be true or false.`);
+              else if (rawQ.dailyDouble) question.dailyDouble = true;
+            }
+            const clueImageError = checkImage(rawQ.clueImage, `${qName}'s clue image`);
+            if (clueImageError) errors.push(clueImageError);
+            else if (typeof rawQ.clueImage === "string" && rawQ.clueImage !== "") question.clueImage = rawQ.clueImage;
+            const answerImageError = checkImage(rawQ.answerImage, `${qName}'s answer image`);
+            if (answerImageError) errors.push(answerImageError);
+            else if (typeof rawQ.answerImage === "string" && rawQ.answerImage !== "") question.answerImage = rawQ.answerImage;
+            if (rawQ.timeLimit !== undefined && rawQ.timeLimit !== null) {
+              if (!isTimeLimit(rawQ.timeLimit)) errors.push(`${qName} has a time limit that must be a whole number of seconds from 0 to ${JEOPARDY_LIMITS.maxTimeLimit}.`);
+              else question.timeLimit = rawQ.timeLimit;
+            }
             cat.questions.push(question);
           });
         }
@@ -237,8 +283,14 @@ export function validateJeopardy(raw: Record<string, unknown>): ValidationResult
         if (f.enabled !== undefined && typeof f.enabled !== "boolean") {
           errors.push("Final Jeopardy's enabled setting must be true or false.");
         }
+        let mode: FinalMode = "always";
+        if (f.mode !== undefined && f.mode !== null) {
+          if ((FINAL_MODES as readonly unknown[]).includes(f.mode)) mode = f.mode as FinalMode;
+          else warnings.push(`The final question's mode was not recognized, so Zuno used "always". Supported modes: ${FINAL_MODES.join(", ")}.`);
+        }
         finalJeopardy = {
           enabled: f.enabled === true,
+          mode,
           category: (text(f.category) ?? "").trim(),
           clue: (text(f.clue) ?? "").trim(),
           answer: (text(f.answer) ?? "").trim(),
@@ -251,12 +303,18 @@ export function validateJeopardy(raw: Record<string, unknown>): ValidationResult
           checkText(finalJeopardy.clue, "The Final Jeopardy clue");
           checkText(finalJeopardy.answer, "The Final Jeopardy answer");
         }
+        const finalClueError = checkImage(f.clueImage, "The Final Jeopardy clue image");
+        if (finalClueError) errors.push(finalClueError);
+        else if (typeof f.clueImage === "string" && f.clueImage !== "") finalJeopardy.clueImage = f.clueImage;
+        const finalAnswerError = checkImage(f.answerImage, "The Final Jeopardy answer image");
+        if (finalAnswerError) errors.push(finalAnswerError);
+        else if (typeof f.answerImage === "string" && f.answerImage !== "") finalJeopardy.answerImage = f.answerImage;
       }
     }
   }
 
   // Settings are optional booleans.
-  const settings: JeopardySettings = { allowNegativeScores: false, showExplanations: true };
+  const settings: JeopardySettings = { allowNegativeScores: false, showExplanations: true, timeLimitSeconds: 0, finalTimeLimitSeconds: 0 };
   if (raw.settings !== undefined && raw.settings !== null) {
     if (!isRecord(raw.settings)) {
       errors.push("The settings section must be an object.");
@@ -267,7 +325,18 @@ export function validateJeopardy(raw: Record<string, unknown>): ValidationResult
         if (typeof v !== "boolean") errors.push(`The ${key} setting must be true or false.`);
         else settings[key] = v;
       }
+      for (const key of ["timeLimitSeconds", "finalTimeLimitSeconds"] as const) {
+        const v = raw.settings[key];
+        if (v === undefined || v === null) continue;
+        if (!isTimeLimit(v)) errors.push(`The ${key} setting must be a whole number of seconds from 0 to ${JEOPARDY_LIMITS.maxTimeLimit}.`);
+        else settings[key] = v;
+      }
     }
+  }
+
+  const allQuestions = categories.flatMap((c) => c.questions);
+  if (allQuestions.length > 0 && allQuestions.every((q) => q.dailyDouble)) {
+    warnings.push("Every question is a Daily Double. Most games use only one or two.");
   }
 
   if (errors.length > 0) return { ok: false, errors };
@@ -305,8 +374,12 @@ Requirements:
 - Every question must have a unique id, a numeric value, a clue, and an answer.
 - value must be a whole number greater than 0, written as a number, not a string.
 - An optional explanation may be included for a question when it is useful.
-- Include content.finalJeopardy with enabled, category, clue, and answer fields. If enabled is true, the other three must be filled in.
-- Include settings.allowNegativeScores and settings.showExplanations as booleans.
+- Include content.finalJeopardy with enabled, mode, category, clue, and answer fields. If enabled is true, category, clue and answer must be filled in. mode is "always" (every team plays the final question with wagers) or "tiebreaker" (only offered when teams tie for first, no wagers). Use "always" by default.
+- Optional question fields: dailyDouble (true or false) marks a Daily Double, where one team wagers on the clue. By default, mark 1 or 2 questions per board as daily doubles, and prefer higher-value questions. Leave the field out on other questions.
+- Optional clueImage and answerImage (on questions and on finalJeopardy) must be https image links. Only include them if I give you links; otherwise leave them out.
+- Optional timeLimit on a question is a whole number of seconds from 0 to ${JEOPARDY_LIMITS.maxTimeLimit} (0 means no timer). Leave it out to use the default from settings.
+- Include settings.allowNegativeScores and settings.showExplanations as booleans. Include settings.timeLimitSeconds (default seconds per clue) and settings.finalTimeLimitSeconds (seconds for the final question) as whole numbers from 0 to ${JEOPARDY_LIMITS.maxTimeLimit}; 0 means no timer.
+- Math can be written as LaTeX between $...$ (inline) or $$...$$ (display) in clues, answers and explanations. Every backslash must be escaped in JSON, for example "What is $\\\\frac{1}{2} + \\\\frac{1}{4}$?".
 - Use five categories and five questions per category by default, unless I request a different supported board size.
 - Use sensible ascending point values by default: 100, 200, 300, 400, and 500.
 - Ensure all IDs are unique and all JSON strings are correctly escaped.
@@ -339,13 +412,18 @@ Use this structure:
             "value": 100,
             "clue": "Clue text",
             "answer": "Correct answer",
-            "explanation": "Optional explanation"
+            "explanation": "Optional explanation",
+            "dailyDouble": false,
+            "clueImage": "https://example.com/clue.png",
+            "answerImage": "https://example.com/answer.png",
+            "timeLimit": 30
           }
         ]
       }
     ],
     "finalJeopardy": {
       "enabled": false,
+      "mode": "always",
       "category": "",
       "clue": "",
       "answer": ""
@@ -353,7 +431,9 @@ Use this structure:
   },
   "settings": {
     "allowNegativeScores": false,
-    "showExplanations": true
+    "showExplanations": true,
+    "timeLimitSeconds": 30,
+    "finalTimeLimitSeconds": 60
   }
 }
 
