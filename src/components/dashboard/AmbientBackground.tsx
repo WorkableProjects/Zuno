@@ -10,10 +10,18 @@ export interface BackdropSpec {
   accent: string;
   preset: BackgroundPreset;
   /** Optional engine artwork drawn into the generated scene. */
-  artwork: "board" | null;
+  artwork: "board" | "cards" | null;
 }
 
 const BOARD_VALUES = [100, 200, 300, 400, 500];
+/** Cells the host "picks" in turn, as [row, column]. One lights up every few seconds. */
+const BOARD_PICKS: Array<[number, number]> = [
+  [2, 2],
+  [3, 0],
+  [1, 3],
+  [4, 4],
+  [0, 2],
+];
 
 /** A tilted game board, drawn in code. Decorative: it holds no real clues. */
 function BoardArt() {
@@ -26,12 +34,52 @@ function BoardArt() {
           </div>
         ))}
         {BOARD_VALUES.map((v, r) =>
-          Array.from({ length: 5 }, (_, c) => (
-            <div key={`${r}-${c}`} className={`art-cell${r === 2 && c === 2 ? " is-lit" : ""}${(r === 0 && c < 2) || (r === 1 && c === 0) ? " is-used" : ""}`}>
-              {v}
-            </div>
-          )),
+          Array.from({ length: 5 }, (_, c) => {
+            const pick = BOARD_PICKS.findIndex(([pr, pc]) => pr === r && pc === c);
+            const used = (r === 0 && c < 2) || (r === 1 && c === 0);
+            return (
+              <div
+                key={`${r}-${c}`}
+                className={`art-cell${pick >= 0 ? " is-pick" : ""}${pick === 0 ? " is-first" : ""}${used ? " is-used" : ""}`}
+                style={pick >= 0 ? ({ "--pick": pick } as CSSProperties) : undefined}
+              >
+                {v}
+              </div>
+            );
+          }),
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Identities the face-down card turns over to show. Generic, never from a loaded deck. */
+const CARD_WORDS = ["Penguin", "Lighthouse", "Pizza", "Astronaut", "Volcano", "Violin"];
+
+/** A fan of headband cards, drawn in code. The middle card turns over now and then. */
+function CardsArt() {
+  const [word, setWord] = useState(0);
+  return (
+    <div className="art-cards" aria-hidden="true">
+      <div className="art-card art-card-back is-left">
+        <span className="art-band" />
+        <span className="art-line" />
+        <span className="art-line is-short" />
+      </div>
+      <div className="art-card art-card-back is-right">
+        <span className="art-band" />
+        <span className="art-line" />
+        <span className="art-line is-short" />
+      </div>
+      <div className="art-card-flip" onAnimationIteration={() => setWord((w) => (w + 1) % CARD_WORDS.length)}>
+        <div className="art-card art-face is-mystery">
+          <span className="art-band" />
+          <span className="art-mark">?</span>
+        </div>
+        <div className="art-card art-face is-reveal">
+          <span className="art-band" />
+          <span className="art-word">{CARD_WORDS[word]}</span>
+        </div>
       </div>
     </div>
   );
@@ -57,6 +105,7 @@ function Scene({ accent, preset, artwork }: Pick<BackdropSpec, "accent" | "prese
       <span className="light light-c" />
       {preset === "horizon" && <span className="sun" />}
       {artwork === "board" && <BoardArt />}
+      {artwork === "cards" && <CardsArt />}
     </div>
   );
 }

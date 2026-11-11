@@ -9,7 +9,7 @@
 
 Zuno is a browser-based, console-style game launcher and game builder. It ships two game engines, Jeopardy and Headbands. Everything runs in the browser; the optional Headbands online lobby uses a free Firebase Realtime Database. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server of its own.
 
-The full product specification is in [Zuno_SPEC.md](Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](HeadbandsSPEC.md).
+The full product specification is in [Zuno_SPEC.md](docs/Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](docs/HeadbandsSPEC.md).
 
 ## Run it
 
