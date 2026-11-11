@@ -359,7 +359,73 @@ export function countClues(file: JeopardyFile): number {
 }
 
 /** The prompt copied by the AI Builder. Versioned with the schema: change both together. */
-export function buildJeopardyGuide(): string {
+/** Choices from the AI Builder screen that shape the copied guide. */
+export interface GuideOptions {
+  /** Daily doubles to place on the board. null = let the assistant pick 1 or 2. */
+  dailyDoubles: number | null;
+  /** Default seconds per clue. 0 = no timer. */
+  timeLimitSeconds: number;
+  /** "off" leaves the final question out. */
+  finalMode: "off" | FinalMode;
+  /** Seconds for the final question. 0 = no timer. */
+  finalTimeLimitSeconds: number;
+  /** Ask for LaTeX math in clues and answers where it fits. */
+  useMath: boolean;
+  /** https image links the assistant should attach to fitting clues or answers. */
+  imageLinks: string[];
+}
+
+export const DEFAULT_GUIDE_OPTIONS: GuideOptions = {
+  dailyDoubles: null,
+  timeLimitSeconds: 0,
+  finalMode: "always",
+  finalTimeLimitSeconds: 0,
+  useMath: false,
+  imageLinks: [],
+};
+
+function guideChoices(o: GuideOptions): string {
+  const lines: string[] = [];
+  lines.push(
+    o.dailyDoubles === null
+      ? "- Daily doubles: mark 1 or 2 questions as daily doubles."
+      : o.dailyDoubles === 0
+        ? "- Daily doubles: none. Do not set dailyDouble on any question."
+        : `- Daily doubles: mark exactly ${o.dailyDoubles} ${o.dailyDoubles === 1 ? "question" : "questions"} with "dailyDouble": true, preferring higher-value questions in different categories.`,
+  );
+  lines.push(
+    o.timeLimitSeconds > 0
+      ? `- Time limit: set settings.timeLimitSeconds to ${o.timeLimitSeconds}. Give a question its own timeLimit only when it clearly needs more or less time (for example a long calculation).`
+      : "- Time limit: set settings.timeLimitSeconds to 0 (no timer) and leave timeLimit off every question.",
+  );
+  if (o.finalMode === "off") {
+    lines.push('- Final question: set content.finalJeopardy.enabled to false, mode to "always", and leave category, clue and answer as empty strings.');
+  } else {
+    lines.push(
+      `- Final question: set content.finalJeopardy.enabled to true and mode to "${o.finalMode}"${o.finalMode === "tiebreaker" ? " (it is only played to break a tie for first)" : " (every team plays it at the end with wagers)"}. Write a harder question that fits the topic, with its own category name.`,
+    );
+    lines.push(
+      o.finalTimeLimitSeconds > 0
+        ? `- Final question time: set settings.finalTimeLimitSeconds to ${o.finalTimeLimitSeconds}.`
+        : "- Final question time: set settings.finalTimeLimitSeconds to 0 (no timer).",
+    );
+  }
+  lines.push(
+    o.useMath
+      ? "- Math: write formulas, equations, fractions and units as LaTeX between $...$ (or $$...$$ for a large centered formula) in clues, answers and explanations. Escape every backslash in JSON."
+      : "- Math: only use LaTeX if the topic needs a formula.",
+  );
+  const links = o.imageLinks.filter((l) => /^https:\/\/\S+$/i.test(l.trim())).map((l) => l.trim());
+  if (links.length > 0) {
+    lines.push("- Images: attach each of these https image links to the clue or answer it fits best, using clueImage or answerImage (on a question or on finalJeopardy). Use each link once, exactly as written, and do not invent other links:");
+    for (const l of links) lines.push(`  - ${l}`);
+  } else {
+    lines.push("- Images: do not include clueImage or answerImage.");
+  }
+  return lines.join("\n");
+}
+
+export function buildJeopardyGuide(options: GuideOptions = DEFAULT_GUIDE_OPTIONS): string {
   return `You are creating a game file for Zuno, a browser-based game platform.
 
 Create a complete Jeopardy game as valid Zuno JSON (schema version ${CURRENT_SCHEMA_VERSION}).
@@ -375,7 +441,7 @@ Requirements:
 - value must be a whole number greater than 0, written as a number, not a string.
 - An optional explanation may be included for a question when it is useful.
 - Include content.finalJeopardy with enabled, mode, category, clue, and answer fields. If enabled is true, category, clue and answer must be filled in. mode is "always" (every team plays the final question with wagers) or "tiebreaker" (only offered when teams tie for first, no wagers). Use "always" by default.
-- Optional question fields: dailyDouble (true or false) marks a Daily Double, where one team wagers on the clue. By default, mark 1 or 2 questions per board as daily doubles, and prefer higher-value questions. Leave the field out on other questions.
+- Optional question fields: dailyDouble (true or false) marks a Daily Double, where one team wagers on the clue. Place them as the game options at the end say, and leave the field out on other questions.
 - Optional clueImage and answerImage (on questions and on finalJeopardy) must be https image links. Only include them if I give you links; otherwise leave them out.
 - Optional timeLimit on a question is a whole number of seconds from 0 to ${JEOPARDY_LIMITS.maxTimeLimit} (0 means no timer). Leave it out to use the default from settings.
 - Include settings.allowNegativeScores and settings.showExplanations as booleans. Include settings.timeLimitSeconds (default seconds per clue) and settings.finalTimeLimitSeconds (seconds for the final question) as whole numbers from 0 to ${JEOPARDY_LIMITS.maxTimeLimit}; 0 means no timer.
@@ -386,6 +452,8 @@ Requirements:
 - Do not include HTML, JavaScript, functions, or other executable content.
 - Do not leave required fields blank.
 - Keep every text field under ${LIMITS.maxTextLength} characters.
+
+In the structure below, the optional fields (dailyDouble, clueImage, answerImage, timeLimit) are shown only as examples; include them only as the game options at the end say.
 
 Use this structure:
 {
@@ -413,7 +481,7 @@ Use this structure:
             "clue": "Clue text",
             "answer": "Correct answer",
             "explanation": "Optional explanation",
-            "dailyDouble": false,
+            "dailyDouble": true,
             "clueImage": "https://example.com/clue.png",
             "answerImage": "https://example.com/answer.png",
             "timeLimit": 30
@@ -422,11 +490,12 @@ Use this structure:
       }
     ],
     "finalJeopardy": {
-      "enabled": false,
+      "enabled": true,
       "mode": "always",
-      "category": "",
-      "clue": "",
-      "answer": ""
+      "category": "Final Category",
+      "clue": "Final clue text",
+      "answer": "Final answer",
+      "clueImage": "https://example.com/final.png"
     }
   },
   "settings": {
@@ -442,5 +511,8 @@ After generating the JSON, do not wrap it in Markdown. Make sure the result is v
 My game:
 - Topic: [describe your topic here]
 - Difficulty or audience: [for example, 7th grade science]
-- Anything else: [optional requests]`;
+- Anything else: [optional requests]
+
+Game options (follow these exactly):
+${guideChoices(options)}`;
 }

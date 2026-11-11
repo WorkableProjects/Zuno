@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, CircleAlert, Copy } from "lucide-react";
-import { JEOPARDY_TYPE, buildJeopardyGuide } from "../../game-files/schema/jeopardy";
+import { DEFAULT_GUIDE_OPTIONS, JEOPARDY_TYPE, buildJeopardyGuide, type GuideOptions } from "../../game-files/schema/jeopardy";
 import { GameImporter } from "../import/GameImporter";
 import type { LoadedGame } from "../import/loadGame";
 import { useEscape } from "../navigation/spatialNav";
@@ -14,14 +14,53 @@ interface Props {
 }
 
 const STEPS = [
-  "Copy the guide and paste it into ChatGPT, Gemini or another AI assistant",
+  "Pick the game options below, then copy the guide into ChatGPT, Gemini or another AI assistant",
   "Add your topic, difficulty and any special requests at the end",
   "Save the reply as a file ending in .zuno.json, or copy the JSON",
   "Import it here. Zuno checks it and shows a preview before you host",
 ];
 
+const DAILY_DOUBLES: Array<[string, number | null]> = [
+  ["Auto", null],
+  ["None", 0],
+  ["1", 1],
+  ["2", 2],
+  ["3", 3],
+];
+const CLUE_TIMES = [0, 15, 30, 45, 60, 90, 120];
+const FINAL_TIMES = [0, 30, 60, 90, 120];
+const FINAL_MODES: Array<[string, GuideOptions["finalMode"]]> = [
+  ["Off", "off"],
+  ["At the end", "always"],
+  ["Tiebreaker only", "tiebreaker"],
+];
+const secondsLabel = (n: number) => (n === 0 ? "Off" : `${n}s`);
+
+function Segmented<T>({ label, hint, options, value, onChange, row }: { label: string; hint?: string; options: Array<[string, T]>; value: T; onChange: (v: T) => void; row: number }) {
+  return (
+    <div className="ai-option">
+      <span className="field-label" id={`ai-opt-${row}`}>
+        {label}
+      </span>
+      <div className="segmented" role="radiogroup" aria-labelledby={`ai-opt-${row}`} data-nav-row={row}>
+        {options.map(([text, v]) => (
+          <button key={text} type="button" role="radio" aria-checked={v === value} className={`segment${v === value ? " is-active" : ""}`} onClick={() => onChange(v)}>
+            {text}
+          </button>
+        ))}
+      </div>
+      {hint && <span className="field-hint">{hint}</span>}
+    </div>
+  );
+}
+
 export function JeopardyAIGuide({ onBack, onHost, onLoaded }: Props) {
-  const guide = useMemo(buildJeopardyGuide, []);
+  const [options, setOptions] = useState<GuideOptions>(DEFAULT_GUIDE_OPTIONS);
+  const [linksText, setLinksText] = useState("");
+  const set = <K extends keyof GuideOptions>(key: K, value: GuideOptions[K]) => setOptions((o) => ({ ...o, [key]: value }));
+  const links = useMemo(() => linksText.split("\n").map((l) => l.trim()).filter(Boolean), [linksText]);
+  const badLinks = links.filter((l) => !/^https:\/\/\S+$/i.test(l)).length;
+  const guide = useMemo(() => buildJeopardyGuide({ ...options, imageLinks: links }), [options, links]);
   const [copied, setCopied] = useState(false);
   const [denied, setDenied] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -73,7 +112,53 @@ export function JeopardyAIGuide({ onBack, onHost, onLoaded }: Props) {
             ))}
           </ol>
 
-          <div className="ai-actions" data-nav-row="1">
+          <section className="ai-options card" aria-label="Game options">
+            <Segmented
+              row={2}
+              label="Daily doubles"
+              hint="Auto lets the assistant place 1 or 2."
+              options={DAILY_DOUBLES}
+              value={options.dailyDoubles}
+              onChange={(v) => set("dailyDoubles", v)}
+            />
+            <Segmented row={3} label="Time per clue" options={CLUE_TIMES.map((n) => [secondsLabel(n), n])} value={options.timeLimitSeconds} onChange={(v) => set("timeLimitSeconds", v)} />
+            <Segmented
+              row={4}
+              label="Final question"
+              hint={options.finalMode === "tiebreaker" ? "Only played when teams tie for first. A right answer adds 1 point." : undefined}
+              options={FINAL_MODES}
+              value={options.finalMode}
+              onChange={(v) => set("finalMode", v)}
+            />
+            {options.finalMode !== "off" && (
+              <Segmented row={5} label="Final question time" options={FINAL_TIMES.map((n) => [secondsLabel(n), n])} value={options.finalTimeLimitSeconds} onChange={(v) => set("finalTimeLimitSeconds", v)} />
+            )}
+            <label className="switch" data-nav-row="6">
+              <span>
+                Use math notation
+                <span className="field-hint switch-hint">Formulas and fractions written in LaTeX, shown as real math during play</span>
+              </span>
+              <input type="checkbox" checked={options.useMath} onChange={(e) => set("useMath", e.target.checked)} />
+              <span className="switch-track" />
+            </label>
+            <label className="ai-option" data-nav-row="7">
+              <span className="field-label">Image links</span>
+              <textarea
+                className="textarea ai-links"
+                rows={3}
+                value={linksText}
+                placeholder="https://example.com/diagram.png"
+                onChange={(e) => setLinksText(e.target.value)}
+              />
+              <span className="field-hint">
+                {badLinks > 0
+                  ? `${badLinks} ${badLinks === 1 ? "line is" : "lines are"} not an https link and will be skipped.`
+                  : "One https link per line. The assistant attaches each to the clue or answer it fits. You can also add or upload images later in the visual editor."}
+              </span>
+            </label>
+          </section>
+
+          <div className="ai-actions" data-nav-row="10">
             <button type="button" className="btn btn-primary" data-autofocus onClick={() => void copy()}>
               {copied ? <Check size={18} strokeWidth={1.5} /> : <Copy size={18} strokeWidth={1.5} />}
               {copied ? "Guide copied" : "Copy Guide"}
