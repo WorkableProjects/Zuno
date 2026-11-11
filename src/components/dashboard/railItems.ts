@@ -1,5 +1,5 @@
 import type { RecentGame } from "../../app/storage";
-import { listEngines } from "../../games/registry";
+import { getEngine, listEngines } from "../../games/registry";
 import type { BackdropSpec } from "./AmbientBackground";
 
 /** What the dashboard knows about a tile. Common metadata only, never game content. */
@@ -30,19 +30,9 @@ export function buildRailItems(recent: RecentGame[]): RailItem[] {
       cover: null,
       accent: e.appearance.accentColor,
       preset: e.appearance.backgroundPreset,
-      artwork: "board",
+      artwork: e.artwork,
     },
   }));
-
-  items.push({
-    id: "soon:headbands",
-    kind: "soon",
-    gameType: "headbands",
-    title: "Headbands",
-    eyebrow: "Coming soon",
-    description: "Everyone wears a secret word they can't see. Ask yes-or-no questions and guess who you are before time runs out.",
-    backdrop: { key: "soon:headbands", cover: null, accent: "#FFB454", preset: "horizon", artwork: null },
-  });
 
   items.push({
     id: BUILD_TILE_ID,
@@ -50,7 +40,7 @@ export function buildRailItems(recent: RecentGame[]): RailItem[] {
     gameType: engines[0].gameType,
     title: "Build a game",
     eyebrow: "Create",
-    description: "Write your own categories and clues in the visual editor, or have an AI assistant draft the game file for you.",
+    description: "Make a Jeopardy board or a Headbands deck in the visual editor, or have an AI assistant draft the game file for you.",
     backdrop: { key: BUILD_TILE_ID, cover: null, accent: "#F06A9A", preset: "horizon", artwork: null },
   });
 
@@ -67,7 +57,7 @@ export function buildRailItems(recent: RecentGame[]): RailItem[] {
         cover: r.coverImage,
         accent: r.accentColor,
         preset: r.backgroundPreset,
-        artwork: "board",
+        artwork: getEngine(r.gameType)?.artwork ?? null,
       },
       recent: r,
     });

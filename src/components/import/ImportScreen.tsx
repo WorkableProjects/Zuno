@@ -30,7 +30,7 @@ export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoad
         <div className="import-intro">
           <h1 className="page-title">Load a game file</h1>
           <p className="page-lede">
-            Every {engine?.title} session runs from a file. It holds the categories, clues and answers. Zuno checks it before you host.
+            Every {engine?.title} session runs from a file. It holds {engine?.fileHolds ?? "the game content"}. Zuno checks it before you host.
           </p>
         </div>
         <GameImporter gameType={gameType} seed={seed} onHost={onHost} onBuilder={onBuilder} onLoaded={onLoaded} />

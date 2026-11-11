@@ -7,9 +7,9 @@
 
 <p align="center"><em>Pick. Build. Play.</em></p>
 
-Zuno is a browser-based, console-style game launcher and game builder. V1 ships one game engine, Jeopardy. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server.
+Zuno is a browser-based, console-style game launcher and game builder. It ships two game engines, Jeopardy and Headbands. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server.
 
-The full product specification is in [Zuno_SPEC.md](Zuno_SPEC.md).
+The full product specification is in [Zuno_SPEC.md](Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](HeadbandsSPEC.md).
 
 ## Run it
 
@@ -32,17 +32,18 @@ Other scripts:
 
 The build is fully static, so any static host works.
 
-## What is in V1
+## What is in Zuno
 
 - **Dashboard** with a horizontal game rail, a full-screen background that follows the focused game, and a hero area with its actions
 - **Tile effects**: a border beam that travels around the selected tile and a separate diagonal sheen across its artwork, both with reduced-motion fallbacks
 - **Keyboard navigation** with arrow keys, WASD, Enter, Escape and Tab on every screen
 - **Game files** in readable JSON, validated before anything can be hosted, never executed
 - **Jeopardy**: session setup with team names, board, clue and answer reveal, scoring, optional final round, standings
+- **Headbands**: everyone holds a secret identity they can't see and asks the group yes-or-no questions. Text Mode or Image Mode (a picture with its answer underneath), shuffled or hand-picked deals, a privacy cover between turns, guess checking, host overrides, pause, skip, reorder and a recap
 - **Builder**: a visual editor that exports a `.zuno.json` file, and an AI Builder with a Copy Guide prompt for ChatGPT, Gemini or another assistant
 - **Settings**: Dark Mode (default) and Light Mode, saved on the device
 
-A sample game lives at `public/samples/science-review.zuno.json` and can be loaded from the import screen.
+Sample games live in `public/samples/` (`science-review.zuno.json` for Jeopardy, `everyday-things.zuno.json` for Headbands) and can be loaded from each import screen.
 
 ## Keyboard
 
@@ -68,10 +69,11 @@ src/
     builder/            Builder entry, visual editor, AI guide
     settings/           Theme panel
     ui/                 Dialog and small helpers
-  game-files/schema/    Shared file shape, Jeopardy schema, validator
+  game-files/schema/    Shared file shape, Jeopardy and Headbands schemas, validator
   games/
     registry.ts         Game engine registry
     jeopardy/           Setup, runtime screens and the session engine
+    headbands/          Setup, play screen, identity card and the session engine
   styles/               Tokens, base styles, motion
 public/                 Logo family, app icons, sample game
 tests/                  Validator and engine tests

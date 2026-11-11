@@ -1,0 +1,529 @@
+/* ---------- Identity card ---------- */
+.id-card {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--top-light), var(--shadow-float);
+  color: var(--text);
+  text-align: center;
+  animation: hb-card-in 220ms var(--ease) both;
+}
+.id-card-text {
+  width: min(100%, 640px);
+  min-height: clamp(200px, 34vh, 360px);
+  padding: 32px;
+  border-top: 6px solid var(--game);
+}
+.id-text {
+  font: 600 clamp(36px, 6.4vw, 88px) / 1.05 var(--font-display);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.id-card-image {
+  width: min(100%, 460px);
+  grid-template-rows: auto auto;
+  gap: 12px;
+  padding: 16px 16px 20px;
+}
+.id-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.id-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.id-image-missing {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  color: var(--text-3);
+  font-size: 14px;
+}
+.id-subtext {
+  font: 600 clamp(24px, 3.4vw, 44px) / 1.1 var(--font-display);
+  overflow-wrap: anywhere;
+}
+.id-card-md.id-card-text {
+  min-height: 160px;
+  width: min(100%, 480px);
+}
+.id-card-md .id-text {
+  font-size: clamp(28px, 4vw, 52px);
+}
+.id-card-md.id-card-image {
+  width: min(100%, 320px);
+}
+.id-card-md .id-subtext {
+  font-size: clamp(20px, 2.4vw, 30px);
+}
+.id-card-sm {
+  box-shadow: var(--top-light);
+  animation: none;
+  border-radius: var(--r-ctl);
+}
+.id-card-sm.id-card-text {
+  width: auto;
+  min-height: 0;
+  padding: 6px 12px;
+  border-top-width: 3px;
+}
+.id-card-sm .id-text {
+  font: 500 14px/20px var(--font-ui);
+  letter-spacing: 0;
+}
+.id-card-sm.id-card-image {
+  width: auto;
+  grid-template-columns: 40px auto;
+  grid-template-rows: none;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+}
+.id-card-sm .id-image {
+  width: 40px;
+  height: 40px;
+  aspect-ratio: auto;
+  border-radius: 6px;
+}
+.id-card-sm .id-image img {
+  object-fit: cover;
+}
+.id-card-sm .id-subtext {
+  font: 500 14px/20px var(--font-ui);
+  text-align: left;
+}
+@keyframes hb-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+}
+
+/* ---------- Setup ---------- */
+.hb-howto {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+  padding-left: 16px;
+  border-left: 2px solid var(--game);
+  color: var(--text-2);
+  max-width: 52ch;
+}
+.hb-tight {
+  margin-top: -16px;
+}
+.hb-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.hb-mode {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 14px 16px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.hb-mode.is-on {
+  border-color: var(--game);
+  background: color-mix(in oklab, var(--game) 14%, var(--surface-2));
+  box-shadow: inset 0 0 0 1px var(--game);
+}
+.hb-mode-title {
+  font-weight: 600;
+  font-size: 17px;
+}
+.hb-mode-text {
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 20px;
+}
+.hb-deal-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.hb-players {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+.hb-player-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.hb-player-name,
+.hb-player-pick {
+  display: block;
+  min-width: 0;
+}
+.hb-player-pick .select {
+  width: 100%;
+}
+.hb-player-card {
+  display: flex;
+  min-width: 0;
+}
+.hb-player-card.is-below {
+  grid-column: 2 / -1;
+}
+@media (max-width: 560px) {
+  .hb-modes {
+    grid-template-columns: 1fr;
+  }
+  .hb-player-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .hb-player-pick,
+  .hb-player-deal,
+  .hb-player-card {
+    grid-column: 2;
+  }
+}
+
+/* ---------- Play ---------- */
+.hb-game .hb-stage {
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+.hb-turn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.hb-main {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.hb-turn-head {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+.hb-name {
+  font: 600 clamp(28px, 4vw, 48px) / 1.1 var(--font-display);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.hb-card-area {
+  display: grid;
+  place-items: center;
+  min-height: clamp(260px, 42vh, 460px);
+}
+.hb-shown {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.hb-cover,
+.hb-feedback {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 12px;
+  width: min(100%, 640px);
+  min-height: clamp(220px, 34vh, 360px);
+  padding: 32px;
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--top-light);
+  text-align: center;
+  animation: hb-card-in 220ms var(--ease) both;
+}
+.hb-cover {
+  background: repeating-linear-gradient(135deg, var(--surface) 0 14px, var(--surface-2) 14px 28px);
+  color: var(--text-2);
+}
+.hb-cover-title {
+  color: var(--text);
+  font: 600 clamp(20px, 2.4vw, 28px) / 1.2 var(--font-display);
+  max-width: 24ch;
+}
+.hb-cover-text {
+  max-width: 42ch;
+}
+.hb-feedback-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 clamp(20px, 2.4vw, 28px) / 1.2 var(--font-display);
+}
+.hb-feedback.is-right .hb-feedback-title {
+  color: var(--positive);
+}
+.hb-feedback.is-right {
+  animation-duration: 320ms;
+}
+.hb-feedback.is-wrong .hb-feedback-title {
+  color: var(--negative);
+}
+.hb-feedback-text {
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.hb-feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.hb-ask {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+.hb-answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hb-answer {
+  flex: 1 1 88px;
+  min-height: 48px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.hb-answer-yes:hover:not(:disabled) {
+  border-color: var(--positive);
+}
+.hb-answer-no:hover:not(:disabled) {
+  border-color: var(--negative);
+}
+.hb-guess {
+  flex: 1 1 160px;
+  min-height: 48px;
+}
+.hb-host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.hb-host .meta {
+  margin-right: 4px;
+}
+.hb-side {
+  display: grid;
+  gap: 12px;
+}
+.hb-side-block {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+.hb-roster,
+.hb-history,
+.hb-manage,
+.hb-players,
+.hb-recap-list {
+  margin: 0;
+  padding: 0;
+}
+.hb-roster,
+.hb-history,
+.hb-manage {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+.hb-roster-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-ctl);
+}
+.hb-roster-row.is-current {
+  background: color-mix(in oklab, var(--game) 16%, var(--surface-2));
+  box-shadow: inset 3px 0 0 var(--game);
+  font-weight: 600;
+}
+.hb-roster-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hb-roster-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  color: var(--text-2);
+  font-size: 14px;
+}
+.hb-roster-row.is-solved .hb-roster-status {
+  color: var(--positive);
+}
+.hb-history li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+}
+.hb-history-q {
+  overflow-wrap: anywhere;
+  color: var(--text-2);
+}
+.hb-pill {
+  flex: none;
+  min-width: 64px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+.hb-pill-yes {
+  color: var(--positive);
+  border-color: color-mix(in oklab, var(--positive) 50%, transparent);
+}
+.hb-pill-no {
+  color: var(--negative);
+  border-color: color-mix(in oklab, var(--negative) 50%, transparent);
+}
+.hb-pill-unsure {
+  color: var(--text-2);
+}
+.hb-manage {
+  margin: 16px 0;
+}
+.hb-recap-row .id-card-sm.id-card-text {
+  max-width: 260px;
+}
+.hb-manage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(4, auto);
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+@media (max-width: 960px) {
+  .hb-turn {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .hb-game .game-bar .btn-quiet {
+    display: inline-flex;
+    padding-inline: 8px;
+  }
+  .hb-bar-label {
+    display: none;
+  }
+}
+
+/* ---------- Recap ---------- */
+.hb-recap {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding-top: clamp(16px, 4vh, 48px);
+}
+.hb-recap-head {
+  display: grid;
+  gap: 8px;
+}
+.hb-recap-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+.hb-recap-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+}
+.hb-recap-name {
+  font-weight: 600;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.hb-recap-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+}
+.hb-recap-row.is-solved .hb-recap-status {
+  color: var(--positive);
+}
+.hb-recap-hidden {
+  padding: 6px 12px;
+  border-radius: var(--r-ctl);
+  border: 1px dashed var(--border);
+  color: var(--text-3);
+  font-size: 14px;
+}
+.hb-recap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .hb-recap-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .id-card,
+  .hb-cover,
+  .hb-feedback {
+    animation: none;
+  }
+}
+
+/* ---------- Builder previews ---------- */
+.hb-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.hb-preview-item {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.hb-preview-item .field-label {
+  justify-self: start;
+}
+.hb-copy-text {
+  justify-self: start;
+}

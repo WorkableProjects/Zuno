@@ -9,6 +9,7 @@ const KEYS = {
   lastTile: "zuno.lastTile",
   recent: "zuno.recent",
   draft: "zuno.draft.jeopardy",
+  draftHeadbands: "zuno.draft.headbands",
 };
 
 function read(key: string): string | null {
@@ -103,8 +104,11 @@ export function forgetGame(id: string): RecentGame[] {
   return list;
 }
 
-export function loadDraft(): unknown {
-  const raw = read(KEYS.draft);
+type DraftKind = "jeopardy" | "headbands";
+const draftKey = (kind: DraftKind) => (kind === "headbands" ? KEYS.draftHeadbands : KEYS.draft);
+
+export function loadDraft(kind: DraftKind = "jeopardy"): unknown {
+  const raw = read(draftKey(kind));
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -112,12 +116,12 @@ export function loadDraft(): unknown {
     return null;
   }
 }
-export function saveDraft(draft: unknown) {
-  write(KEYS.draft, JSON.stringify(draft));
+export function saveDraft(draft: unknown, kind: DraftKind = "jeopardy"): boolean {
+  return write(draftKey(kind), JSON.stringify(draft));
 }
-export function clearDraft() {
+export function clearDraft(kind: DraftKind = "jeopardy") {
   try {
-    localStorage.removeItem(KEYS.draft);
+    localStorage.removeItem(draftKey(kind));
   } catch {
     /* ignore */
   }

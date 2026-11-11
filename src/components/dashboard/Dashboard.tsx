@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, PencilRuler, Play, Settings, Sticker, ClipboardList, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, PencilRuler, Play, Settings, Sticker, Trash2 } from "lucide-react";
 import { ZunoLogo } from "../brand/Logo";
 import { GameTile } from "./GameTile";
 import type { RailItem } from "./railItems";
@@ -10,9 +10,8 @@ interface Props {
   selectedId: string;
   onSelect: (id: string) => void;
   onLoad: (gameType: string) => void;
-  onBuild: () => void;
-  onEditor: () => void;
-  onAiBuilder: () => void;
+  /** Opens the builder, with a game type picked when the user came from an engine. */
+  onBuild: (gameType?: string) => void;
   onOpenRecent: (item: RailItem) => void;
   onForgetRecent: (item: RailItem) => void;
   onSettings: () => void;
@@ -72,23 +71,17 @@ export function Dashboard(props: Props) {
                 <FolderOpen size={18} strokeWidth={1.5} />
                 Load game file
               </button>
-              <button type="button" className="btn btn-secondary" onClick={props.onBuild}>
+              <button type="button" className="btn btn-secondary" onClick={() => props.onBuild(selected.gameType)}>
                 <PencilRuler size={18} strokeWidth={1.5} />
                 Build a game
               </button>
             </>
           )}
           {selected.kind === "build" && (
-            <>
-              <button type="button" className="btn btn-primary" data-nav-default="" onClick={props.onEditor}>
-                <PencilRuler size={18} strokeWidth={1.5} />
-                Visual editor
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={props.onAiBuilder}>
-                <ClipboardList size={18} strokeWidth={1.5} />
-                AI builder
-              </button>
-            </>
+            <button type="button" className="btn btn-primary" data-nav-default="" onClick={() => props.onBuild()}>
+              <PencilRuler size={18} strokeWidth={1.5} />
+              Start building
+            </button>
           )}
           {selected.kind === "soon" && (
             <button type="button" className="btn btn-secondary" disabled>

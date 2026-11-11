@@ -17,14 +17,17 @@ function unwrap(text: string): string {
 export function validateGameFileText(text: string, expectedGameType?: string): ValidationResult<GameFile> {
   const bytes = new Blob([text]).size;
   if (bytes > LIMITS.maxFileBytes) {
-    const hasImage = /"coverImage"\s*:\s*"data:/.test(text);
+    const hasCover = /"coverImage"\s*:\s*"data:/.test(text);
+    const hasOtherImages = /"(image|clueImage|answerImage)"\s*:\s*"data:/.test(text);
     return {
       ok: false,
       errors: [
         `This file is ${formatBytes(bytes)}. The limit is ${formatBytes(LIMITS.maxFileBytes)}. ${
-          hasImage
-            ? `Most of that is the embedded cover image. Use a smaller image, under ${formatBytes(LIMITS.maxImageBytes)}.`
-            : "The game data itself is too large. Remove some content and try again."
+          hasOtherImages
+            ? "Most of that is embedded images. Use fewer or smaller images."
+            : hasCover
+              ? `Most of that is the embedded cover image. Use a smaller image, under ${formatBytes(LIMITS.maxImageBytes)}.`
+              : "The game data itself is too large. Remove some content and try again."
         }`,
       ],
     };

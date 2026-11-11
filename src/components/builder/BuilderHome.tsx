@@ -1,15 +1,20 @@
 import { ArrowLeft, ArrowRight, ClipboardList, PencilRuler } from "lucide-react";
+import { getEngine, listEngines } from "../../games/registry";
 import { useEscape } from "../navigation/spatialNav";
 import { useAutoFocus } from "../ui/useAutoFocus";
 import "./builder.css";
 
 interface Props {
+  gameType: string;
+  onGameType: (gameType: string) => void;
   onBack: () => void;
   onEditor: () => void;
   onAiBuilder: () => void;
 }
 
-export function BuilderHome({ onBack, onEditor, onAiBuilder }: Props) {
+export function BuilderHome({ gameType, onGameType, onBack, onEditor, onAiBuilder }: Props) {
+  const engines = listEngines().filter((e) => e.hasBuilder);
+  const engine = getEngine(gameType) ?? engines[0];
   const root = useAutoFocus<HTMLElement>();
   useEscape(onBack);
   return (
@@ -21,9 +26,21 @@ export function BuilderHome({ onBack, onEditor, onAiBuilder }: Props) {
         <span className="screen-bar-title">Build</span>
       </header>
       <div className="builder-home">
-        <h1 className="page-title">Build a Jeopardy game</h1>
+        <h1 className="page-title">{engine.buildTitle}</h1>
         <p className="page-lede">Both routes end in the same .zuno.json file, ready to load and host.</p>
-        <div className="builder-options" data-nav-row="1">
+        <div className="builder-game">
+          <span className="field-label" id="builder-game">
+            Game
+          </span>
+          <div className="segmented" role="radiogroup" aria-labelledby="builder-game" data-nav-row="1">
+            {engines.map((e) => (
+              <button key={e.gameType} type="button" role="radio" aria-checked={e.gameType === engine.gameType} className={`segment${e.gameType === engine.gameType ? " is-active" : ""}`} onClick={() => onGameType(e.gameType)}>
+                {e.title}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="builder-options" data-nav-row="2">
           <button type="button" className="option card" data-autofocus onClick={onEditor}>
             <PencilRuler size={24} strokeWidth={1.5} className="option-icon" />
             <span className="option-title">Visual Editor</span>

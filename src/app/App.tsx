@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BuilderHome } from "../components/builder/BuilderHome";
+import { HeadbandsAIGuide } from "../components/builder/HeadbandsAIGuide";
+import { HeadbandsVisualEditor } from "../components/builder/HeadbandsVisualEditor";
 import { JeopardyAIGuide } from "../components/builder/JeopardyAIGuide";
 import { JeopardyVisualEditor } from "../components/builder/JeopardyVisualEditor";
 import { AmbientBackground, type BackdropSpec } from "../components/dashboard/AmbientBackground";
@@ -11,10 +13,14 @@ import type { LoadedGame } from "../components/import/loadGame";
 import { useSpatialNav } from "../components/navigation/spatialNav";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
-import { JEOPARDY_TYPE, countClues, type JeopardyFile } from "../game-files/schema/jeopardy";
+import { HEADBANDS_TYPE, type HeadbandsFile } from "../game-files/schema/headbands";
+import { JEOPARDY_TYPE, type JeopardyFile } from "../game-files/schema/jeopardy";
+import { HeadbandsGame } from "../games/headbands/HeadbandsGame";
+import { HeadbandsSetup, type HeadbandsStart } from "../games/headbands/HeadbandsSetup";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
+import { getEngine } from "../games/registry";
 import { forgetGame, loadLastTile, loadRecent, loadTheme, rememberGame, saveLastTile, saveTheme, type Theme } from "./storage";
 
 type Screen =
@@ -22,9 +28,11 @@ type Screen =
   | { name: "import"; gameType: string; seed?: ImportSeed }
   | { name: "setup"; game: LoadedGame<JeopardyFile> }
   | { name: "play"; game: LoadedGame<JeopardyFile>; teams: TeamSetup[]; allowNegativeScores: boolean; timeLimitSeconds: number }
+  | { name: "hbSetup"; game: LoadedGame<HeadbandsFile> }
+  | { name: "hbPlay"; game: LoadedGame<HeadbandsFile>; start: HeadbandsStart }
   | { name: "builder" }
-  | { name: "editor" }
-  | { name: "ai" };
+  | { name: "editor"; gameType: string }
+  | { name: "ai"; gameType: string };
 
 function backdropForGame(game: LoadedGame): BackdropSpec {
   const { metadata, appearance } = game.file;
@@ -33,7 +41,7 @@ function backdropForGame(game: LoadedGame): BackdropSpec {
     cover: metadata.coverImage,
     accent: appearance.accentColor,
     preset: appearance.backgroundPreset,
-    artwork: "board",
+    artwork: getEngine(game.file.gameType)?.artwork ?? null,
   };
 }
 
@@ -46,6 +54,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState<LoadedGame | null>(null);
   const [draftBackdrop, setDraftBackdrop] = useState<BackdropSpec | null>(null);
+  const [buildType, setBuildType] = useState(JEOPARDY_TYPE);
 
   const items = useMemo(() => buildRailItems(recent), [recent]);
   const [selectedId, setSelectedId] = useState(() => {
@@ -84,8 +93,7 @@ export function App() {
   /** A validated file is about to be hosted: remember it, then set up the session. */
   const host = useCallback(
     (game: LoadedGame) => {
-      const file = game.file as JeopardyFile;
-      const cats = file.content.categories.length;
+      const file = game.file;
       const list = rememberGame({
         gameType: file.gameType,
         filename: game.filename,
@@ -95,12 +103,13 @@ export function App() {
         accentColor: file.appearance.accentColor,
         backgroundPreset: file.appearance.backgroundPreset,
         coverImage: file.metadata.coverImage,
-        summary: `${cats} ${cats === 1 ? "category" : "categories"} · ${countClues(file)} clues`,
+        summary: getEngine(file.gameType)?.summarize(file) ?? "",
         text: game.text,
       });
       setRecent(list);
       setLoaded(game);
-      push({ name: "setup", game: game as LoadedGame<JeopardyFile> });
+      if (file.gameType === HEADBANDS_TYPE) push({ name: "hbSetup", game: game as LoadedGame<HeadbandsFile> });
+      else push({ name: "setup", game: game as LoadedGame<JeopardyFile> });
     },
     [push],
   );
@@ -142,13 +151,17 @@ export function App() {
   if (screen.name === "editor") backdrop = draftBackdrop ?? buildBackdrop;
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
-  else if (screen.name === "setup" || screen.name === "play") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay") backdrop = backdropForGame(screen.game);
   else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
 
-  const toBuilder = useCallback(() => {
-    setLoaded(null);
-    push({ name: "builder" });
-  }, [push]);
+  const toBuilder = useCallback(
+    (gameType?: string) => {
+      setLoaded(null);
+      if (gameType && getEngine(gameType)?.hasBuilder) setBuildType(gameType);
+      push({ name: "builder" });
+    },
+    [push],
+  );
   const back = useCallback(() => {
     setLoaded(null);
     pop();
@@ -165,15 +178,13 @@ export function App() {
           onSelect={select}
           onLoad={(gameType) => push({ name: "import", gameType })}
           onBuild={toBuilder}
-          onEditor={() => push({ name: "editor" })}
-          onAiBuilder={() => push({ name: "ai" })}
           onOpenRecent={openRecent}
           onForgetRecent={forgetRecent}
           onSettings={() => setSettingsOpen(true)}
         />
       )}
       {screen.name === "import" && (
-        <ImportScreen key={stack.length} gameType={screen.gameType} seed={screen.seed} onBack={back} onHost={host} onBuilder={toBuilder} onLoaded={setLoaded} />
+        <ImportScreen key={stack.length} gameType={screen.gameType} seed={screen.seed} onBack={back} onHost={host} onBuilder={() => toBuilder(screen.gameType)} onLoaded={setLoaded} />
       )}
       {screen.name === "setup" && (
         <JeopardySetup
@@ -185,11 +196,25 @@ export function App() {
       {screen.name === "play" && (
         <JeopardyGame file={screen.game.file} teams={screen.teams} allowNegativeScores={screen.allowNegativeScores} timeLimitSeconds={screen.timeLimitSeconds} onExit={home} />
       )}
-      {screen.name === "builder" && <BuilderHome onBack={back} onEditor={() => push({ name: "editor" })} onAiBuilder={() => push({ name: "ai" })} />}
-      {screen.name === "editor" && (
-        <JeopardyVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: JEOPARDY_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
+      {screen.name === "hbSetup" && <HeadbandsSetup game={screen.game} onBack={pop} onStart={(start) => push({ name: "hbPlay", game: screen.game, start })} />}
+      {screen.name === "hbPlay" && <HeadbandsGame key={stack.length} file={screen.game.file} start={screen.start} onAgain={pop} onExit={home} />}
+      {screen.name === "builder" && (
+        <BuilderHome
+          gameType={buildType}
+          onGameType={setBuildType}
+          onBack={back}
+          onEditor={() => push({ name: "editor", gameType: buildType })}
+          onAiBuilder={() => push({ name: "ai", gameType: buildType })}
+        />
       )}
-      {screen.name === "ai" && <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />}
+      {screen.name === "editor" &&
+        (screen.gameType === HEADBANDS_TYPE ? (
+          <HeadbandsVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: HEADBANDS_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
+        ) : (
+          <JeopardyVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: JEOPARDY_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
+        ))}
+      {screen.name === "ai" &&
+        (screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
 
       {settingsOpen && <SettingsPanel theme={theme} onTheme={changeTheme} onClose={() => setSettingsOpen(false)} />}
     </>

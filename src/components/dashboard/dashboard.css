@@ -289,6 +289,10 @@
 .cover-lit {
   fill: var(--game);
 }
+.cover-mark {
+  fill: #0b1018;
+  font: 600 26px/1 var(--font-display);
+}
 
 .tile-generated {
   display: flex;

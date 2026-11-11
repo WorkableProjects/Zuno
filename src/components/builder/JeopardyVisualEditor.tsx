@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, CircleAlert, CircleCheck, Download, Eye, FilePlus2, FolderOpen, ImagePlus, Play, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CircleAlert, CircleCheck, Download, Eye, FilePlus2, FolderOpen, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { clearDraft, loadDraft, saveDraft } from "../../app/storage";
 import { ALLOWED_IMAGE_MIME, BACKGROUND_PRESETS, LIMITS, formatBytes, type BackgroundPreset } from "../../game-files/schema/common";
 import { FINAL_MODES, JEOPARDY_LIMITS, JEOPARDY_TYPE, type FinalMode, type JeopardyFile, type JeopardyQuestion } from "../../game-files/schema/jeopardy";
-import { validateGameFile, validateGameFileText } from "../../game-files/schema/validateGameFile";
+import { validateGameFile } from "../../game-files/schema/validateGameFile";
 import { loadGameFile } from "../import/loadGame";
 import { useEscape } from "../navigation/spatialNav";
 import { ConfirmDialog, Dialog } from "../ui/Dialog";
 import { RichText } from "../ui/RichText";
-import { DEFAULT_VALUES, draftFromFile, draftToFile, isQuestionComplete, move, newCategory, newDraft, newQuestion, reviveDraft, slugify, type Draft } from "./editorModel";
+import { DEFAULT_VALUES, draftFromFile, draftToFile, isQuestionComplete, move, newCategory, newDraft, newQuestion, reviveDraft, type Draft } from "./editorModel";
+import { ExportDialog } from "./ExportDialog";
 import "./builder.css";
 
 interface Props {
@@ -604,7 +605,7 @@ export function JeopardyVisualEditor({ onBack, onHost, onAppearance }: Props) {
       </div>
 
       {dialog === "preview" && <PreviewDialog file={file} onClose={() => setDialog(null)} />}
-      {dialog === "export" && <ExportDialog file={file} onHost={onHost} onClose={() => setDialog(null)} />}
+      {dialog === "export" && <ExportDialog file={file} gameType={JEOPARDY_TYPE} onHost={onHost} onClose={() => setDialog(null)} />}
       {dialog === "new" && (
         <ConfirmDialog
           title="Start a new game"
@@ -663,83 +664,6 @@ function PreviewDialog({ file, onClose }: { file: JeopardyFile; onClose: () => v
             </button>
           </div>
         </div>
-      )}
-    </Dialog>
-  );
-}
-
-function ExportDialog({ file, onHost, onClose }: { file: JeopardyFile; onHost: Props["onHost"]; onClose: () => void }) {
-  const [name, setName] = useState(() => slugify(file.metadata.title) || "my-game");
-  const [saved, setSaved] = useState<string | null>(null);
-  const [problem, setProblem] = useState<string | null>(null);
-  const text = useMemo(() => JSON.stringify(file, null, 2), [file]);
-  const filename = `${slugify(name) || "my-game"}.zuno.json`;
-
-  const download = () => {
-    // The exact text being saved is validated again before it leaves the editor.
-    const check = validateGameFileText(text, JEOPARDY_TYPE);
-    if (!check.ok) {
-      setProblem(check.errors[0]);
-      return;
-    }
-    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setProblem(null);
-    setSaved(filename);
-  };
-
-  return (
-    <Dialog title="Export game file" onClose={onClose}>
-      {(close) => (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            download();
-          }}
-        >
-          <h2 className="dialog-title">Export game file</h2>
-          <p className="dialog-text">The file downloads to this device. Keep it to host this game again later.</p>
-          <label className="field export-name">
-            <span className="field-label">File name</span>
-            <span className="name-row">
-              <input className="input" data-autofocus value={name} maxLength={48} onChange={(e) => setName(e.target.value)} />
-              <span className="meta">.zuno.json</span>
-            </span>
-          </label>
-          {problem && (
-            <div className="notice notice-error" role="alert">
-              <CircleAlert size={18} strokeWidth={1.5} />
-              <p>{problem}</p>
-            </div>
-          )}
-          {saved && (
-            <div className="notice notice-ok" role="status">
-              <CircleCheck size={18} strokeWidth={1.5} />
-              <p>Saved as {saved}</p>
-            </div>
-          )}
-          <div className="dialog-actions" data-nav-row="1">
-            <button type="button" className="btn btn-quiet" onClick={close}>
-              {saved ? "Keep editing" : "Cancel"}
-            </button>
-            <button type="submit" className={`btn ${saved ? "btn-secondary" : "btn-primary"}`}>
-              <Download size={18} strokeWidth={1.5} />
-              {saved ? "Download again" : "Download file"}
-            </button>
-            {saved && (
-              <button type="button" className="btn btn-primary" onClick={() => onHost(text, saved)}>
-                <Play size={18} strokeWidth={1.5} />
-                Load &amp; Host This Game
-              </button>
-            )}
-          </div>
-        </form>
       )}
     </Dialog>
   );
