@@ -6,6 +6,8 @@ import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog, Dialog } from "../../components/ui/Dialog";
 import type { HeadbandsStart } from "./HeadbandsSetup";
 import { IdentityCard } from "./IdentityCard";
+import { ActivityLog } from "./ActivityLog";
+import { moveToAction, publishGame, watchMoves, type OnlineGame } from "./lobby";
 import {
   activePlayers,
   createSession,
@@ -26,6 +28,8 @@ import "./headbands.css";
 interface Props {
   file: HeadbandsFile;
   start: HeadbandsStart;
+  /** Set when players joined from their phones: the game is published to the lobby. */
+  lobbyCode?: string;
   /** Back to setup for a fresh deal. */
   onAgain: () => void;
   onExit: () => void;
@@ -40,7 +44,26 @@ const ANSWERS: Array<[GroupAnswer, string]> = [
   ["unsure", "Not sure"],
 ];
 
-export function HeadbandsGame({ file, start, onAgain, onExit }: Props) {
+/** What the phones see. No identities and no undo history. */
+function toOnline(state: SessionState): OnlineGame {
+  return {
+    phase: state.phase,
+    mode: state.mode,
+    rules: state.rules,
+    turn: state.turn,
+    current: state.current,
+    paused: state.paused,
+    revealed: state.revealed,
+    endedEarly: state.endedEarly,
+    order: state.order,
+    players: state.players.map(({ id, name, solved, solvedOrder, byHost, removed, questions, guesses }) => ({ id, name, solved, solvedOrder, byHost, removed, questions, guesses })),
+    pending: state.pending,
+    lastGuess: state.lastGuess,
+    log: state.log,
+  };
+}
+
+export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props) {
   const deck = useMemo(() => deckOf(file.content.identities), [file]);
   const reducer = useCallback((state: SessionState, action: SessionAction) => sessionReducer(deck, state, action), [deck]);
   const [state, dispatch] = useReducer(reducer, null, () => createSession(start.players, start.mode, start.rules));
@@ -52,6 +75,19 @@ export function HeadbandsGame({ file, start, onAgain, onExit }: Props) {
   const current = getPlayer(state, state.current);
   const solved = solvedCount(state);
   const total = state.players.filter((p) => !p.removed).length;
+
+  // Online: publish every change, and apply the moves players send from their phones.
+  const published = useMemo(() => JSON.stringify(toOnline(state)), [state]);
+  useEffect(() => {
+    if (lobbyCode) void publishGame(lobbyCode, JSON.parse(published) as OnlineGame).catch(() => undefined);
+  }, [lobbyCode, published]);
+  useEffect(() => {
+    if (!lobbyCode) return;
+    return watchMoves(lobbyCode, (by, move) => {
+      const action = moveToAction(move, by);
+      if (action) dispatch(action);
+    });
+  }, [lobbyCode]);
 
   const stageKey = `${state.phase}:${state.current}:${state.turn}:${state.cardVisible}:${state.paused}:${state.lastGuess ? (state.lastGuess.correct ? "right" : "wrong") : ""}`;
   useEffect(() => {
@@ -105,7 +141,7 @@ export function HeadbandsGame({ file, start, onAgain, onExit }: Props) {
       </header>
 
       <div className="stage hb-stage" ref={stage} key={state.phase === "over" ? "over" : `turn-${state.turn}`}>
-        {state.phase === "play" && current && <Turn file={file} state={state} current={current} dispatch={dispatch} onGuess={() => setGuessOpen(true)} />}
+        {state.phase === "play" && current && <Turn file={file} state={state} current={current} online={!!lobbyCode} dispatch={dispatch} onGuess={() => setGuessOpen(true)} />}
         {state.phase === "over" && <Recap file={file} state={state} onReveal={() => setConfirm("reveal")} onAgain={onAgain} onExit={onExit} />}
       </div>
 
@@ -162,7 +198,7 @@ export function HeadbandsGame({ file, start, onAgain, onExit }: Props) {
   );
 }
 
-function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile; state: SessionState; current: Player; dispatch: Dispatch; onGuess: () => void }) {
+function Turn({ file, state, current, online, dispatch, onGuess }: { file: HeadbandsFile; state: SessionState; current: Player; online: boolean; dispatch: Dispatch; onGuess: () => void }) {
   const deck = useMemo(() => deckOf(file.content.identities), [file]);
   const [question, setQuestion] = useState("");
   const { index, total } = turnPosition(state);
@@ -172,6 +208,9 @@ function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile
   const feedback = state.lastGuess && state.lastGuess.playerId === current.id ? state.lastGuess : null;
   const busy = state.paused || feedback !== null;
   const lastOne = activePlayers(state).filter((p) => !p.solved).length === 0;
+  const pending = state.pending?.playerId === current.id ? state.pending.question : null;
+  const waiting = pending !== null;
+  const nameOf = (id: string) => getPlayer(state, id)?.name ?? "Someone";
 
   const ask = (answer: GroupAnswer) => {
     dispatch({ type: "ask", question, answer });
@@ -260,8 +299,14 @@ function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile
         </div>
 
         <div className="hb-ask card">
+          {waiting && (
+            <p className="hb-pending" role="status">
+              <span className="meta">{current.name} asks</span>
+              <span className="hb-pending-q">{pending ? `“${pending}”` : "Out loud"}</span>
+            </p>
+          )}
           <label className="field">
-            <span className="field-label">{current.name} asks</span>
+            <span className="field-label">{waiting ? "Or type a different question" : `${current.name} asks`}</span>
             <input
               className="input"
               value={question}
@@ -286,6 +331,7 @@ function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile
           </div>
           <p className="field-hint">
             {state.rules.continueAfterYes ? "A Yes keeps the turn; a No passes it." : "Each answer passes the turn."} Not sure lets {current.name} ask again. Typing the question is optional.
+            {online && " Players can also ask, answer, guess and skip from their phones."}
           </p>
         </div>
 
@@ -329,6 +375,10 @@ function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile
               </li>
             ))}
           </ol>
+        </section>
+        <section className="card hb-side-block">
+          <h2 className="aside-title">Activity</h2>
+          <ActivityLog log={state.log} nameOf={nameOf} limit={30} />
         </section>
         <section className="card hb-side-block">
           <h2 className="aside-title">{current.name}’s answers so far</h2>
@@ -474,6 +524,12 @@ function Recap({ file, state, onReveal, onAgain, onExit }: { file: HeadbandsFile
           );
         })}
       </ol>
+      {state.log.length > 0 && (
+        <section className="card hb-side-block hb-recap-log">
+          <h2 className="aside-title">Activity</h2>
+          <ActivityLog log={state.log} nameOf={(id) => getPlayer(state, id)?.name ?? "Someone"} />
+        </section>
+      )}
       <div className="hb-recap-actions" data-nav-row="1">
         {hidden && (
           <button type="button" className="btn btn-secondary" onClick={onReveal}>

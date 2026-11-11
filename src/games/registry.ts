@@ -16,7 +16,7 @@ export interface GameEngine {
   appearance: { accentColor: string; backgroundPreset: BackgroundPreset };
   validate: (raw: Record<string, unknown>) => ValidationResult<GameFile>;
   /** Decorative scene drawn behind the dashboard for this engine. */
-  artwork: "board" | null;
+  artwork: "board" | "cards" | null;
   /** A sample in public/samples that the importer can load. */
   sampleFile: string;
   /** What a game file holds, for the import screen. */
@@ -65,9 +65,9 @@ const engines: GameEngine[] = [
     description: "Everyone holds a secret identity they can't see. Ask the group yes-or-no questions and work out who, or what, you are.",
     schemaVersions: [1],
     hasBuilder: true,
-    appearance: { accentColor: "#FFB454", backgroundPreset: "horizon" },
+    appearance: { accentColor: "#FFB454", backgroundPreset: "tide" },
     validate: validateHeadbands as GameEngine["validate"],
-    artwork: null,
+    artwork: "cards",
     sampleFile: "everyday-things.zuno.json",
     fileHolds: "the deck of identities players guess",
     buildTitle: "Build a Headbands deck",

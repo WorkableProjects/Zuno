@@ -1,12 +1,14 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
-import { connectDatabaseEmulator, get, getDatabase, onDisconnect, onValue, ref, remove, runTransaction, serverTimestamp, set, update, type Database } from "firebase/database";
+import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, onValue, push, ref, remove, runTransaction, serverTimestamp, set, update, type Database } from "firebase/database";
 import type { HeadbandsMode } from "../../game-files/schema/headbands";
+import type { GroupAnswer, GuessOutcome, LogEntry, PendingQuestion, Player, Rules, SessionAction } from "./headbandsEngine";
 
 /**
  * Online lobby for Headbands, kept in Firebase Realtime Database under
  * /hb/{code}. Players join from their own devices with a room code and write
- * the identity for the next player in the circle. The host's screen runs the
- * game; the database only carries the lobby.
+ * the identity for the next player in the circle. The host's device runs the
+ * game and publishes it under /game; phones send their moves to /actions and
+ * the host applies the ones that are theirs to make.
  */
 
 export type LobbyPhase = "lobby" | "writing" | "playing" | "over";
@@ -32,6 +34,64 @@ export interface LobbyState {
   circle: string[];
   /** Keyed by the writer's player id. */
   entries: Record<string, LobbyEntry>;
+  /** The running game as the host last published it, or null before it starts. */
+  game: OnlineGame | null;
+}
+
+/**
+ * What every device sees of the running game. Player ids are lobby ids.
+ * It holds no identities: each phone looks those up in the entries and never
+ * shows its own.
+ */
+export interface OnlineGame {
+  phase: "play" | "over";
+  mode: HeadbandsMode;
+  rules: Rules;
+  turn: number;
+  current: string | null;
+  paused: boolean;
+  revealed: boolean;
+  endedEarly: boolean;
+  order: string[];
+  players: Array<Pick<Player, "id" | "name" | "solved" | "solvedOrder" | "byHost" | "removed" | "questions" | "guesses">>;
+  pending: PendingQuestion | null;
+  lastGuess: GuessOutcome | null;
+  log: LogEntry[];
+}
+
+/** A move sent from a player's phone. The host checks it is theirs to make. */
+export type PlayerMove =
+  | { type: "pose"; question: string }
+  | { type: "ask"; answer: GroupAnswer }
+  | { type: "guess"; text: string }
+  | { type: "skip" }
+  | { type: "continue" };
+
+export function moveToAction(move: PlayerMove, from: string): SessionAction | null {
+  switch (move.type) {
+    case "pose":
+      return typeof move.question === "string" ? { type: "pose", question: move.question, from } : null;
+    case "ask":
+      return move.answer === "yes" || move.answer === "no" || move.answer === "unsure" ? { type: "ask", answer: move.answer, from } : null;
+    case "guess":
+      return typeof move.text === "string" ? { type: "guess", text: move.text, from } : null;
+    case "skip":
+      return { type: "skip", from };
+    case "continue":
+      return { type: "continue", from };
+    default:
+      return null;
+  }
+}
+
+function readGame(raw: unknown): OnlineGame | null {
+  if (typeof raw !== "string") return null;
+  try {
+    const g = JSON.parse(raw) as OnlineGame;
+    return g && (g.phase === "play" || g.phase === "over") && Array.isArray(g.players) && Array.isArray(g.log) ? g : null;
+  } catch {
+    return null;
+  }
 }
 
 const config = {
@@ -113,7 +173,7 @@ export function readLobby(raw: unknown): LobbyState | null {
       };
     }
   }
-  return { phase, mode: r.mode === "image" ? "image" : "text", createdAt: Number(r.createdAt) || 0, players, circle, entries };
+  return { phase, mode: r.mode === "image" ? "image" : "text", createdAt: Number(r.createdAt) || 0, players, circle, entries, game: readGame(r.game) };
 }
 
 /** Opens a new lobby with an unused code. */
@@ -155,12 +215,30 @@ export function leaveLobby(code: string, id: string): Promise<void> {
   return remove(ref(database(), path(code, "players", id)));
 }
 
-export function setLobby(code: string, change: Partial<Pick<LobbyState, "phase" | "mode" | "circle">> & { entries?: null }): Promise<void> {
+export function setLobby(code: string, change: Partial<Pick<LobbyState, "phase" | "mode" | "circle">> & { entries?: null; game?: null; actions?: null }): Promise<void> {
   return update(ref(database(), path(code)), change);
 }
 
 export function submitEntry(code: string, writer: string, entry: LobbyEntry | null): Promise<void> {
   return set(ref(database(), path(code, "entries", writer)), entry);
+}
+
+/** The host publishes the game after every change. Stored as one JSON string to keep the rules simple. */
+export function publishGame(code: string, game: OnlineGame): Promise<void> {
+  return set(ref(database(), path(code, "game")), JSON.stringify(game));
+}
+
+export async function sendMove(code: string, by: string, move: PlayerMove): Promise<void> {
+  await push(ref(database(), path(code, "actions")), { by, ...move });
+}
+
+/** The host takes each move once, in order, and clears it from the queue. */
+export function watchMoves(code: string, onMove: (by: string, move: PlayerMove) => void): () => void {
+  return onChildAdded(ref(database(), path(code, "actions")), (snap) => {
+    const v = snap.val() as ({ by?: unknown } & PlayerMove) | null;
+    void remove(snap.ref);
+    if (v && typeof v.by === "string" && typeof v.type === "string") onMove(v.by, v);
+  });
 }
 
 export function closeLobby(code: string): Promise<void> {

@@ -39,7 +39,7 @@ export function lobbyToGame(base: HeadbandsFile, lobby: LobbyState, rules: Rules
   }
   return {
     file: { ...base, content: { identities }, settings: { ...base.settings, allowDuplicateAssignments: false } },
-    start: { mode: lobby.mode, rules, players: lobby.circle.map((id) => ({ name: lobby.players[id].name, identityId: forTarget.get(id) ?? "" })) },
+    start: { mode: lobby.mode, rules, players: lobby.circle.map((id) => ({ id, name: lobby.players[id].name, identityId: forTarget.get(id) ?? "" })) },
   };
 }
 
@@ -69,7 +69,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
   useEffect(() => {
     if (!code) return;
     // Coming back after a round: everyone writes again.
-    void setLobby(code, { phase: "lobby", entries: null });
+    void setLobby(code, { phase: "lobby", entries: null, game: null, actions: null });
     return watchLobby(code, setLobbyState, setProblem);
   }, [code]);
 
@@ -159,7 +159,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
           )}
           <div className="hb-howto">
             <p>Everyone scans the code, or opens Zuno, picks Headbands and types the room code. Each player then writes, or uploads a picture, for the next player in the circle.</p>
-            <p>Nobody sees what was written for them. The game runs on this screen.</p>
+            <p>Nobody sees what was written for them. During the game everyone asks, answers, guesses and follows the activity on their own phone.</p>
           </div>
           {problem && (
             <div className="notice notice-error" role="alert">

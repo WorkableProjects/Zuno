@@ -9,7 +9,7 @@
 
 Zuno is a browser-based, console-style game launcher and game builder. It ships two game engines, Jeopardy and Headbands. Everything runs in the browser; the optional Headbands online lobby uses a free Firebase Realtime Database. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server of its own.
 
-The full product specification is in [Zuno_SPEC.md](Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](HeadbandsSPEC.md).
+The full product specification is in [Zuno_SPEC.md](docs/Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](docs/HeadbandsSPEC.md).
 
 ## Run it
 
@@ -53,7 +53,9 @@ Players can join the host from their own phones and write each other's identitie
 - Players sit in a circle the host can reorder or shuffle. Each player writes for the next one, and the last writes for the first. The circle is also the turn order.
 - The host picks **Text, any topic** (players type any word, name or phrase) or **A picture with its answer** (players upload or take a photo and write the answer shown under it).
 - Each phone only shows who it is writing for. Nobody sees what was written for them, and the host screen only shows who has finished.
-- When everyone has written, the host starts the game and it runs on the host screen as usual. **Play again** goes back to the lobby for a fresh round of writing.
+- When everyone has written, the host starts the game. Each phone then shows whose turn it is, every other player's card (never your own), the answers each player has received, and an activity log such as "Maya guessed “Owl”, not it" or "Ben skipped their turn".
+- On your turn you ask, guess or skip from your phone. Typing the question is optional: tap **I asked out loud** and the group answers Yes, No or Not sure on their own phones. The host's screen follows along and keeps its overrides (pause, mark solved, skip, remove).
+- **Play again** goes back to the lobby for a fresh round of writing.
 
 Start a lobby from the Headbands load screen (**Host an online lobby**, no file needed) or from session setup (**Let players write them on their phones instead**, which keeps the loaded game's title and colors).
 
@@ -62,7 +64,7 @@ Start a lobby from the Headbands load screen (**Host an online lobby**, no file 
 Lobbies use Firebase Realtime Database. The free Spark plan (100 simultaneous connections, 1 GB stored, 10 GB a month downloaded) is plenty, and no card is needed. Without this setup Zuno still works, and the online buttons are hidden.
 
 1. In the [Firebase console](https://console.firebase.google.com/), create a project, then **Build → Realtime Database → Create database** (start in locked mode).
-2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish.
+2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish. Publish them again whenever that file changes (version 1.0.2 added `game` and `actions`).
 3. **Project settings → Your apps → Add app → Web**, and note `apiKey`, `databaseURL`, `projectId` and `appId`.
 4. Put them in [`.env.production`](.env.production), which every production build reads, including the GitHub Pages deploy. This repository already has its project's values there. For a different project locally, copy `.env.example` to `.env.local` and fill it in.
 

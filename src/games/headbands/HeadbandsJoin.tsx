@@ -4,6 +4,7 @@ import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
 import { IdentityImageField } from "../../components/builder/IdentityImageField";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { IdentityCard } from "./IdentityCard";
+import { PhoneGame } from "./PhoneGame";
 import { customIdentityProblems } from "./headbandsEngine";
 import { joinLobby, leaveLobby, lobbyExists, normalizeCode, playerId, submitEntry, watchLobby, type LobbyEntry, type LobbyState } from "./lobby";
 import "../jeopardy/setup.css";
@@ -154,13 +155,16 @@ export function HeadbandsJoin({ code: linkCode, onExit }: Props) {
           </div>
         )}
 
-        {joined && lobby && !removed && lobby.phase === "playing" && (
-          <div className="card hb-phone-card" role="status">
-            <EyeOff size={28} strokeWidth={1.5} />
-            <h1 className="page-title">The game is on</h1>
-            <p className="page-lede">Watch the host's screen. When it's your turn, look away from your card and ask the group a yes-or-no question.</p>
-          </div>
-        )}
+        {joined && lobby && !removed && lobby.phase === "playing" &&
+          (lobby.game ? (
+            <PhoneGame code={joined} me={me} lobby={lobby} game={lobby.game} />
+          ) : (
+            <div className="card hb-phone-card" role="status">
+              <EyeOff size={28} strokeWidth={1.5} />
+              <h1 className="page-title">The game is starting</h1>
+              <p className="page-lede">Your card stays hidden from you. Everyone else's shows up here.</p>
+            </div>
+          ))}
       </div>
     </main>
   );

@@ -32,7 +32,7 @@ type Screen =
   | { name: "setup"; game: LoadedGame<JeopardyFile> }
   | { name: "play"; game: LoadedGame<JeopardyFile>; teams: TeamSetup[]; allowNegativeScores: boolean; timeLimitSeconds: number }
   | { name: "hbSetup"; game: LoadedGame<HeadbandsFile> }
-  | { name: "hbPlay"; game: LoadedGame<HeadbandsFile>; start: HeadbandsStart }
+  | { name: "hbPlay"; game: LoadedGame<HeadbandsFile>; start: HeadbandsStart; lobbyCode?: string }
   | { name: "hbLobby"; base: HeadbandsFile; code: string | null }
   | { name: "hbJoin"; code: string | null }
   | { name: "builder" }
@@ -243,11 +243,11 @@ export function App() {
             hostedLobby.current = null;
             pop();
           }}
-          onStart={(file, start) => push({ name: "hbPlay", game: { file, filename: "lobby", text: "", warnings: [] }, start })}
+          onStart={(file, start) => push({ name: "hbPlay", game: { file, filename: "lobby", text: "", warnings: [] }, start, lobbyCode: hostedLobby.current ?? undefined })}
         />
       )}
       {screen.name === "hbJoin" && <HeadbandsJoin code={screen.code} onExit={home} />}
-      {screen.name === "hbPlay" && <HeadbandsGame key={stack.length} file={screen.game.file} start={screen.start} onAgain={pop} onExit={home} />}
+      {screen.name === "hbPlay" && <HeadbandsGame key={stack.length} file={screen.game.file} start={screen.start} lobbyCode={screen.lobbyCode} onAgain={pop} onExit={home} />}
       {screen.name === "builder" && (
         <BuilderHome
           gameType={buildType}
