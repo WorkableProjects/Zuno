@@ -256,3 +256,30 @@ describe("jeopardy expansion fields", () => {
   });
 });
 
+
+describe("AI guide options", () => {
+  it("writes the chosen options into the guide", () => {
+    const g = buildJeopardyGuide({
+      dailyDoubles: 2,
+      timeLimitSeconds: 45,
+      finalMode: "tiebreaker",
+      finalTimeLimitSeconds: 90,
+      useMath: true,
+      imageLinks: ["https://example.com/a.png", "http://bad.example/b.png"],
+    });
+    expect(g).toContain('exactly 2 questions with "dailyDouble": true');
+    expect(g).toContain("settings.timeLimitSeconds to 45");
+    expect(g).toContain('mode to "tiebreaker"');
+    expect(g).toContain("settings.finalTimeLimitSeconds to 90");
+    expect(g).toContain("as LaTeX between $...$");
+    expect(g).toContain("  - https://example.com/a.png");
+    expect(g).not.toContain("http://bad.example");
+  });
+
+  it("turns features off when asked", () => {
+    const g = buildJeopardyGuide({ dailyDoubles: 0, timeLimitSeconds: 0, finalMode: "off", finalTimeLimitSeconds: 0, useMath: false, imageLinks: [] });
+    expect(g).toContain("Daily doubles: none");
+    expect(g).toContain("finalJeopardy.enabled to false");
+    expect(g).toContain("do not include clueImage or answerImage");
+  });
+});
