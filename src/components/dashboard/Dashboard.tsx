@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, PencilRuler, Play, Settings, ClipboardList, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, PencilRuler, Play, Settings, Sticker, ClipboardList, Trash2 } from "lucide-react";
 import { ZunoLogo } from "../brand/Logo";
 import { GameTile } from "./GameTile";
 import type { RailItem } from "./railItems";
@@ -31,7 +31,8 @@ export function Dashboard(props: Props) {
   const activate = (item: RailItem) => {
     if (item.kind === "engine") props.onLoad(item.gameType);
     else if (item.kind === "build") props.onBuild();
-    else props.onOpenRecent(item);
+    else if (item.kind === "file") props.onOpenRecent(item);
+    // "soon" tiles have no action yet.
   };
 
   const firstFile = items.findIndex((i) => i.kind === "file");
@@ -88,6 +89,12 @@ export function Dashboard(props: Props) {
                 AI builder
               </button>
             </>
+          )}
+          {selected.kind === "soon" && (
+            <button type="button" className="btn btn-secondary" disabled>
+              <Sticker size={18} strokeWidth={1.5} />
+              Coming soon
+            </button>
           )}
           {selected.kind === "file" && (
             <>

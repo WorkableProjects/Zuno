@@ -13,6 +13,7 @@ import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { JEOPARDY_TYPE, countClues, type JeopardyFile } from "../game-files/schema/jeopardy";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
+import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
 import { forgetGame, loadLastTile, loadRecent, loadTheme, rememberGame, saveLastTile, saveTheme, type Theme } from "./storage";
 
@@ -20,7 +21,7 @@ type Screen =
   | { name: "dashboard" }
   | { name: "import"; gameType: string; seed?: ImportSeed }
   | { name: "setup"; game: LoadedGame<JeopardyFile> }
-  | { name: "play"; game: LoadedGame<JeopardyFile>; teamNames: string[]; allowNegativeScores: boolean }
+  | { name: "play"; game: LoadedGame<JeopardyFile>; teams: TeamSetup[]; allowNegativeScores: boolean; timeLimitSeconds: number }
   | { name: "builder" }
   | { name: "editor" }
   | { name: "ai" };
@@ -178,10 +179,12 @@ export function App() {
         <JeopardySetup
           game={screen.game}
           onBack={pop}
-          onStart={(teamNames, allowNegativeScores) => push({ name: "play", game: screen.game, teamNames, allowNegativeScores })}
+          onStart={(teams, allowNegativeScores, timeLimitSeconds) => push({ name: "play", game: screen.game, teams, allowNegativeScores, timeLimitSeconds })}
         />
       )}
-      {screen.name === "play" && <JeopardyGame file={screen.game.file} teamNames={screen.teamNames} allowNegativeScores={screen.allowNegativeScores} onExit={home} />}
+      {screen.name === "play" && (
+        <JeopardyGame file={screen.game.file} teams={screen.teams} allowNegativeScores={screen.allowNegativeScores} timeLimitSeconds={screen.timeLimitSeconds} onExit={home} />
+      )}
       {screen.name === "builder" && <BuilderHome onBack={back} onEditor={() => push({ name: "editor" })} onAiBuilder={() => push({ name: "ai" })} />}
       {screen.name === "editor" && (
         <JeopardyVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: JEOPARDY_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
