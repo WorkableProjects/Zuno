@@ -1,0 +1,43 @@
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--text-2);
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    transform var(--t-press) var(--ease);
+}
+.segment:hover {
+  color: var(--text);
+}
+.segment:active {
+  transform: scale(0.98);
+}
+.segment.is-on {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    var(--top-light),
+    0 0 0 1px var(--border);
+}
+[data-theme="dark"] .segment.is-on {
+  background: var(--surface-3);
+}

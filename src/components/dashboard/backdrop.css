@@ -1,0 +1,342 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--bg);
+  pointer-events: none;
+  --px: 0px;
+  --py: 0px;
+}
+
+.bg-parallax {
+  position: absolute;
+  inset: -16px;
+  transform: translate3d(var(--px), var(--py), 0);
+  transition: transform 500ms var(--ease);
+}
+
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  animation: bg-in var(--t-bg) var(--ease) both;
+}
+@keyframes bg-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bg-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
+  opacity: 0;
+  transition: opacity 500ms var(--ease);
+}
+.bg-cover.is-ready {
+  opacity: 1;
+}
+
+/* ---------- Generated scenes ---------- */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.light {
+  position: absolute;
+  border-radius: 50%;
+  opacity: var(--field-opacity);
+  will-change: transform;
+}
+.light-a {
+  background: radial-gradient(closest-side, var(--c1), transparent);
+}
+.light-b {
+  background: radial-gradient(closest-side, var(--c2), transparent);
+}
+.light-c {
+  background: radial-gradient(closest-side, var(--c3), transparent);
+}
+
+@keyframes drift-x {
+  from {
+    transform: translate3d(-4%, 0, 0) rotate(var(--rot, 0deg));
+  }
+  to {
+    transform: translate3d(5%, 3%, 0) rotate(var(--rot, 0deg));
+  }
+}
+@keyframes drift-y {
+  from {
+    transform: translate3d(0, 4%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, -5%, 0) scale(1.06);
+  }
+}
+@keyframes sway {
+  from {
+    transform: rotate(calc(var(--rot) - 3deg));
+  }
+  to {
+    transform: rotate(calc(var(--rot) + 3deg));
+  }
+}
+
+/* Aurora: wide ribbons of light across the upper right */
+.scene-aurora .light {
+  width: 110vmax;
+  height: 44vmax;
+  animation: drift-x 36s ease-in-out infinite alternate;
+}
+.scene-aurora .light-a {
+  top: -14vmax;
+  right: -30vmax;
+  --rot: -14deg;
+}
+.scene-aurora .light-b {
+  top: 6vmax;
+  right: -44vmax;
+  --rot: -8deg;
+  animation-duration: 44s;
+  animation-direction: alternate-reverse;
+}
+.scene-aurora .light-c {
+  top: 26vmax;
+  right: -20vmax;
+  --rot: -18deg;
+  animation-duration: 52s;
+}
+
+/* Tide: slow swells rising from the lower edge */
+.scene-tide .light {
+  width: 96vmax;
+  height: 56vmax;
+  animation: drift-y 32s ease-in-out infinite alternate;
+}
+.scene-tide .light-a {
+  bottom: -30vmax;
+  right: -18vmax;
+}
+.scene-tide .light-b {
+  bottom: -36vmax;
+  right: 24vmax;
+  animation-duration: 40s;
+  animation-direction: alternate-reverse;
+}
+.scene-tide .light-c {
+  bottom: -18vmax;
+  right: -44vmax;
+  animation-duration: 48s;
+}
+
+/* Spotlight: two stage beams and the pool of light they land in */
+.scene-spotlight .light-a,
+.scene-spotlight .light-b {
+  top: -30vmax;
+  width: 44vmax;
+  height: 130vmax;
+  transform-origin: 50% 0%;
+  animation: sway 28s ease-in-out infinite alternate;
+}
+.scene-spotlight .light-a {
+  right: 30vmax;
+  --rot: 24deg;
+}
+.scene-spotlight .light-b {
+  right: -6vmax;
+  --rot: -16deg;
+  animation-duration: 36s;
+  animation-direction: alternate-reverse;
+}
+.scene-spotlight .light-c {
+  width: 90vmax;
+  height: 44vmax;
+  bottom: -24vmax;
+  right: -10vmax;
+  animation: drift-y 40s ease-in-out infinite alternate;
+}
+
+/* Horizon: a banded sun going down on the right */
+.scene-horizon .light-a {
+  width: 96vmax;
+  height: 70vmax;
+  right: -22vmax;
+  bottom: -34vmax;
+  animation: drift-y 44s ease-in-out infinite alternate;
+}
+.scene-horizon .light-b {
+  width: 70vmax;
+  height: 40vmax;
+  right: -6vmax;
+  bottom: -4vmax;
+  animation: drift-x 52s ease-in-out infinite alternate;
+}
+.scene-horizon .light-c {
+  width: 120vmax;
+  height: 40vmax;
+  right: -30vmax;
+  bottom: -26vmax;
+  animation: drift-x 60s ease-in-out infinite alternate-reverse;
+}
+.sun {
+  position: absolute;
+  right: clamp(24px, 12vw, 220px);
+  bottom: 14vh;
+  width: min(46vmin, 520px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--c2) 4%, var(--c1) 52%, var(--c3) 100%);
+  /* Slits widen toward the horizon, as the sun sinks into it */
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0 50%,
+    transparent 50% 51.5%,
+    #000 51.5% 61%,
+    transparent 61% 63.5%,
+    #000 63.5% 72%,
+    transparent 72% 76%,
+    #000 76% 83%,
+    transparent 83% 88.5%,
+    #000 88.5% 93.5%,
+    transparent 93.5%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0 50%,
+    transparent 50% 51.5%,
+    #000 51.5% 61%,
+    transparent 61% 63.5%,
+    #000 63.5% 72%,
+    transparent 72% 76%,
+    #000 76% 83%,
+    transparent 83% 88.5%,
+    #000 88.5% 93.5%,
+    transparent 93.5%
+  );
+  animation: sun-set 46s ease-in-out infinite alternate;
+}
+@keyframes sun-set {
+  from {
+    transform: translate3d(0, -1.5%, 0);
+  }
+  to {
+    transform: translate3d(0, 2.5%, 0);
+  }
+}
+
+/* ---------- Engine artwork: the board ---------- */
+.art-board {
+  position: absolute;
+  right: clamp(-40px, 3vw, 80px);
+  top: 50%;
+  width: min(48vw, 780px);
+  transform: translateY(-44%);
+  perspective: 1600px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 34%), linear-gradient(180deg, #000 62%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 34%), linear-gradient(180deg, #000 62%, transparent 100%);
+  mask-composite: intersect;
+}
+.art-board-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  transform: rotateY(-24deg) rotateX(10deg) rotateZ(1.5deg);
+  transform-origin: 100% 50%;
+}
+.art-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1.5;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--surface-2) 78%, transparent);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--top-light);
+  color: color-mix(in oklab, var(--c1) 82%, var(--text));
+  font: 500 clamp(14px, 1.7vw, 28px) / 1 var(--font-display);
+}
+.art-head {
+  aspect-ratio: 2.4;
+  background: color-mix(in oklab, var(--surface) 80%, transparent);
+}
+.art-head span {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--text-3);
+  opacity: 0.5;
+}
+.art-cell.is-used {
+  color: transparent;
+  background: color-mix(in oklab, var(--surface) 60%, transparent);
+}
+.art-cell.is-lit {
+  background: var(--c1);
+  border-color: transparent;
+  color: #0b1018;
+  box-shadow: 0 0 48px color-mix(in oklab, var(--c1) 50%, transparent);
+}
+@media (max-width: 900px) {
+  .art-board {
+    display: none;
+  }
+  .sun {
+    width: 56vmin;
+    right: -8vmin;
+    bottom: 30vh;
+  }
+}
+
+/* ---------- Overlays ---------- */
+.backdrop-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.backdrop-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(var(--bg-rgb) / 0.86) 0%, rgb(var(--bg-rgb) / 0.56) 36%, rgb(var(--bg-rgb) / 0.06) 74%),
+    linear-gradient(0deg, rgb(var(--bg-rgb) / 0.88) 0%, rgb(var(--bg-rgb) / 0) 40%),
+    linear-gradient(180deg, rgb(var(--bg-rgb) / 0.66) 0%, rgb(var(--bg-rgb) / 0) 28%);
+}
+.backdrop-dim {
+  position: absolute;
+  inset: 0;
+  background: rgb(var(--bg-rgb) / 0.82);
+  opacity: 0;
+  transition: opacity var(--t-slow) var(--ease);
+}
+.backdrop.is-dim .backdrop-dim {
+  opacity: 1;
+}
+/* Engine artwork belongs to the dashboard. Behind working screens it steps away. */
+.art-board {
+  transition: opacity var(--t-slow) var(--ease);
+}
+.backdrop.is-dim .art-board {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .light,
+  .sun {
+    animation: none !important;
+  }
+  .bg-parallax {
+    transform: none;
+  }
+}

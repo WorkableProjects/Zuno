@@ -1,0 +1,409 @@
+.dash {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  padding: 0 var(--page-x);
+  animation: fade-in var(--t-slow) var(--ease) both;
+}
+
+/* ---------- Header ---------- */
+.dash-header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  height: 72px;
+}
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+.dash-nav-item {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--text);
+}
+.dash-spacer {
+  flex: 1;
+}
+@media (max-width: 520px) {
+  .logo-word {
+    display: none;
+  }
+  .dash-header {
+    gap: 16px;
+  }
+}
+
+/* ---------- Rail ---------- */
+.rail {
+  --tile: clamp(96px, 9.4vw, 136px);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 calc(var(--page-x) * -1);
+  padding: 20px var(--page-x) 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-padding-inline: var(--page-x);
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+.rail-slot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: none;
+}
+.rail-divider {
+  width: 1px;
+  height: 48px;
+  margin: 0 8px;
+  background: var(--border);
+}
+
+/* ---------- Tile ---------- */
+@property --beam {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.tile {
+  --tile-r: 18px;
+  position: relative;
+  flex: none;
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: var(--tile-r);
+  outline: none;
+  transition: transform var(--t-med) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.tile.is-active {
+  transform: translateY(-4px) scale(1.07);
+}
+.tile:active {
+  transform: translateY(-2px) scale(1.02);
+  transition-duration: var(--t-press);
+}
+.tile:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Shadow fades in on its own layer, so only opacity animates */
+.tile-shadow {
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--tile-r);
+  box-shadow: var(--shadow-tile);
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease);
+}
+.tile.is-active .tile-shadow {
+  opacity: 1;
+}
+
+.tile-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--tile-r);
+  background: var(--surface-2);
+  /* Keeps rounded clipping crisp while children transform */
+  isolation: isolate;
+}
+.tile-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--t-slow) var(--ease);
+}
+.tile.is-active .tile-img {
+  transform: scale(1.05);
+}
+
+/* Idle tiles sit a little darker; focus brings the artwork up to full light */
+.tile-shade {
+  position: absolute;
+  inset: 0;
+  background: rgb(var(--bg-rgb) / 0.3);
+  transition: opacity var(--t-med) var(--ease);
+  pointer-events: none;
+}
+.tile.is-active .tile-shade {
+  opacity: 0;
+}
+
+/* Static light from the top-left corner */
+.tile-gloss {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 120% at 0% 0%, rgba(255, 255, 255, 0.2), transparent 52%);
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease);
+  pointer-events: none;
+}
+.tile.is-active .tile-gloss {
+  opacity: 1;
+}
+
+/* B. Specular sheen: a soft band crossing the artwork, top-left to bottom-right */
+.tile-sheen {
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(135deg, transparent 43%, rgba(255, 255, 255, 0.08) 46%, rgba(255, 255, 255, 0.38) 50%, rgba(255, 255, 255, 0.08) 54%, transparent 57%);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.tile.is-active .tile-sheen {
+  /* One sweep on focus, then a rare quiet repeat while the tile stays selected */
+  animation:
+    sheen-sweep 720ms cubic-bezier(0.4, 0, 0.2, 1) 80ms 1,
+    sheen-repeat 9s linear 6s infinite;
+}
+@keyframes sheen-sweep {
+  from {
+    opacity: 1;
+    transform: translate3d(-56%, -56%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(56%, 56%, 0);
+  }
+}
+@keyframes sheen-repeat {
+  0% {
+    opacity: 0.7;
+    transform: translate3d(-56%, -56%, 0);
+  }
+  9% {
+    opacity: 0.7;
+    transform: translate3d(56%, 56%, 0);
+  }
+  9.01%,
+  100% {
+    opacity: 0;
+    transform: translate3d(56%, 56%, 0);
+  }
+}
+
+/* Stable border. Quiet when idle, brighter when active */
+.tile-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--tile-r);
+  border: 1px solid var(--hairline);
+  pointer-events: none;
+  transition: border-color var(--t-med) var(--ease);
+}
+.tile.is-active .tile-ring {
+  border-color: var(--ring);
+}
+
+/* A. Border beam: a narrow highlight travelling around the perimeter */
+.tile-beam {
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--tile-r) + 2px);
+  padding: 2px;
+  background: conic-gradient(
+    from var(--beam),
+    transparent 0turn,
+    transparent 0.7turn,
+    color-mix(in oklab, var(--game) 70%, transparent) 0.84turn,
+    var(--beam-core) 0.93turn,
+    transparent 1turn
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms var(--ease);
+  animation: beam-travel 3.4s linear infinite paused;
+}
+.tile-beam-glow {
+  filter: blur(6px);
+}
+.tile.is-active .tile-beam {
+  opacity: 1;
+  transition-duration: 200ms;
+  animation-play-state: running;
+}
+.tile.is-active .tile-beam-glow {
+  opacity: 0.5;
+}
+@keyframes beam-travel {
+  to {
+    --beam: 360deg;
+  }
+}
+
+/* Keyboard focus adds a clear static outline on top of the moving light */
+.tile:focus-visible .tile-ring {
+  border-color: color-mix(in oklab, var(--text) 72%, transparent);
+}
+
+/* No animated custom properties, or reduced motion: a static high-contrast border */
+.no-beam .tile-beam {
+  display: none;
+}
+.no-beam .tile.is-active .tile-ring {
+  border: 2px solid var(--text);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile-beam,
+  .tile-sheen {
+    display: none;
+  }
+  .tile.is-active .tile-ring {
+    border: 2px solid var(--text);
+  }
+}
+
+/* ---------- Tile artwork ---------- */
+.cover-bg {
+  fill: #121a2c;
+}
+.cover-head {
+  fill: #3a465e;
+}
+.cover-cell {
+  fill: #232e45;
+}
+.cover-lit {
+  fill: var(--game);
+}
+
+.tile-generated {
+  display: flex;
+  align-items: flex-end;
+  padding: 12px;
+  background: linear-gradient(160deg, color-mix(in oklab, var(--game) 58%, #0b1018), color-mix(in oklab, var(--game) 24%, #0b1018));
+  text-align: left;
+}
+.tile-generated-title {
+  color: #fff;
+  font: 500 14px/18px var(--font-display);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile-build .tile-art {
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+}
+.tile-build .tile-ring {
+  border-style: dashed;
+  border-color: var(--border);
+}
+.tile-build.is-active .tile-ring {
+  border-style: solid;
+  border-color: var(--ring);
+}
+.tile-create {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.tile-build.is-active .tile-create {
+  color: var(--text);
+}
+.tile-build .tile-shade {
+  display: none;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  align-self: end;
+  max-width: 640px;
+  padding: 32px 0 40px;
+  animation: settle 300ms var(--ease) both;
+}
+.hero-eyebrow {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hero-title {
+  margin-top: 8px;
+  font: 500 clamp(40px, 6vw, 72px) / 1.04 var(--font-display);
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.hero-desc {
+  margin-top: 16px;
+  max-width: 34rem;
+  font-size: 18px;
+  line-height: 28px;
+  color: var(--text-2);
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+.hero-actions .btn {
+  height: 48px;
+}
+
+/* ---------- Footer ---------- */
+.dash-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 64px;
+  padding-bottom: 8px;
+}
+.dash-tagline {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--text-3);
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding-bottom: 24px;
+  }
+  .hero-desc {
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .hero-actions .btn {
+    flex: 1 1 auto;
+  }
+}
