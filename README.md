@@ -64,8 +64,7 @@ Lobbies use Firebase Realtime Database. The free Spark plan (100 simultaneous co
 1. In the [Firebase console](https://console.firebase.google.com/), create a project, then **Build → Realtime Database → Create database** (start in locked mode).
 2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish.
 3. **Project settings → Your apps → Add app → Web**, and note `apiKey`, `databaseURL`, `projectId` and `appId`.
-4. For local use, copy `.env.example` to `.env.local` and fill them in.
-5. For GitHub Pages, add them as repository **variables** (Settings → Secrets and variables → Actions → Variables): `FIREBASE_API_KEY`, `FIREBASE_DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`. The deploy workflow passes them to the build.
+4. Put them in [`.env.production`](.env.production), which every production build reads, including the GitHub Pages deploy. This repository already has its project's values there. For a different project locally, copy `.env.example` to `.env.local` and fill it in.
 
 These web config values are public by design; the rules limit what can be written. Lobbies live under `/hb/{code}` and are removed when the host leaves or closes the tab.
 
