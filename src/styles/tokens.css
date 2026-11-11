@@ -1,0 +1,90 @@
+/* Design tokens. Spacing sits on a 4px grid. One easing curve, a few durations. */
+:root {
+  --font-ui: "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-press: 110ms;
+  --t-fast: 160ms;
+  --t-med: 220ms;
+  --t-slow: 320ms;
+  --t-bg: 760ms;
+
+  --r-key: 6px;
+  --r-ctl: 10px;
+  --r-card: 14px;
+  --r-panel: 18px;
+
+  /* Brand sunset. Lives in the logo and the horizon scene, not in the chrome. */
+  --sunset-1: #ffb36b;
+  --sunset-2: #f06a9a;
+  --sunset-3: #8266e8;
+
+  /* Accent of the game in focus. Set inline by the shell. */
+  --game: #79b8ff;
+
+  --page-x: clamp(20px, 4vw, 64px);
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #080b12;
+  --bg-rgb: 8 11 18;
+  --surface: #111725;
+  --surface-2: #1a2232;
+  --surface-3: #232c3f;
+  --text: #f7f9fc;
+  --text-2: #aab4c5;
+  --text-3: #808ba1;
+  --accent: #79b8ff;
+  --accent-ink: #0b1420;
+  --accent-glow: rgba(105, 174, 255, 0.32);
+  --border: rgba(255, 255, 255, 0.14);
+  --hairline: rgba(255, 255, 255, 0.08);
+  --btn-bg: #f7f9fc;
+  --btn-text: #0b1018;
+  --positive: #4cc38a;
+  --negative: #f0686c;
+  --beam-core: #ffffff;
+  --ring: rgba(255, 255, 255, 0.3);
+  --top-light: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-float: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-tile: 0 14px 28px rgba(0, 0, 0, 0.55);
+  --field-opacity: 0.5;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f4f8;
+  --bg-rgb: 242 244 248;
+  --surface: #ffffff;
+  --surface-2: #e8ecf3;
+  --surface-3: #dde3ec;
+  --text: #111827;
+  --text-2: #596579;
+  --text-3: #667186;
+  --accent: #246bc4;
+  --accent-ink: #ffffff;
+  --accent-glow: rgba(36, 107, 196, 0.18);
+  --border: rgba(20, 35, 55, 0.16);
+  --hairline: rgba(20, 35, 55, 0.09);
+  --btn-bg: #111827;
+  --btn-text: #ffffff;
+  --positive: #15803d;
+  --negative: #c62828;
+  --beam-core: var(--accent);
+  --ring: rgba(17, 24, 39, 0.28);
+  --top-light: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-float: 0 8px 24px rgba(17, 24, 39, 0.1);
+  --shadow-tile: 0 10px 22px rgba(17, 24, 39, 0.2);
+  --field-opacity: 0.42;
+}
+
+/* Ink made from the game accent. Declared where --game is set, so it follows that game. */
+.game-scope {
+  --game-ink: var(--game);
+}
+[data-theme="light"] .game-scope {
+  --game-ink: color-mix(in oklab, var(--game) 52%, #05070c);
+}

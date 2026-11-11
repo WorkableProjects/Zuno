@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "gameType": "jeopardy",
+  "metadata": {
+    "title": "Science Review",
+    "description": "A middle school science review covering atoms, forces, cells, Earth and the periodic table.",
+    "author": "Dutch & Friends",
+    "coverImage": null
+  },
+  "appearance": {
+    "accentColor": "#6FD3C1",
+    "backgroundPreset": "aurora"
+  },
+  "content": {
+    "categories": [
+      {
+        "id": "atomic-structure",
+        "title": "Atomic structure",
+        "questions": [
+          {
+            "id": "atomic-structure-100",
+            "value": 100,
+            "clue": "This negatively charged particle is found outside the nucleus.",
+            "answer": "What is an electron?",
+            "explanation": "Electrons carry a negative charge and occupy the space around the nucleus."
+          },
+          {
+            "id": "atomic-structure-200",
+            "value": 200,
+            "clue": "These two particles make up the nucleus of an atom.",
+            "answer": "What are protons and neutrons?"
+          },
+          {
+            "id": "atomic-structure-300",
+            "value": 300,
+            "clue": "The number of these particles sets an element's atomic number.",
+            "answer": "What are protons?"
+          },
+          {
+            "id": "atomic-structure-400",
+            "value": 400,
+            "clue": "Atoms of one element with different numbers of neutrons are called this.",
+            "answer": "What are isotopes?",
+            "explanation": "Carbon-12 and carbon-14 are isotopes of carbon."
+          },
+          {
+            "id": "atomic-structure-500",
+            "value": 500,
+            "clue": "His gold foil experiment showed that atoms have a small, dense nucleus.",
+            "answer": "Who is Ernest Rutherford?"
+          }
+        ]
+      },
+      {
+        "id": "forces-and-motion",
+        "title": "Forces and motion",
+        "questions": [
+          {
+            "id": "forces-and-motion-100",
+            "value": 100,
+            "clue": "This force pulls objects toward the center of Earth.",
+            "answer": "What is gravity?"
+          },
+          {
+            "id": "forces-and-motion-200",
+            "value": 200,
+            "clue": "Speed with a direction is called this.",
+            "answer": "What is velocity?"
+          },
+          {
+            "id": "forces-and-motion-300",
+            "value": 300,
+            "clue": "An object at rest stays at rest unless acted on by an outside force. This is Newton's law number what?",
+            "answer": "What is the first law?",
+            "explanation": "It is also called the law of inertia."
+          },
+          {
+            "id": "forces-and-motion-400",
+            "value": 400,
+            "clue": "Force equals mass times this.",
+            "answer": "What is acceleration?"
+          },
+          {
+            "id": "forces-and-motion-500",
+            "value": 500,
+            "clue": "This force opposes motion between two surfaces that touch.",
+            "answer": "What is friction?"
+          }
+        ]
+      },
+      {
+        "id": "cells",
+        "title": "Cells",
+        "questions": [
+          {
+            "id": "cells-100",
+            "value": 100,
+            "clue": "This organelle is often called the powerhouse of the cell.",
+            "answer": "What is the mitochondrion?"
+          },
+          {
+            "id": "cells-200",
+            "value": 200,
+            "clue": "Plant cells have this rigid outer layer that animal cells lack.",
+            "answer": "What is the cell wall?"
+          },
+          {
+            "id": "cells-300",
+            "value": 300,
+            "clue": "This structure holds the cell's DNA.",
+            "answer": "What is the nucleus?"
+          },
+          {
+            "id": "cells-400",
+            "value": 400,
+            "clue": "Green organelles where photosynthesis happens.",
+            "answer": "What are chloroplasts?"
+          },
+          {
+            "id": "cells-500",
+            "value": 500,
+            "clue": "The movement of water across a membrane toward higher solute concentration.",
+            "answer": "What is osmosis?"
+          }
+        ]
+      },
+      {
+        "id": "earth-and-space",
+        "title": "Earth and space",
+        "questions": [
+          {
+            "id": "earth-and-space-100",
+            "value": 100,
+            "clue": "The planet closest to the Sun.",
+            "answer": "What is Mercury?"
+          },
+          {
+            "id": "earth-and-space-200",
+            "value": 200,
+            "clue": "Earth's outermost solid layer.",
+            "answer": "What is the crust?"
+          },
+          {
+            "id": "earth-and-space-300",
+            "value": 300,
+            "clue": "This causes the seasons on Earth.",
+            "answer": "What is the tilt of Earth's axis?",
+            "explanation": "Distance from the Sun is a common wrong answer."
+          },
+          {
+            "id": "earth-and-space-400",
+            "value": 400,
+            "clue": "The type of rock formed from cooled magma or lava.",
+            "answer": "What is igneous rock?"
+          },
+          {
+            "id": "earth-and-space-500",
+            "value": 500,
+            "clue": "The galaxy that contains our solar system.",
+            "answer": "What is the Milky Way?"
+          }
+        ]
+      },
+      {
+        "id": "the-periodic-table",
+        "title": "The periodic table",
+        "questions": [
+          {
+            "id": "the-periodic-table-100",
+            "value": 100,
+            "clue": "The chemical symbol for gold.",
+            "answer": "What is Au?",
+            "explanation": "From the Latin word aurum."
+          },
+          {
+            "id": "the-periodic-table-200",
+            "value": 200,
+            "clue": "Elements in group 18, which rarely react.",
+            "answer": "What are the noble gases?"
+          },
+          {
+            "id": "the-periodic-table-300",
+            "value": 300,
+            "clue": "The most abundant element in the universe.",
+            "answer": "What is hydrogen?"
+          },
+          {
+            "id": "the-periodic-table-400",
+            "value": 400,
+            "clue": "Horizontal rows of the periodic table are called these.",
+            "answer": "What are periods?"
+          },
+          {
+            "id": "the-periodic-table-500",
+            "value": 500,
+            "clue": "This Russian chemist published the first widely accepted periodic table in 1869.",
+            "answer": "Who is Dmitri Mendeleev?"
+          }
+        ]
+      }
+    ],
+    "finalJeopardy": {
+      "enabled": true,
+      "category": "Famous scientists",
+      "clue": "She won Nobel Prizes in both physics and chemistry for her work on radioactivity.",
+      "answer": "Who is Marie Curie?"
+    }
+  },
+  "settings": {
+    "allowNegativeScores": false,
+    "showExplanations": true
+  }
+}

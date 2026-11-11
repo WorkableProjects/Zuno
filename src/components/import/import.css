@@ -1,0 +1,183 @@
+.import-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 64px;
+  align-items: start;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(24px, 8vh, 96px) 0 48px;
+}
+@media (max-width: 900px) {
+  .import-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.importer {
+  position: relative;
+  min-width: 0;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 32px;
+  border-style: dashed;
+  border-color: var(--border);
+  transition:
+    border-color var(--t-fast) var(--ease),
+    background-color var(--t-fast) var(--ease);
+}
+.importer.is-dragging .dropzone {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
+}
+.dropzone-icon {
+  color: var(--text-3);
+}
+.dropzone-title {
+  margin-top: 16px;
+  font: 500 20px/28px var(--font-ui);
+}
+.dropzone-text {
+  margin-top: 4px;
+  color: var(--text-2);
+}
+.dropzone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+.dropzone-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 12px 0 0 -12px;
+}
+.paste {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  width: 100%;
+  margin-top: 12px;
+}
+.paste-area {
+  min-height: 160px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.import-result {
+  display: grid;
+  gap: 24px;
+  animation: settle 300ms var(--ease) both;
+}
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.notice-title {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.error-list {
+  margin-top: 8px !important;
+  color: var(--text-2);
+}
+
+/* ---------- Preview ---------- */
+.preview {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+}
+.preview-head {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  min-width: 0;
+}
+.preview-thumb {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.preview-thumb-generated {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, color-mix(in oklab, var(--game) 62%, #0b1018), color-mix(in oklab, var(--game) 26%, #0b1018));
+}
+.preview-titles {
+  min-width: 0;
+}
+.preview-valid {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--positive);
+}
+.preview-title {
+  margin-top: 4px;
+  font: 500 24px/30px var(--font-display);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.preview-titles .meta {
+  overflow-wrap: anywhere;
+}
+.preview-desc {
+  color: var(--text-2);
+}
+.preview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+.preview-stats div {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.preview-stats dt {
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--text-2);
+}
+.preview-stats dd {
+  margin: 8px 0 0;
+  font: 500 28px/1 var(--font-display);
+}
+.preview-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-2);
+}
+.preview-cats li:not(:last-child)::after {
+  content: "·";
+  margin: 0 8px;
+  color: var(--text-3);
+}
