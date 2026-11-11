@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowUp, CircleAlert, CircleCheck, Download, Eye, FilePlus2, FolderOpen, ImagePlus, Play, Plus, Trash2 } from "lucide-react";
 import { clearDraft, loadDraft, saveDraft } from "../../app/storage";
 import { ALLOWED_IMAGE_MIME, BACKGROUND_PRESETS, LIMITS, formatBytes, type BackgroundPreset } from "../../game-files/schema/common";
-import { JEOPARDY_LIMITS, JEOPARDY_TYPE, type JeopardyFile, type JeopardyQuestion } from "../../game-files/schema/jeopardy";
+import { FINAL_MODES, JEOPARDY_LIMITS, JEOPARDY_TYPE, type FinalMode, type JeopardyFile, type JeopardyQuestion } from "../../game-files/schema/jeopardy";
 import { validateGameFile, validateGameFileText } from "../../game-files/schema/validateGameFile";
 import { loadGameFile } from "../import/loadGame";
 import { useEscape } from "../navigation/spatialNav";
 import { ConfirmDialog, Dialog } from "../ui/Dialog";
+import { RichText } from "../ui/RichText";
 import { DEFAULT_VALUES, draftFromFile, draftToFile, isQuestionComplete, move, newCategory, newDraft, newQuestion, reviveDraft, slugify, type Draft } from "./editorModel";
 import "./builder.css";
 
@@ -20,6 +21,113 @@ interface Props {
 const SWATCHES = ["#79B8FF", "#6FD3C1", "#9BD772", "#FFD166", "#FFB36B", "#F06A9A", "#C58BFF", "#8266E8"];
 const PRESET_LABELS: Record<BackgroundPreset, string> = { aurora: "Aurora", horizon: "Horizon", tide: "Tide", spotlight: "Spotlight" };
 const FINAL = "final";
+const FINAL_MODE_LABELS: Record<FinalMode, string> = { always: "Always play it at the end", tiebreaker: "Only to break a tie for first" };
+
+/** Image from a file (embedded) or an https link, with a thumbnail and a remove button. */
+function ImageField({ label, value, onChange }: { label: string; value: string | undefined; onChange: (next: string | undefined) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [link, setLink] = useState("");
+
+  const onPick = (picked: File | undefined) => {
+    if (!picked) return;
+    if (!(ALLOWED_IMAGE_MIME as readonly string[]).includes(picked.type)) {
+      setProblem("That image format is not supported. Use PNG, JPEG, WebP or GIF.");
+      return;
+    }
+    if (picked.size > LIMITS.maxImageBytes) {
+      setProblem(`That image is ${formatBytes(picked.size)}. Images can be up to ${formatBytes(LIMITS.maxImageBytes)}.`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProblem(null);
+      onChange(String(reader.result));
+    };
+    reader.onerror = () => setProblem("Zuno could not read that image. Try another one.");
+    reader.readAsDataURL(picked);
+  };
+
+  const applyLink = (text: string) => {
+    const v = text.trim();
+    if (!v) return;
+    if (!/^https:\/\//i.test(v)) {
+      setProblem("The link must start with https://.");
+      return;
+    }
+    setProblem(null);
+    setLink("");
+    onChange(v);
+  };
+
+  return (
+    <div className="field image-field">
+      <span className="field-label">{label}, optional</span>
+      <div className="cover-row">
+        {value && <img className="cover-thumb" src={value} alt={`${label} preview`} />}
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => input.current?.click()}>
+          <ImagePlus size={18} strokeWidth={1.5} />
+          {value ? "Replace" : "Upload"}
+        </button>
+        {value && (
+          <button type="button" className="btn btn-quiet btn-sm" onClick={() => { setProblem(null); onChange(undefined); }}>
+            Remove
+          </button>
+        )}
+      </div>
+      <input
+        className="input"
+        type="url"
+        value={link}
+        placeholder="Paste https link"
+        aria-label={`${label} link`}
+        onChange={(e) => setLink(e.target.value)}
+        onBlur={() => applyLink(link)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            applyLink(link);
+          }
+        }}
+      />
+      {problem && (
+        <p className="field-hint image-problem" role="alert">
+          {problem}
+        </p>
+      )}
+      <input
+        ref={input}
+        type="file"
+        accept={ALLOWED_IMAGE_MIME.join(",")}
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(e) => {
+          onPick(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+/** Live math preview, shown only when the text contains a dollar sign. */
+function MathPreview({ text }: { text: string }) {
+  if (!text.includes("$")) return null;
+  return (
+    <p className="math-preview" aria-label="Preview">
+      <RichText text={text} />
+    </p>
+  );
+}
+
+const MATH_HINT = "Math: wrap LaTeX in $\u2026$ or $$\u2026$$";
+
+/** Whole seconds, blank allowed, clamped to 0..maxTimeLimit. */
+function clampSeconds(raw: string): number {
+  const n = Math.floor(Number(raw));
+  return Number.isFinite(n) ? Math.min(JEOPARDY_LIMITS.maxTimeLimit, Math.max(0, n)) : 0;
+}
 
 export function JeopardyVisualEditor({ onBack, onHost, onAppearance }: Props) {
   const [draft, setDraft] = useState<Draft>(() => reviveDraft(loadDraft()) ?? newDraft());
@@ -181,10 +289,10 @@ export function JeopardyVisualEditor({ onBack, onHost, onAppearance }: Props) {
             Add category
           </button>
 
-          <p className="side-label">Final round</p>
+          <p className="side-label">Final question</p>
           <button type="button" className={`cat-row${selected === FINAL ? " is-on" : ""}`} aria-current={selected === FINAL ? "true" : undefined} onClick={() => setSelected(FINAL)}>
             <span className="cat-n">F</span>
-            <span className="cat-name">Final Jeopardy</span>
+            <span className="cat-name">Final question</span>
             <span className="cat-count">{final.enabled ? "On" : "Off"}</span>
           </button>
         </nav>
@@ -263,15 +371,45 @@ export function JeopardyVisualEditor({ onBack, onHost, onAppearance }: Props) {
                     <label className="field">
                       <span className="field-label">Clue</span>
                       <textarea className="textarea" rows={2} value={q.clue} maxLength={LIMITS.maxTextLength} placeholder={catIndex === 0 && qi === 0 ? "This negatively charged particle is found outside the nucleus" : undefined} onChange={(e) => setQuestion(q.id, { clue: e.target.value })} />
+                      <span className="field-hint">{MATH_HINT}</span>
                     </label>
+                    <MathPreview text={q.clue} />
                     <div className="clue-card-row">
                       <label className="field">
                         <span className="field-label">Answer</span>
                         <input className="input" value={q.answer} maxLength={LIMITS.maxTextLength} placeholder={catIndex === 0 && qi === 0 ? "What is an electron?" : undefined} onChange={(e) => setQuestion(q.id, { answer: e.target.value })} />
+                        <MathPreview text={q.answer} />
                       </label>
                       <label className="field">
                         <span className="field-label">Explanation, optional</span>
                         <input className="input" value={q.explanation ?? ""} maxLength={LIMITS.maxTextLength} onChange={(e) => setQuestion(q.id, { explanation: e.target.value })} />
+                        <MathPreview text={q.explanation ?? ""} />
+                      </label>
+                    </div>
+                    <div className="clue-card-row">
+                      <ImageField label="Clue image" value={q.clueImage} onChange={(v) => setQuestion(q.id, { clueImage: v })} />
+                      <ImageField label="Answer image" value={q.answerImage} onChange={(v) => setQuestion(q.id, { answerImage: v })} />
+                    </div>
+                    <div className="clue-card-row clue-options">
+                      <label className="switch">
+                        <span>Daily Double</span>
+                        <input type="checkbox" checked={q.dailyDouble === true} onChange={(e) => setQuestion(q.id, { dailyDouble: e.target.checked ? true : undefined })} />
+                        <span className="switch-track" />
+                      </label>
+                      <label className="field">
+                        <span className="field-label">Time limit in seconds, optional</span>
+                        <input
+                          className="input"
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          max={JEOPARDY_LIMITS.maxTimeLimit}
+                          step={1}
+                          value={typeof q.timeLimit === "number" ? q.timeLimit : ""}
+                          placeholder="Game default"
+                          onChange={(e) => setQuestion(q.id, { timeLimit: e.target.value === "" ? undefined : clampSeconds(e.target.value) })}
+                        />
+                        <span className="field-hint">Blank uses the game default. 0 means no timer.</span>
                       </label>
                     </div>
                   </li>
@@ -287,11 +425,11 @@ export function JeopardyVisualEditor({ onBack, onHost, onAppearance }: Props) {
 
           {selected === FINAL && (
             <div className="final-editor">
-              <h2 className="main-heading">Final Jeopardy</h2>
+              <h2 className="main-heading">Final question</h2>
               <label className="switch">
                 <span>
-                  Include a final round
-                  <span className="field-hint switch-hint">One last clue where teams wager their points</span>
+                  Include a final question
+                  <span className="field-hint switch-hint">One last clue at the end of the game</span>
                 </span>
                 <input type="checkbox" checked={final.enabled} onChange={(e) => setFinal({ enabled: e.target.checked })} />
                 <span className="switch-track" />
@@ -299,17 +437,32 @@ export function JeopardyVisualEditor({ onBack, onHost, onAppearance }: Props) {
               {final.enabled && (
                 <div className="final-fields">
                   <label className="field">
+                    <span className="field-label">When to play it</span>
+                    <select className="select" value={final.mode} onChange={(e) => setFinal({ mode: e.target.value as FinalMode })}>
+                      {FINAL_MODES.map((m) => (
+                        <option key={m} value={m}>
+                          {FINAL_MODE_LABELS[m]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
                     <span className="field-label">Category</span>
                     <input className="input" value={final.category} maxLength={80} onChange={(e) => setFinal({ category: e.target.value })} />
                   </label>
                   <label className="field">
                     <span className="field-label">Clue</span>
                     <textarea className="textarea" rows={3} value={final.clue} maxLength={LIMITS.maxTextLength} onChange={(e) => setFinal({ clue: e.target.value })} />
+                    <span className="field-hint">{MATH_HINT}</span>
                   </label>
+                  <MathPreview text={final.clue} />
                   <label className="field">
                     <span className="field-label">Answer</span>
                     <input className="input" value={final.answer} maxLength={LIMITS.maxTextLength} onChange={(e) => setFinal({ answer: e.target.value })} />
+                    <MathPreview text={final.answer} />
                   </label>
+                  <ImageField label="Clue image" value={final.clueImage} onChange={(v) => setFinal({ clueImage: v })} />
+                  <ImageField label="Answer image" value={final.answerImage} onChange={(v) => setFinal({ answerImage: v })} />
                 </div>
               )}
             </div>
@@ -413,6 +566,14 @@ export function JeopardyVisualEditor({ onBack, onHost, onAppearance }: Props) {
               <input type="checkbox" checked={draft.settings.showExplanations} onChange={(e) => patch((d) => ({ ...d, settings: { ...d.settings, showExplanations: e.target.checked } }))} />
               <span className="switch-track" />
             </label>
+            <label className="field">
+              <span className="field-label">Default time per clue (seconds, 0 = off)</span>
+              <input className="input" type="number" inputMode="numeric" min={0} max={JEOPARDY_LIMITS.maxTimeLimit} step={1} value={draft.settings.timeLimitSeconds} onChange={(e) => patch((d) => ({ ...d, settings: { ...d.settings, timeLimitSeconds: clampSeconds(e.target.value) } }))} />
+            </label>
+            <label className="field">
+              <span className="field-label">Final question time (seconds, 0 = off)</span>
+              <input className="input" type="number" inputMode="numeric" min={0} max={JEOPARDY_LIMITS.maxTimeLimit} step={1} value={draft.settings.finalTimeLimitSeconds} onChange={(e) => patch((d) => ({ ...d, settings: { ...d.settings, finalTimeLimitSeconds: clampSeconds(e.target.value) } }))} />
+            </label>
           </section>
 
           <section className="aside-block card" aria-live="polite">
@@ -488,13 +649,14 @@ function PreviewDialog({ file, onClose }: { file: JeopardyFile; onClose: () => v
                   return (
                     <div key={`${c.id}-${r}`} className={`mini-cell${q ? "" : " is-gap"}${q && !isQuestionComplete(q) ? " is-open" : ""}`} title={q && !isQuestionComplete(q) ? "This clue is not finished" : undefined}>
                       {q ? (Number.isFinite(q.value) && q.value > 0 ? q.value : "?") : ""}
+                      {q?.dailyDouble && <span className="dd-mark" title="Daily Double">DD</span>}
                     </div>
                   );
                 }),
               )}
             </div>
           )}
-          {file.content.finalJeopardy.enabled && <p className="meta">Final round: {file.content.finalJeopardy.category || "no category yet"}</p>}
+          {file.content.finalJeopardy.enabled && <p className="meta">Final question: {file.content.finalJeopardy.category || "no category yet"}</p>}
           <div className="dialog-actions" data-nav-row="0">
             <button type="button" className="btn btn-primary" data-autofocus onClick={close}>
               Close preview
