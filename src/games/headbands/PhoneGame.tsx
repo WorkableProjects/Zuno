@@ -3,6 +3,7 @@ import { CircleCheck, EyeOff, HelpCircle, Pause, Send, SkipForward, X } from "lu
 import type { HeadbandsIdentity } from "../../game-files/schema/headbands";
 import { ActivityLog } from "./ActivityLog";
 import { IdentityCard } from "./IdentityCard";
+import { HeadbandsTable } from "./HeadbandsTable";
 import type { GroupAnswer, LogEntry } from "./headbandsEngine";
 import { sendMove, type LobbyState, type OnlineGame, type PlayerMove } from "./lobby";
 
@@ -112,6 +113,11 @@ export function PhoneGame({ code, me, lobby, game }: Props) {
             })()}
           </>
         )}
+
+        <HeadbandsTable
+          mode={game.mode}
+          seats={players.map((p) => ({ id: p.id, name: p.name, card: cardFor(lobby, p.id), hidden: p.id === me && !p.solved, solved: p.solved, current: p.id === game.current, isMe: p.id === me }))}
+        />
 
         {problem && (
           <p className="field-hint hb-phone-problem" role="alert">

@@ -1,15 +1,17 @@
-import { Moon, Sun, X } from "lucide-react";
-import type { Theme } from "../../app/storage";
+import { Monitor, Moon, Smartphone, Sun, X } from "lucide-react";
+import type { Device, Theme } from "../../app/storage";
 import { Dialog } from "../ui/Dialog";
 import "./settings.css";
 
 interface Props {
   theme: Theme;
   onTheme: (theme: Theme) => void;
+  device: Device;
+  onDevice: (device: Device) => void;
   onClose: () => void;
 }
 
-export function SettingsPanel({ theme, onTheme, onClose }: Props) {
+export function SettingsPanel({ theme, onTheme, device, onDevice, onClose }: Props) {
   return (
     <Dialog title="Settings" onClose={onClose} variant="sheet">
       {(close) => (
@@ -47,6 +49,26 @@ export function SettingsPanel({ theme, onTheme, onClose }: Props) {
               ))}
             </div>
             <p className="field-hint">Saved on this device. Zuno has no accounts.</p>
+          </div>
+
+          <div className="field">
+            <span className="field-label" id="device-label">
+              Layout
+            </span>
+            <div className="segmented" role="radiogroup" aria-labelledby="device-label" data-nav-row="1">
+              {(
+                [
+                  ["desktop", "Desktop", Monitor],
+                  ["mobile", "Mobile", Smartphone],
+                ] as const
+              ).map(([value, label, Icon]) => (
+                <button key={value} type="button" role="radio" aria-checked={device === value} className={`segment${device === value ? " is-on" : ""}`} onClick={() => onDevice(value)}>
+                  <Icon size={18} strokeWidth={1.5} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="field-hint">Desktop uses the full width. Mobile stays compact and vertical.</p>
           </div>
         </>
       )}

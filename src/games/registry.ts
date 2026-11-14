@@ -1,5 +1,6 @@
 import type { BackgroundPreset, GameFile, ValidationResult } from "../game-files/schema/common";
 import { HEADBANDS_TYPE, eligibleIdentities, validateHeadbands, type HeadbandsFile } from "../game-files/schema/headbands";
+import { LIAR_TYPE, validateLiar, type LiarFile } from "../game-files/schema/liar";
 import { JEOPARDY_TYPE, countClues, validateJeopardy, type JeopardyFile } from "../game-files/schema/jeopardy";
 
 /**
@@ -84,6 +85,32 @@ const engines: GameEngine[] = [
       ];
     },
     // The host may play too, so the preview never lists the deck.
+    listing: () => null,
+  },
+  {
+    gameType: LIAR_TYPE,
+    title: "LIAR",
+    description: "Two truths and a lie. Each storyteller shares three statements with follow-up questions, the group investigates, then everyone votes on the lie.",
+    schemaVersions: [1],
+    hasBuilder: false,
+    appearance: { accentColor: "#FF6B8B", backgroundPreset: "aurora" },
+    validate: validateLiar as GameEngine["validate"],
+    artwork: null,
+    sampleFile: "liar-prompts.zuno.json",
+    fileHolds: "optional question prompts and default settings",
+    buildTitle: "Build a LIAR deck",
+    summarize: (f) => {
+      const n = (f as LiarFile).content.questionPrompts.length;
+      return `${n} question ${n === 1 ? "prompt" : "prompts"}`;
+    },
+    stats: (f) => {
+      const file = f as LiarFile;
+      return [
+        ["Question prompts", file.content.questionPrompts.length],
+        ["Players", `${file.settings.minPlayers} to ${file.settings.maxPlayers}`],
+        ["Scoring", file.settings.scoringEnabled ? "On" : "Off"],
+      ];
+    },
     listing: () => null,
   },
 ];

@@ -37,6 +37,19 @@ function CardsCover() {
   );
 }
 
+/** Cover for LIAR: three statements, one of them struck through. */
+function LiarCover() {
+  return (
+    <svg className="tile-img" viewBox="0 0 120 120" aria-hidden="true">
+      <rect width="120" height="120" className="cover-bg" />
+      <rect x="20" y="28" width="80" height="16" rx="5" className="cover-cell" />
+      <rect x="20" y="52" width="80" height="16" rx="5" className="cover-lit" />
+      <rect x="20" y="76" width="80" height="16" rx="5" className="cover-cell" />
+      <text x="60" y="64" textAnchor="middle" className="cover-mark">LIAR</text>
+    </svg>
+  );
+}
+
 function FileCover({ item }: { item: RailItem }) {
   const [failed, setFailed] = useState(false);
   const cover = item.backdrop.cover;
@@ -101,7 +114,7 @@ export function GameTile({ item, active, onSelect, onActivate }: Props) {
     >
       <span className="tile-shadow" />
       <span className="tile-art">
-        {item.kind === "engine" && (item.gameType === "headbands" ? <CardsCover /> : <BoardCover />)}
+        {item.kind === "engine" && (item.gameType === "headbands" ? <CardsCover /> : item.gameType === "liar" ? <LiarCover /> : <BoardCover />)}
         {item.kind === "file" && <FileCover item={item} />}
         {item.kind === "build" && (
           <span className="tile-img tile-create">

@@ -6,6 +6,7 @@ import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog, Dialog } from "../../components/ui/Dialog";
 import type { HeadbandsStart } from "./HeadbandsSetup";
 import { IdentityCard } from "./IdentityCard";
+import { HeadbandsTable } from "./HeadbandsTable";
 import { ActivityLog } from "./ActivityLog";
 import { moveToAction, publishGame, watchMoves, type OnlineGame } from "./lobby";
 import {
@@ -275,6 +276,13 @@ function Turn({ file, state, current, online, dispatch, onGuess }: { file: Headb
                 </button>
               </div>
             </div>
+          ) : online ? (
+            <div className="hb-table-host">
+              <HeadbandsTable
+                mode={state.mode}
+                seats={activePlayers(state).map((p) => ({ id: p.id, name: p.name, card: deck.get(p.identityId) ?? null, hidden: false, solved: p.solved, current: p.id === current.id, isMe: false }))}
+              />
+            </div>
           ) : !state.cardVisible ? (
             <div className="hb-cover">
               <EyeOff size={28} strokeWidth={1.5} />
@@ -321,7 +329,7 @@ function Turn({ file, state, current, online, dispatch, onGuess }: { file: Headb
           </label>
           <div className="hb-answers" role="group" aria-label="The group answers" data-nav-row="2">
             {ANSWERS.map(([value, label]) => (
-              <button key={value} type="button" className={`btn hb-answer hb-answer-${value}`} disabled={busy} data-autofocus={state.cardVisible && !busy && value === "yes" ? "" : undefined} onClick={() => ask(value)}>
+              <button key={value} type="button" className={`btn hb-answer hb-answer-${value}`} disabled={busy} data-autofocus={(state.cardVisible || online) && !busy && value === "yes" ? "" : undefined} onClick={() => ask(value)}>
                 {label}
               </button>
             ))}

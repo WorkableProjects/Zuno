@@ -755,3 +755,72 @@
 .hb-log-guess.is-correct .hb-log-text {
   color: var(--positive);
 }
+
+/* ---------- Table: every player and their headband card ---------- */
+.hb-table {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px 16px;
+}
+.hb-seat {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 96px;
+  max-width: 160px;
+  padding: 8px 6px;
+  border-radius: var(--r-ctl);
+  border: 1px solid transparent;
+}
+.hb-seat.is-current {
+  border-color: var(--game, var(--accent));
+  background: color-mix(in oklab, var(--game, var(--accent)) 10%, transparent);
+}
+.hb-seat-tag {
+  min-height: 1.2em;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--game, var(--accent));
+}
+.hb-seat-card {
+  transform: rotate(-2deg);
+}
+.hb-seat:nth-child(even) .hb-seat-card {
+  transform: rotate(2deg);
+}
+.hb-seat-unknown {
+  opacity: 0.7;
+}
+.hb-seat-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-weight: 600;
+  background: var(--surface);
+  border: 2px solid var(--hairline);
+}
+.hb-seat.is-me .hb-seat-avatar {
+  border-color: var(--game, var(--accent));
+}
+.hb-seat-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.hb-seat.is-solved .hb-seat-name {
+  color: var(--text-2);
+}
+.hb-table-host {
+  padding: 16px;
+}
