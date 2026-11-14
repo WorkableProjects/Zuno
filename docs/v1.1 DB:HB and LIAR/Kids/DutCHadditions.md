@@ -1,0 +1,7 @@
+- Polish of both games & polishing with LIAR
+- More animations (like an intro animation every startup, each element moving or page change, etc.)
+- More dynamic backgrounds (when hovered for so long, more elements come in to match the music)
+- Ensure music loops (with fade in/out)
+- Fix many UI discrepancies (e.g., in Jeopardy, text of each team name is not aligned with its score -- need to fix app-wide)
+- Make the UI Unforgettable; even with the PS5 Dashboard inspired dashboard, make it more memorable -- big research first
+- Move game files from the right side next to each game to UNDER their respective games when the parent game is chosen (e.g, Science Review on Jeopardy UDNER Jeopardy when hovered but Science Review smaller but chooseale)
