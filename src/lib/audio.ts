@@ -10,7 +10,7 @@ export type SoundTheme = "jeopardy" | "headbands" | "liar";
 const TRACKS: Record<SoundTheme, string> = {
   jeopardy: "ZunoApody (Jpdy).mp3",
   headbands: "LoungeAble (Headbands).mp3",
-  liar: "Fibline (LIAR).mp3",
+  liar: "Liar's Little Clue.mp3",
 };
 
 const MUTE_KEY = "zuno.muted";
