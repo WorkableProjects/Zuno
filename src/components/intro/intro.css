@@ -7,7 +7,37 @@
   align-content: center;
   gap: 20px;
   background: var(--bg);
-  animation: intro-out 500ms var(--ease) 1400ms forwards;
+  cursor: pointer;
+  transition: opacity 420ms var(--ease), visibility 0s linear 420ms;
+}
+.intro.is-leaving {
+  opacity: 0;
+  visibility: hidden;
+}
+.intro-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  color: var(--text);
+  font-size: 15px;
+  animation: intro-fade 600ms var(--ease) 1100ms both, intro-pulse 2.4s ease-in-out 1700ms infinite;
+}
+.intro-note {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 12px;
+  animation: intro-fade 600ms var(--ease) 1300ms both;
+}
+@keyframes intro-fade {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@keyframes intro-pulse {
+  50% { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro *,
+  .intro { animation: none !important; }
 }
 .intro-mark {
   animation: intro-rise 900ms var(--ease) both;
@@ -25,9 +55,6 @@
 }
 @keyframes intro-line {
   from { opacity: 0; transform: scaleX(0); }
-}
-@keyframes intro-out {
-  to { opacity: 0; visibility: hidden; }
 }
 /* Dashboard elements arrive in sequence once the intro lifts. */
 .dash .dash-header,

@@ -163,6 +163,33 @@ export function stopMusic(fadeMs = FADE_OUT_MS) {
   });
 }
 
+/**
+ * Called from a click or key press. Browsers only let a page play sound after
+ * one, so each track is started silently and stopped inside that gesture;
+ * from then on hovering can start the music.
+ */
+export function unlockAudio() {
+  blocked = false;
+  (Object.keys(TRACKS) as SoundTheme[]).forEach((t) => {
+    const a = player(t);
+    if (!a || a === playing) return;
+    try {
+      a.muted = true;
+      const started = a.play();
+      const reset = () => {
+        if (a === playing) return;
+        a.pause();
+        a.currentTime = 0;
+        a.muted = false;
+      };
+      if (started) started.then(reset, () => (a.muted = false));
+      else reset();
+    } catch {
+      a.muted = false;
+    }
+  });
+}
+
 /** Warm up every track so none has to load when the music starts. */
 function preloadAll() {
   (Object.keys(TRACKS) as SoundTheme[]).forEach((t) => {
