@@ -37,15 +37,20 @@ function CardsCover() {
   );
 }
 
-/** Cover for LIAR: three statements, one of them struck through. */
+/** Cover for LIAR: a speech bubble of three statements, one struck out and stamped. */
 function LiarCover() {
   return (
     <svg className="tile-img" viewBox="0 0 120 120" aria-hidden="true">
       <rect width="120" height="120" className="cover-bg" />
-      <rect x="20" y="28" width="80" height="16" rx="5" className="cover-cell" />
-      <rect x="20" y="52" width="80" height="16" rx="5" className="cover-lit" />
-      <rect x="20" y="76" width="80" height="16" rx="5" className="cover-cell" />
-      <text x="60" y="64" textAnchor="middle" className="cover-mark">LIAR</text>
+      <path d="M22 26h76a8 8 0 0 1 8 8v42a8 8 0 0 1-8 8H52l-16 13v-13H22a8 8 0 0 1-8-8V34a8 8 0 0 1 8-8z" className="cover-cell" />
+      <rect x="26" y="38" width="54" height="7" rx="3.5" className="cover-head" />
+      <rect x="26" y="52" width="62" height="7" rx="3.5" className="cover-head" />
+      <rect x="26" y="66" width="44" height="7" rx="3.5" className="cover-head" />
+      <rect x="22" y="54.5" width="70" height="2.5" rx="1.25" className="cover-lit" />
+      <g transform="rotate(-14 86 74)">
+        <rect x="68" y="64" width="38" height="20" rx="4" className="cover-stamp" />
+        <text x="87" y="79" textAnchor="middle" className="cover-stamp-text">LIE</text>
+      </g>
     </svg>
   );
 }

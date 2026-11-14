@@ -4,11 +4,12 @@
  * simply means silence. Nothing here can throw into the app.
  */
 
-export type SoundTheme = "jeopardy" | "headbands";
+export type SoundTheme = "jeopardy" | "headbands" | "liar";
 
 const TRACKS: Record<SoundTheme, string> = {
   jeopardy: "ZunoApody (Jpdy).mp3",
   headbands: "LoungeAble (Headbands).mp3",
+  liar: "Fibline (LIAR).mp3",
 };
 
 const MUTE_KEY = "zuno.muted";

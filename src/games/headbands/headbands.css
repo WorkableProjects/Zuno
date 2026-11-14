@@ -824,3 +824,17 @@
 .hb-table-host {
   padding: 16px;
 }
+
+/* Online host: plays like everyone else, with a slim strip of host-only moves above. */
+.hb-host-play {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.hb-host-strip {
+  flex-wrap: wrap;
+  padding: 10px 14px;
+}

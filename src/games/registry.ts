@@ -17,7 +17,7 @@ export interface GameEngine {
   appearance: { accentColor: string; backgroundPreset: BackgroundPreset };
   validate: (raw: Record<string, unknown>) => ValidationResult<GameFile>;
   /** Decorative scene drawn behind the dashboard for this engine. */
-  artwork: "board" | "cards" | null;
+  artwork: "board" | "cards" | "statements" | null;
   /** A sample in public/samples that the importer can load. */
   sampleFile: string;
   /** What a game file holds, for the import screen. */
@@ -95,7 +95,7 @@ const engines: GameEngine[] = [
     hasBuilder: false,
     appearance: { accentColor: "#FF6B8B", backgroundPreset: "aurora" },
     validate: validateLiar as GameEngine["validate"],
-    artwork: null,
+    artwork: "statements",
     sampleFile: "liar-prompts.zuno.json",
     fileHolds: "optional question prompts and default settings",
     buildTitle: "Build a LIAR deck",

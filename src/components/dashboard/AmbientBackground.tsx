@@ -10,7 +10,7 @@ export interface BackdropSpec {
   accent: string;
   preset: BackgroundPreset;
   /** Optional engine artwork drawn into the generated scene. */
-  artwork: "board" | "cards" | null;
+  artwork: "board" | "cards" | "statements" | null;
 }
 
 const BOARD_VALUES = [100, 200, 300, 400, 500];
@@ -85,6 +85,34 @@ function CardsArt() {
   );
 }
 
+/** Generic statements for the LIAR scene. Never from a loaded file. */
+const STATEMENT_SETS = [
+  ["I have met a famous chef", "I can juggle five balls", "I was born on a boat"],
+  ["I have never seen snow", "I once won a spelling bee", "I keep a pet snail"],
+  ["I have climbed a volcano", "I speak three languages", "I hate chocolate"],
+];
+
+/**
+ * Three statement cards, drawn in code. They drift, then one of them is
+ * stamped as the lie before the set changes.
+ */
+function StatementsArt() {
+  const [set, setSet] = useState(0);
+  const lines = STATEMENT_SETS[set];
+  const lie = set % 3 === 0 ? 1 : set % 3 === 1 ? 2 : 0;
+  return (
+    <div className="art-statements" aria-hidden="true" onAnimationIteration={(e) => e.target === e.currentTarget && setSet((s) => (s + 1) % STATEMENT_SETS.length)}>
+      {lines.map((text, i) => (
+        <div key={`${set}-${i}`} className={`art-statement${i === lie ? " is-lie" : ""}`} style={{ "--i": i } as CSSProperties}>
+          <span className="art-statement-num">{i + 1}</span>
+          <span className="art-statement-text">{text}</span>
+          {i === lie && <span className="art-stamp">LIE</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Abstract scene generated from a game's accent color and preset. */
 function Scene({ accent, preset, artwork }: Pick<BackdropSpec, "accent" | "preset" | "artwork">) {
   const style = useMemo(() => {
@@ -106,6 +134,7 @@ function Scene({ accent, preset, artwork }: Pick<BackdropSpec, "accent" | "prese
       {preset === "horizon" && <span className="sun" />}
       {artwork === "board" && <BoardArt />}
       {artwork === "cards" && <CardsArt />}
+      {artwork === "statements" && <StatementsArt />}
     </div>
   );
 }

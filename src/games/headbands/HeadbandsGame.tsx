@@ -6,9 +6,9 @@ import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog, Dialog } from "../../components/ui/Dialog";
 import type { HeadbandsStart } from "./HeadbandsSetup";
 import { IdentityCard } from "./IdentityCard";
-import { HeadbandsTable } from "./HeadbandsTable";
+import { PhoneGame } from "./PhoneGame";
 import { ActivityLog } from "./ActivityLog";
-import { moveToAction, publishGame, watchMoves, type OnlineGame } from "./lobby";
+import { moveToAction, playerId, publishGame, watchLobby, watchMoves, type LobbyState, type OnlineGame, type PlayerMove } from "./lobby";
 import {
   activePlayers,
   createSession,
@@ -72,6 +72,20 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
   const [guessOpen, setGuessOpen] = useState(false);
   const [playersOpen, setPlayersOpen] = useState(false);
   const stage = useRef<HTMLDivElement>(null);
+  /** Online, the host is a regular player on this device. */
+  const me = useMemo(() => playerId(), []);
+  const [lobby, setLobby] = useState<LobbyState | null>(null);
+  useEffect(() => {
+    if (!lobbyCode) return;
+    return watchLobby(lobbyCode, setLobby, () => undefined);
+  }, [lobbyCode]);
+  const onHostMove = useCallback(
+    (move: PlayerMove) => {
+      const action = moveToAction(move, me);
+      if (action) dispatch(action);
+    },
+    [me],
+  );
 
   const current = getPlayer(state, state.current);
   const solved = solvedCount(state);
@@ -142,7 +156,13 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
       </header>
 
       <div className="stage hb-stage" ref={stage} key={state.phase === "over" ? "over" : `turn-${state.turn}`}>
-        {state.phase === "play" && current && <Turn file={file} state={state} current={current} online={!!lobbyCode} dispatch={dispatch} onGuess={() => setGuessOpen(true)} />}
+        {state.phase === "play" && current && lobbyCode && (
+          <div className="hb-host-play">
+            <HostStrip state={state} current={current} dispatch={dispatch} />
+            {lobby ? <PhoneGame code={lobbyCode} me={me} lobby={lobby} game={toOnline(state)} onMove={onHostMove} /> : <p className="meta" role="status">Connecting…</p>}
+          </div>
+        )}
+        {state.phase === "play" && current && !lobbyCode && <Turn file={file} state={state} current={current} dispatch={dispatch} onGuess={() => setGuessOpen(true)} />}
         {state.phase === "over" && <Recap file={file} state={state} onReveal={() => setConfirm("reveal")} onAgain={onAgain} onExit={onExit} />}
       </div>
 
@@ -199,7 +219,37 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
   );
 }
 
-function Turn({ file, state, current, online, dispatch, onGuess }: { file: HeadbandsFile; state: SessionState; current: Player; online: boolean; dispatch: Dispatch; onGuess: () => void }) {
+/**
+ * Online host controls. The host plays like everyone else, so this never shows
+ * any card: only the moves a host may need to make for the table.
+ */
+function HostStrip({ state, current, dispatch }: { state: SessionState; current: Player; dispatch: Dispatch }) {
+  const feedback = state.lastGuess && state.lastGuess.playerId === current.id ? state.lastGuess : null;
+  const busy = state.paused || feedback !== null;
+  return (
+    <div className="hb-host hb-host-strip card" data-nav-row="3" aria-label="Host controls" role="group">
+      <span className="meta">Host</span>
+      <button type="button" className="btn btn-quiet btn-sm" disabled={busy} onClick={() => dispatch({ type: "skip" })}>
+        <SkipForward size={16} strokeWidth={1.5} />
+        Skip {current.name}
+      </button>
+      {feedback && !feedback.correct && (
+        <button type="button" className="btn btn-quiet btn-sm" onClick={() => dispatch({ type: "markCorrect" })}>
+          <Check size={16} strokeWidth={1.5} />
+          Accept “{feedback.guess}”
+        </button>
+      )}
+      {state.undo && (
+        <button type="button" className="btn btn-quiet btn-sm" onClick={() => dispatch({ type: "undoOverride" })}>
+          <Undo2 size={16} strokeWidth={1.5} />
+          Undo last override
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile; state: SessionState; current: Player; dispatch: Dispatch; onGuess: () => void }) {
   const deck = useMemo(() => deckOf(file.content.identities), [file]);
   const [question, setQuestion] = useState("");
   const { index, total } = turnPosition(state);
@@ -276,13 +326,6 @@ function Turn({ file, state, current, online, dispatch, onGuess }: { file: Headb
                 </button>
               </div>
             </div>
-          ) : online ? (
-            <div className="hb-table-host">
-              <HeadbandsTable
-                mode={state.mode}
-                seats={activePlayers(state).map((p) => ({ id: p.id, name: p.name, card: deck.get(p.identityId) ?? null, hidden: false, solved: p.solved, current: p.id === current.id, isMe: false }))}
-              />
-            </div>
           ) : !state.cardVisible ? (
             <div className="hb-cover">
               <EyeOff size={28} strokeWidth={1.5} />
@@ -329,7 +372,7 @@ function Turn({ file, state, current, online, dispatch, onGuess }: { file: Headb
           </label>
           <div className="hb-answers" role="group" aria-label="The group answers" data-nav-row="2">
             {ANSWERS.map(([value, label]) => (
-              <button key={value} type="button" className={`btn hb-answer hb-answer-${value}`} disabled={busy} data-autofocus={(state.cardVisible || online) && !busy && value === "yes" ? "" : undefined} onClick={() => ask(value)}>
+              <button key={value} type="button" className={`btn hb-answer hb-answer-${value}`} disabled={busy} data-autofocus={state.cardVisible && !busy && value === "yes" ? "" : undefined} onClick={() => ask(value)}>
                 {label}
               </button>
             ))}
@@ -339,7 +382,6 @@ function Turn({ file, state, current, online, dispatch, onGuess }: { file: Headb
           </div>
           <p className="field-hint">
             {state.rules.continueAfterYes ? "A Yes keeps the turn; a No passes it." : "Each answer passes the turn."} Not sure lets {current.name} ask again. Typing the question is optional.
-            {online && " Players can also ask, answer, guess and skip from their phones."}
           </p>
         </div>
 

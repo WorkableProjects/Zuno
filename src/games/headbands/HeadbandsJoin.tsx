@@ -170,7 +170,7 @@ export function HeadbandsJoin({ code: linkCode, onExit }: Props) {
   );
 }
 
-function WriteFor({ code, me, targetName, lobby }: { code: string; me: string; targetName: string; lobby: LobbyState }) {
+export function WriteFor({ code, me, targetName, lobby }: { code: string; me: string; targetName: string; lobby: LobbyState }) {
   const saved = lobby.entries[me];
   const mode = lobby.mode;
   const [text, setText] = useState(saved?.text ?? "");
