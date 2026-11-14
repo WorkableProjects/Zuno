@@ -84,3 +84,7 @@ html[data-device="mobile"] .liar-setup { max-width: 560px; }
 html[data-device="mobile"] .liar-prep { grid-template-columns: minmax(0, 1fr); }
 html[data-device="mobile"] .btn,
 html[data-device="mobile"] .icon-btn { min-height: 44px; }
+
+/* Jeopardy: use the extra width on desktop, stay compact on mobile. */
+html[data-device="desktop"] .setup { max-width: min(1560px, 100%); }
+html[data-device="mobile"] .setup { max-width: 560px; grid-template-columns: minmax(0, 1fr); gap: 32px; }
