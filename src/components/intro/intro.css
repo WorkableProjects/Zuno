@@ -61,13 +61,89 @@ html.intro-playing .dash * { animation-play-state: paused; }
   display: grid;
   gap: 10px;
 }
-.sound-toggle {
+.sound-control {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sound-toggle {
   background: color-mix(in oklab, var(--surface) 90%, transparent);
   border: 1px solid var(--hairline);
+}
+/* The meter sits above the speaker and opens on hover or keyboard focus. */
+.sound-meter {
+  position: absolute;
+  bottom: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* Padding bridges the gap to the button so the pointer never falls through. */
+  padding: 12px 10px 14px;
+  margin-bottom: 0;
+  border-radius: 14px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 0s linear 160ms;
+}
+.sound-meter::after {
+  content: "";
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 10px;
+}
+.sound-control:hover .sound-meter,
+.sound-control:focus-within .sound-meter {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-8px);
+  transition-delay: 0s;
+}
+.sound-level {
+  min-width: 3ch;
+  color: var(--text-2);
+  font: 600 12px/1 var(--font-body, inherit);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.sound-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 6px;
+  height: 120px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 3px;
+  background: linear-gradient(to top, var(--accent) var(--level), var(--surface-3) var(--level));
+  cursor: pointer;
+}
+.sound-slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.sound-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+.sound-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
 }
 
 /* ---------- Device layouts ---------- */
