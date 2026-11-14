@@ -1,3 +1,4 @@
-Add music for LIAR
-Add animated background for LIAR
-New icon for LIAR
+- Add music for LIAR (public/music/Liar's Little Clue.mp3)
+- Add animated background for LIAR
+- New icon for LIAR
+- Fix music for ALL games (previous 2 don't work)
