@@ -24,6 +24,9 @@ let muted = readMuted();
 let theme: SoundTheme = "jeopardy";
 let playing: HTMLAudioElement | null = null;
 let hoverTimer: number | undefined;
+/** Set when the browser refused to play; the next click or key press retries. */
+let blocked = false;
+let hoveringTile = false;
 const players = new Map<SoundTheme, HTMLAudioElement | null>();
 const listeners = new Set<() => void>();
 
@@ -105,8 +108,12 @@ export function startMusic() {
   try {
     audio.volume = 0;
     audio.currentTime = 0;
-    audio.play()?.catch(() => undefined); // Autoplay not allowed yet: ignore.
     playing = audio;
+    audio.play()?.catch(() => {
+      // The browser refused: no click or key press on the page yet. Try again on the next one.
+      if (playing === audio) playing = null;
+      blocked = true;
+    });
     fadeTo(audio, VOLUME, FADE_IN_MS);
   } catch {
     /* ignore */
@@ -147,12 +154,22 @@ export function installHoverSounds(): () => void {
     const tile = (e.target as Element | null)?.closest?.(TILE_SELECTOR) ?? null;
     if (tile === current) return;
     current = tile;
+    hoveringTile = !!tile;
     stopMusic();
     if (!tile) return;
     // The tile selects itself on hover, so the theme is that game's by the time this fires.
     hoverTimer = window.setTimeout(startMusic, HOVER_DELAY_MS);
   };
+  // Browsers only allow sound after the person clicks or types on the page.
+  const onGesture = () => {
+    if (!blocked) return;
+    blocked = false;
+    if (hoveringTile) startMusic();
+  };
+  document.addEventListener("pointerdown", onGesture, true);
+  document.addEventListener("keydown", onGesture, true);
   const onLeave = () => {
+    hoveringTile = false;
     current = null;
     stopMusic();
   };
@@ -161,6 +178,8 @@ export function installHoverSounds(): () => void {
   return () => {
     document.removeEventListener("pointerover", onOver);
     document.documentElement.removeEventListener("pointerleave", onLeave);
+    document.removeEventListener("pointerdown", onGesture, true);
+    document.removeEventListener("keydown", onGesture, true);
     stopMusic();
   };
 }
