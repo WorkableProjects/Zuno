@@ -8,7 +8,7 @@ import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../l
  */
 export function SoundToggle() {
   const muted = useSyncExternalStore(subscribeMuted, isMuted, () => false);
-  const volume = useSyncExternalStore(subscribeMuted, getVolume, () => 0.3);
+  const volume = useSyncExternalStore(subscribeMuted, getVolume, () => 0.7);
   const percent = Math.round(volume * 100);
   const silent = muted || percent === 0;
   const Icon = silent ? VolumeX : percent < 34 ? Volume : percent < 67 ? Volume1 : Volume2;
@@ -39,7 +39,7 @@ export function SoundToggle() {
         title={muted ? "Sound off" : `Volume ${percent}%`}
         onClick={() => {
           // Unmuting at 0% would still be silent, so bring the level back up.
-          if (muted && percent === 0) setVolume(0.3);
+          if (muted && percent === 0) setVolume(0.7);
           setMuted(!muted);
         }}
       >

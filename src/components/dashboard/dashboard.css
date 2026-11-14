@@ -487,6 +487,8 @@
 }
 .dash-tagline {
   margin-left: auto;
+  /* Leaves the corner to the sound control. */
+  margin-right: 56px;
   font-size: 13px;
   line-height: 16px;
   color: var(--text-3);

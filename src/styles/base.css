@@ -413,6 +413,8 @@ svg {
   display: flex;
   flex-direction: column;
   padding: 0 var(--page-x);
+  /* Room at the bottom so the last controls can scroll clear of the sound control. */
+  padding-bottom: 64px;
   animation: screen-in var(--t-slow) var(--ease) both;
 }
 .screen-bar {

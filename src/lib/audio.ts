@@ -14,14 +14,16 @@ const TRACKS: Record<SoundTheme, string> = {
 };
 
 const MUTE_KEY = "zuno.muted";
-const VOLUME_KEY = "zuno.volume";
-const DEFAULT_VOLUME = 0.3;
+const VOLUME_KEY = "zuno.level";
+/** The meter's 0-100% maps onto quieter real gain: 70% on the meter plays at 0.3. */
+const GAIN_AT_FULL = 0.3 / 0.7;
+const DEFAULT_VOLUME = 0.7;
 /** Quick fades used when switching games or nudging the volume. */
 const CROSSFADE_MS = 900;
 /** Gap allowed between tiles before the music counts as left. */
 const LEAVE_GRACE_MS = 1500;
 /** How long the pointer rests on a tile before its music starts. */
-const HOVER_DELAY_MS = 5000;
+const HOVER_DELAY_MS = 1700;
 const FADE_IN_MS = 1800;
 const FADE_OUT_MS = 700;
 
@@ -54,7 +56,7 @@ function readVolume(): number {
 }
 
 export const isMuted = () => muted;
-/** Music volume from 0 to 1. */
+/** Meter level from 0 to 1, as shown to the person. */
 export const getVolume = () => volume;
 
 export function setVolume(next: number) {
@@ -64,7 +66,7 @@ export function setVolume(next: number) {
   } catch {
     /* storage unavailable: the level lasts for this visit */
   }
-  if (playing) fadeTo(playing, volume, 120);
+  if (playing) fadeTo(playing, volume * GAIN_AT_FULL, 120);
   // Dragging the level up from zero turns sound back on.
   if (muted && volume > 0) setMuted(false);
   else listeners.forEach((l) => l());
@@ -144,7 +146,7 @@ export function startMusic(fadeMs = FADE_IN_MS) {
       if (playing === audio) playing = null;
       blocked = true;
     });
-    fadeTo(audio, volume, fadeMs);
+    fadeTo(audio, volume * GAIN_AT_FULL, fadeMs);
   } catch {
     /* ignore */
   }
