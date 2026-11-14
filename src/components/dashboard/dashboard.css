@@ -340,6 +340,16 @@
 .cover-lit {
   fill: var(--game);
 }
+.cover-stamp {
+  fill: none;
+  stroke: var(--game);
+  stroke-width: 3;
+}
+.cover-stamp-text {
+  fill: var(--game);
+  font: 700 14px/1 var(--font-display);
+  letter-spacing: 0.06em;
+}
 .cover-mark {
   fill: #0b1018;
   font: 600 26px/1 var(--font-display);
@@ -477,6 +487,8 @@
 }
 .dash-tagline {
   margin-left: auto;
+  /* Leaves the corner to the sound control. */
+  margin-right: 56px;
   font-size: 13px;
   line-height: 16px;
   color: var(--text-3);

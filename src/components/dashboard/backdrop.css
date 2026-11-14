@@ -431,7 +431,121 @@
   text-align: center;
 }
 
+/* ---------- Engine artwork: LIAR's three statements ---------- */
+.art-statements {
+  position: absolute;
+  right: clamp(72px, 12vw, 240px);
+  top: 50%;
+  width: min(30vw, 420px);
+  display: grid;
+  gap: 18px;
+  transform: translateY(-50%) rotate(-3deg);
+  /* One cycle per statement set; the iteration swaps the set. */
+  animation: statements-cycle 9s var(--ease) infinite;
+}
+@keyframes statements-cycle {
+  0% {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  8%,
+  90% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -12px;
+  }
+}
+.art-statement {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface-2) 86%, transparent);
+  box-shadow: var(--top-light), 0 20px 50px rgb(0 0 0 / 0.32);
+  animation: statement-bob 6s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -2s);
+}
+.art-statement:nth-child(2) {
+  margin-left: 28px;
+}
+@keyframes statement-bob {
+  from {
+    translate: 0 -4px;
+  }
+  to {
+    translate: 0 4px;
+  }
+}
+.art-statement-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--c1) 80%, var(--surface-3));
+  color: #0b1018;
+  font: 600 16px/1 var(--font-display);
+}
+.art-statement-text {
+  color: var(--text);
+  font: 500 clamp(15px, 1.4vw, 21px) / 1.2 var(--font-display);
+}
+.art-statement.is-lie .art-statement-text {
+  animation: lie-strike 9s var(--ease) infinite;
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 55% / 0% 2px;
+}
+@keyframes lie-strike {
+  0%,
+  52% {
+    background-size: 0% 2px;
+    opacity: 1;
+  }
+  62%,
+  100% {
+    background-size: 100% 2px;
+    opacity: 0.55;
+  }
+}
+.art-stamp {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  padding: 4px 12px;
+  border: 3px solid var(--c1);
+  border-radius: 8px;
+  color: var(--c1);
+  font: 700 22px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transform: translateY(-50%) rotate(-12deg) scale(1.8);
+  animation: lie-stamp 9s var(--ease) infinite;
+}
+@keyframes lie-stamp {
+  0%,
+  55% {
+    opacity: 0;
+    transform: translateY(-50%) rotate(-12deg) scale(1.8);
+  }
+  60%,
+  90% {
+    opacity: 0.95;
+    transform: translateY(-50%) rotate(-12deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) rotate(-12deg) scale(1);
+  }
+}
+
 @media (max-width: 900px) {
+  .art-statements,
   .art-board,
   .art-cards {
     display: none;
@@ -513,11 +627,13 @@
 }
 /* Engine artwork belongs to the dashboard. Behind working screens it steps away. */
 .art-board,
-.art-cards {
+.art-cards,
+.art-statements {
   transition: opacity var(--t-slow) var(--ease);
 }
 .backdrop.is-dim .art-board,
-.backdrop.is-dim .art-cards {
+.backdrop.is-dim .art-cards,
+.backdrop.is-dim .art-statements {
   opacity: 0;
 }
 
@@ -526,6 +642,7 @@
   .sun,
   .art-cards,
   .art-card-flip,
+  .art-statement,
   .art-cell.is-pick,
   .art-cell.is-pick::before {
     animation: none !important;

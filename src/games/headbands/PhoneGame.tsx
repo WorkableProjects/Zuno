@@ -12,6 +12,8 @@ interface Props {
   me: string;
   lobby: LobbyState;
   game: OnlineGame;
+  /** Set on the host's device, which applies its own moves directly instead of sending them. */
+  onMove?: (move: PlayerMove) => void;
 }
 
 const ANSWERS: Array<[GroupAnswer, string]> = [
@@ -34,7 +36,7 @@ export function cardFor(lobby: LobbyState, target: string): HeadbandsIdentity | 
 const answerLabel = (a: GroupAnswer) => (a === "yes" ? "Yes" : a === "no" ? "No" : "Not sure");
 
 /** A player's phone during the game: whose turn it is, everyone else's card, their moves and the activity. */
-export function PhoneGame({ code, me, lobby, game }: Props) {
+export function PhoneGame({ code, me, lobby, game, onMove }: Props) {
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const nameOf = (id: string) => game.players.find((p) => p.id === id)?.name ?? lobby.players[id]?.name ?? "Someone";
@@ -51,7 +53,8 @@ export function PhoneGame({ code, me, lobby, game }: Props) {
     setSending(true);
     setProblem(null);
     try {
-      await sendMove(code, me, move);
+      if (onMove) onMove(move);
+      else await sendMove(code, me, move);
     } catch {
       setProblem("That didn't reach the host. Check your connection and try again.");
     } finally {
@@ -285,7 +288,7 @@ function PhoneRecap({ lobby, game, me, nameOf }: { lobby: LobbyState; game: Onli
             );
           })}
         </ol>
-        <p className="meta">The host can start another round from their screen.</p>
+        <p className="meta">The host can start another round.</p>
       </section>
       <section className="card hb-phone-card">
         <h2 className="aside-title">Activity</h2>

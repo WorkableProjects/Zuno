@@ -59,10 +59,11 @@ function backdropForGame(game: LoadedGame): BackdropSpec {
   };
 }
 
-/** Jeopardy screens use the Jeopardy track; everything else uses the Headbands track. */
-function backdropTheme(screen: Screen, tileGameType: string): "jeopardy" | "headbands" {
-  if (screen.name === "dashboard") return tileGameType === "jeopardy" ? "jeopardy" : "headbands";
+/** Each game's screens use its own track; everything else uses the Headbands track. */
+function backdropTheme(screen: Screen, tileGameType: string): "jeopardy" | "headbands" | "liar" {
+  if (screen.name === "dashboard") return tileGameType === "jeopardy" ? "jeopardy" : tileGameType === "liar" ? "liar" : "headbands";
   if (screen.name === "setup" || screen.name === "play") return "jeopardy";
+  if (screen.name === "liarSetup" || screen.name === "liarPlay") return "liar";
   return "headbands";
 }
 

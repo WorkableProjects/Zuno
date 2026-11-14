@@ -7,7 +7,37 @@
   align-content: center;
   gap: 20px;
   background: var(--bg);
-  animation: intro-out 500ms var(--ease) 1400ms forwards;
+  cursor: pointer;
+  transition: opacity 420ms var(--ease), visibility 0s linear 420ms;
+}
+.intro.is-leaving {
+  opacity: 0;
+  visibility: hidden;
+}
+.intro-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  color: var(--text);
+  font-size: 15px;
+  animation: intro-fade 600ms var(--ease) 1100ms both, intro-pulse 2.4s ease-in-out 1700ms infinite;
+}
+.intro-note {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 12px;
+  animation: intro-fade 600ms var(--ease) 1300ms both;
+}
+@keyframes intro-fade {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@keyframes intro-pulse {
+  50% { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro *,
+  .intro { animation: none !important; }
 }
 .intro-mark {
   animation: intro-rise 900ms var(--ease) both;
@@ -25,9 +55,6 @@
 }
 @keyframes intro-line {
   from { opacity: 0; transform: scaleX(0); }
-}
-@keyframes intro-out {
-  to { opacity: 0; visibility: hidden; }
 }
 /* Dashboard elements arrive in sequence once the intro lifts. */
 .dash .dash-header,
@@ -61,13 +88,89 @@ html.intro-playing .dash * { animation-play-state: paused; }
   display: grid;
   gap: 10px;
 }
-.sound-toggle {
+.sound-control {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sound-toggle {
   background: color-mix(in oklab, var(--surface) 90%, transparent);
   border: 1px solid var(--hairline);
+}
+/* The meter sits above the speaker and opens on hover or keyboard focus. */
+.sound-meter {
+  position: absolute;
+  bottom: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* Padding bridges the gap to the button so the pointer never falls through. */
+  padding: 12px 10px 14px;
+  margin-bottom: 0;
+  border-radius: 14px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 0s linear 160ms;
+}
+.sound-meter::after {
+  content: "";
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 10px;
+}
+.sound-control:hover .sound-meter,
+.sound-control:focus-within .sound-meter {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-8px);
+  transition-delay: 0s;
+}
+.sound-level {
+  min-width: 3ch;
+  color: var(--text-2);
+  font: 600 12px/1 var(--font-body, inherit);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.sound-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 6px;
+  height: 120px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 3px;
+  background: linear-gradient(to top, var(--accent) var(--level), var(--surface-3) var(--level));
+  cursor: pointer;
+}
+.sound-slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.sound-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+.sound-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
 }
 
 /* ---------- Device layouts ---------- */

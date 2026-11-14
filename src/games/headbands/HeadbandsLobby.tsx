@@ -7,7 +7,8 @@ import { ConfirmDialog } from "../../components/ui/Dialog";
 import type { HeadbandsStart } from "./HeadbandsSetup";
 import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
 import { customIdentityProblems, shuffle, writingPairs, type Rules } from "./headbandsEngine";
-import { closeLobby, createLobby, joinLink, leaveLobby, setLobby, syncCircle, watchLobby, type LobbyState } from "./lobby";
+import { closeLobby, createLobby, joinLink, joinLobby, leaveLobby, playerId, setLobby, syncCircle, watchLobby, type LobbyState } from "./lobby";
+import { WriteFor } from "./HeadbandsJoin";
 import "../jeopardy/jeopardy.css";
 import "../jeopardy/setup.css";
 import "./headbands.css";
@@ -43,7 +44,19 @@ export function lobbyToGame(base: HeadbandsFile, lobby: LobbyState, rules: Rules
   };
 }
 
+const NAME_KEY = "zuno.hb.name";
+const savedName = () => {
+  try {
+    return localStorage.getItem(NAME_KEY) ?? "";
+  } catch {
+    return "";
+  }
+};
+
 export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStart }: Props) {
+  /** The host plays too: this device joins its own room as a regular player. */
+  const me = playerId();
+  const [name, setName] = useState(savedName);
   const [code, setCode] = useState<string | null>(initialCode);
   const [lobby, setLobbyState] = useState<LobbyState | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -73,6 +86,21 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
     return watchLobby(code, setLobbyState, setProblem);
   }, [code]);
 
+  // Join (or rename) the host as a player once they have a name.
+  const trimmed = name.trim();
+  useEffect(() => {
+    if (!code || trimmed === "") return;
+    const t = window.setTimeout(() => {
+      void joinLobby(code, me, trimmed).catch(() => setProblem("Could not add you to the room."));
+      try {
+        localStorage.setItem(NAME_KEY, trimmed);
+      } catch {
+        /* optional */
+      }
+    }, 350);
+    return () => window.clearTimeout(t);
+  }, [code, me, trimmed]);
+
   useEffect(() => {
     if (code) void QRCode.toDataURL(joinLink(code), { margin: 1, width: 240 }).then(setQr).catch(() => setQr(""));
   }, [code]);
@@ -92,6 +120,8 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
   const tooMany = circle.length > HEADBANDS_LIMITS.maxPlayers;
   const written = circle.filter((id) => lobby?.entries[id] && customIdentityProblems(lobby.entries[id], lobby.mode).length === 0);
   const allWritten = circle.length >= 2 && written.length === circle.length;
+  const hostIn = circle.includes(me);
+  const myTarget = hostIn && circle.length >= 2 ? circle[(circle.indexOf(me) + 1) % circle.length] : null;
   const missingPlayers = phase === "writing" && lobby ? Object.keys(lobby.players).length !== circle.length || circle.some((id) => !(id in lobby.players)) : false;
 
   const moveIn = (i: number, by: -1 | 1) => {
@@ -138,7 +168,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
       <div className="setup">
         <div className="setup-intro">
           <p className="meta">{base.metadata.title}</p>
-          <h1 className="page-title setup-title">Join on your phone</h1>
+          <h1 className="page-title setup-title">Invite the players</h1>
           {code ? (
             <div className="hb-join-info">
               {qr && <img className="hb-qr" src={qr} alt={`QR code to join room ${code}`} width={200} height={200} />}
@@ -158,8 +188,8 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
             !problem && <p className="page-lede" role="status">Opening a room…</p>
           )}
           <div className="hb-howto">
-            <p>Everyone scans the code, or opens Zuno, picks Headbands and types the room code. Each player then writes, or uploads a picture, for the next player in the circle.</p>
-            <p>Nobody sees what was written for them. During the game everyone asks, answers, guesses and follows the activity on their own phone.</p>
+            <p>You play too. Everyone else scans the code, or opens Zuno, picks Headbands and types the room code. Each player, you included, then writes, or uploads a picture, for the next player in the circle.</p>
+            <p>When you start the game, every device shows everyone else's card but never its own.</p>
           </div>
           {problem && (
             <div className="notice notice-error" role="alert">
@@ -170,6 +200,16 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
         </div>
 
         <div className="setup-panel card">
+          <label className="field setup-field">
+            <span className="setup-label">Your name</span>
+            <input className="input" value={name} maxLength={24} autoComplete="nickname" disabled={phase !== "lobby"} placeholder="You play as well" onChange={(e) => setName(e.target.value)} />
+            {!hostIn && <span className="field-hint">Enter your name to join the circle.</span>}
+          </label>
+
+          {phase === "writing" && code && lobby && hostIn && myTarget && (
+            <WriteFor key={`${myTarget}-${lobby.mode}`} code={code} me={me} targetName={nameOf(myTarget)} lobby={lobby} />
+          )}
+
           <div className="setup-field">
             <span className="setup-label" id="lobby-mode">
               Players write
@@ -225,7 +265,8 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
                     <li key={id} className="hb-circle-row" data-nav-row={10 + writer}>
                       <span className="team-index">{writer + 1}</span>
                       <span className="hb-circle-who">
-                        <strong>{nameOf(id)}</strong> writes for {nameOf(circle[target])}
+                        <strong>{nameOf(id)}</strong>
+                        {id === me && <span className="meta"> (you)</span>} writes for {nameOf(circle[target])}
                       </span>
                       {phase === "writing" ? (
                         <span className={`hb-circle-status${done ? " is-done" : ""}`}>{done ? "Written" : "Writing…"}</span>
@@ -237,7 +278,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
                           <button type="button" className="icon-btn icon-btn-sm" aria-label={`Move ${nameOf(id)} later`} disabled={writer === circle.length - 1} onClick={() => moveIn(writer, 1)}>
                             <ArrowDown size={16} strokeWidth={1.5} />
                           </button>
-                          <button type="button" className="icon-btn icon-btn-sm" aria-label={`Remove ${nameOf(id)}`} onClick={() => code && void leaveLobby(code, id)}>
+                          <button type="button" className="icon-btn icon-btn-sm" aria-label={`Remove ${nameOf(id)}`} disabled={id === me} onClick={() => code && void leaveLobby(code, id)}>
                             <UserMinus size={16} strokeWidth={1.5} />
                           </button>
                         </span>
@@ -285,7 +326,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
 
           <div className="setup-actions hb-lobby-actions" data-nav-row="50">
             {phase === "lobby" && (
-              <button type="button" className="btn btn-primary" data-autofocus disabled={!code || circle.length < 2 || tooMany} onClick={() => code && void setLobby(code, { phase: "writing", entries: null })}>
+              <button type="button" className="btn btn-primary" data-autofocus disabled={!code || !hostIn || circle.length < 2 || tooMany} onClick={() => code && void setLobby(code, { phase: "writing", entries: null })}>
                 Everyone, start writing
               </button>
             )}
@@ -302,7 +343,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
               </>
             )}
           </div>
-          {phase === "lobby" && circle.length < 2 && <p className="field-hint">At least 2 players need to join.</p>}
+          {phase === "lobby" && circle.length < 2 && <p className="field-hint">At least 2 players, you included, need to be in the circle.</p>}
         </div>
       </div>
 
