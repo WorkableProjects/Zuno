@@ -141,6 +141,7 @@ const SETTLE_MS = 90;
 export function AmbientBackground({ spec, dim }: { spec: BackdropSpec; dim: boolean }) {
   const [layers, setLayers] = useState<BackdropSpec[]>([spec]);
   const root = useRef<HTMLDivElement>(null);
+  const [lingered, setLingered] = useState(false);
 
   useEffect(() => {
     // Wait a beat so racing across the rail does not start a fade per tile.
@@ -153,39 +154,29 @@ export function AmbientBackground({ spec, dim }: { spec: BackdropSpec; dim: bool
     return () => window.clearTimeout(settle);
   }, [spec]);
 
+  // The scene grows richer the longer it stays on screen. Time only, never the pointer.
+  useEffect(() => {
+    setLingered(false);
+    const t = window.setTimeout(() => setLingered(true), 12000);
+    return () => window.clearTimeout(t);
+  }, [spec.key]);
+
   useEffect(() => {
     if (layers.length < 2) return;
     const done = window.setTimeout(() => setLayers((prev) => prev.slice(-1)), FADE_MS + 40);
     return () => window.clearTimeout(done);
   }, [layers]);
 
-  // Very small pointer parallax. Purely decorative, so keyboard users miss nothing.
-  useEffect(() => {
-    const el = root.current;
-    if (!el || dim || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let frame = 0;
-    const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") return;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        el.style.setProperty("--px", `${((e.clientX / window.innerWidth - 0.5) * -10).toFixed(1)}px`);
-        el.style.setProperty("--py", `${((e.clientY / window.innerHeight - 0.5) * -6).toFixed(1)}px`);
-      });
-    };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      cancelAnimationFrame(frame);
-    };
-  }, [dim]);
-
   return (
-    <div ref={root} className={`backdrop${dim ? " is-dim" : ""}`} aria-hidden="true">
+    <div ref={root} className={`backdrop${dim ? " is-dim" : ""}${lingered ? " is-lingering" : ""}`} aria-hidden="true">
       <div className="bg-parallax">
         {layers.map((l) => (
           <Layer key={l.key} spec={l} />
         ))}
       </div>
+      <div className="backdrop-drift" />
+      <div className="backdrop-glitter" />
+      <div className="backdrop-glitter is-slow" />
       <div className="backdrop-grain" />
       <div className="backdrop-scrim" />
       <div className="backdrop-dim" />

@@ -1,0 +1,86 @@
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 20px;
+  background: var(--bg);
+  animation: intro-out 500ms var(--ease) 1400ms forwards;
+}
+.intro-mark {
+  animation: intro-rise 900ms var(--ease) both;
+}
+.intro-line {
+  width: 120px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--text-2), transparent);
+  transform-origin: center;
+  animation: intro-line 1100ms var(--ease) 300ms both;
+}
+@keyframes intro-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+}
+@keyframes intro-line {
+  from { opacity: 0; transform: scaleX(0); }
+}
+@keyframes intro-out {
+  to { opacity: 0; visibility: hidden; }
+}
+/* Dashboard elements arrive in sequence once the intro lifts. */
+.dash .dash-header,
+.dash .rail-slot,
+.dash .dash-foot {
+  animation: settle 600ms var(--ease) both;
+}
+.dash .dash-header { animation-delay: 60ms; }
+.dash .rail-slot { animation-delay: calc(140ms + var(--i, 0) * 70ms); }
+.dash .dash-foot { animation-delay: 560ms; }
+html.intro-playing .dash * { animation-play-state: paused; }
+
+.device-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in oklab, var(--bg) 80%, transparent);
+  backdrop-filter: blur(10px);
+}
+.device-card {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+}
+.device-options {
+  display: grid;
+  gap: 10px;
+}
+.sound-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  background: color-mix(in oklab, var(--surface) 90%, transparent);
+  border: 1px solid var(--hairline);
+}
+
+/* ---------- Device layouts ---------- */
+html[data-device="desktop"] .hb-turn {
+  max-width: min(1760px, 100%);
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 440px);
+}
+html[data-device="desktop"] .hb-recap { max-width: 1200px; }
+html[data-device="desktop"] .liar-game,
+html[data-device="desktop"] .liar-setup { max-width: min(1400px, 100%); }
+html[data-device="mobile"] .hb-turn { grid-template-columns: minmax(0, 1fr); max-width: 560px; }
+html[data-device="mobile"] .liar-game,
+html[data-device="mobile"] .liar-setup { max-width: 560px; }
+html[data-device="mobile"] .liar-prep { grid-template-columns: minmax(0, 1fr); }
+html[data-device="mobile"] .btn,
+html[data-device="mobile"] .icon-btn { min-height: 44px; }

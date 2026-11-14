@@ -60,6 +60,57 @@
   gap: 16px;
   flex: none;
 }
+.rail-slot {
+  position: relative;
+  align-items: flex-start;
+}
+.rail.has-files {
+  padding-bottom: 132px;
+  margin-bottom: -104px;
+}
+.rail-files {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  display: grid;
+  gap: 6px;
+  width: max(var(--tile), 190px);
+  animation: settle var(--t-slow) var(--ease) both;
+  z-index: 2;
+}
+.rail-file {
+  display: grid;
+  gap: 1px;
+  padding: 8px 12px;
+  text-align: left;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--game);
+  background: color-mix(in oklab, var(--surface) 90%, transparent);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--t-slow) var(--ease), transform var(--t-slow) var(--ease);
+}
+.rail-file:hover,
+.rail-file.is-active {
+  background: var(--surface-2);
+  transform: translateX(3px);
+}
+.rail-file-title {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rail-file-meta {
+  font-size: 11px;
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rail-divider {
   width: 1px;
   height: 48px;

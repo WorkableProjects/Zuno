@@ -11,8 +11,12 @@ import type { ImportSeed } from "../components/import/GameImporter";
 import { ImportScreen } from "../components/import/ImportScreen";
 import type { LoadedGame } from "../components/import/loadGame";
 import { useSpatialNav } from "../components/navigation/spatialNav";
+import { DevicePrompt, StartupIntro } from "../components/intro/Intro";
+import { SoundToggle } from "../components/ui/SoundToggle";
+import { installHoverSounds, setSoundTheme } from "../lib/audio";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
+import { LIAR_TYPE, type LiarFile } from "../game-files/schema/liar";
 import { HEADBANDS_TYPE, blankHeadbandsFile, type HeadbandsFile } from "../game-files/schema/headbands";
 import { JEOPARDY_TYPE, type JeopardyFile } from "../game-files/schema/jeopardy";
 import { HeadbandsGame } from "../games/headbands/HeadbandsGame";
@@ -20,11 +24,14 @@ import { HeadbandsJoin } from "../games/headbands/HeadbandsJoin";
 import { HeadbandsLobby } from "../games/headbands/HeadbandsLobby";
 import { HeadbandsSetup, type HeadbandsStart } from "../games/headbands/HeadbandsSetup";
 import { closeLobby, codeFromHash, lobbiesAvailable } from "../games/headbands/lobby";
+import { LiarGame } from "../games/liar/LiarGame";
+import { LiarSetup } from "../games/liar/LiarSetup";
+import type { Options as LiarOptions } from "../games/liar/liarEngine";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
 import { getEngine } from "../games/registry";
-import { forgetGame, loadLastTile, loadRecent, loadTheme, rememberGame, saveLastTile, saveTheme, type Theme } from "./storage";
+import { forgetGame, loadDevice, loadLastTile, loadRecent, loadTheme, rememberGame, saveDevice, saveLastTile, saveTheme, type Device, type Theme } from "./storage";
 
 type Screen =
   | { name: "dashboard" }
@@ -35,6 +42,8 @@ type Screen =
   | { name: "hbPlay"; game: LoadedGame<HeadbandsFile>; start: HeadbandsStart; lobbyCode?: string }
   | { name: "hbLobby"; base: HeadbandsFile; code: string | null }
   | { name: "hbJoin"; code: string | null }
+  | { name: "liarSetup"; game: LoadedGame<LiarFile> }
+  | { name: "liarPlay"; game: LoadedGame<LiarFile>; names: string[]; options: LiarOptions }
   | { name: "builder" }
   | { name: "editor"; gameType: string }
   | { name: "ai"; gameType: string };
@@ -48,6 +57,13 @@ function backdropForGame(game: LoadedGame): BackdropSpec {
     preset: appearance.backgroundPreset,
     artwork: getEngine(game.file.gameType)?.artwork ?? null,
   };
+}
+
+/** Jeopardy screens use the Jeopardy track; everything else uses the Headbands track. */
+function backdropTheme(screen: Screen, tileGameType: string): "jeopardy" | "headbands" {
+  if (screen.name === "dashboard") return tileGameType === "jeopardy" ? "jeopardy" : "headbands";
+  if (screen.name === "setup" || screen.name === "play") return "jeopardy";
+  return "headbands";
 }
 
 export function App() {
@@ -104,6 +120,18 @@ export function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  // Layout preference: asked once, then remembered. Defaults to a guess so the first paint is sensible.
+  const [device, setDevice] = useState<Device | null>(loadDevice);
+  useEffect(() => {
+    document.documentElement.dataset.device = device ?? (window.matchMedia?.("(max-width: 760px)").matches ? "mobile" : "desktop");
+  }, [device]);
+  const chooseDevice = useCallback((d: Device) => {
+    setDevice(d);
+    saveDevice(d);
+  }, []);
+
+  useEffect(() => installHoverSounds(), []);
+
   /** A validated file is about to be hosted: remember it, then set up the session. */
   const host = useCallback(
     (game: LoadedGame) => {
@@ -122,7 +150,8 @@ export function App() {
       });
       setRecent(list);
       setLoaded(game);
-      if (file.gameType === HEADBANDS_TYPE) push({ name: "hbSetup", game: game as LoadedGame<HeadbandsFile> });
+      if (file.gameType === LIAR_TYPE) push({ name: "liarSetup", game: game as LoadedGame<LiarFile> });
+      else if (file.gameType === HEADBANDS_TYPE) push({ name: "hbSetup", game: game as LoadedGame<HeadbandsFile> });
       else push({ name: "setup", game: game as LoadedGame<JeopardyFile> });
     },
     [push],
@@ -165,7 +194,7 @@ export function App() {
   if (screen.name === "editor") backdrop = draftBackdrop ?? buildBackdrop;
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
-  else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay") backdrop = backdropForGame(screen.game);
   else if (screen.name === "hbLobby") backdrop = backdropForGame({ file: screen.base, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
 
@@ -181,6 +210,8 @@ export function App() {
     setLoaded(null);
     pop();
   }, [pop]);
+
+  setSoundTheme(backdropTheme(screen, selected.gameType));
 
   return (
     <>
@@ -248,6 +279,8 @@ export function App() {
       )}
       {screen.name === "hbJoin" && <HeadbandsJoin code={screen.code} onExit={home} />}
       {screen.name === "hbPlay" && <HeadbandsGame key={stack.length} file={screen.game.file} start={screen.start} lobbyCode={screen.lobbyCode} onAgain={pop} onExit={home} />}
+      {screen.name === "liarSetup" && <LiarSetup game={screen.game} onBack={pop} onStart={(names, options) => push({ name: "liarPlay", game: screen.game, names, options })} />}
+      {screen.name === "liarPlay" && <LiarGame key={stack.length} file={screen.game.file} names={screen.names} options={screen.options} onAgain={pop} onExit={home} />}
       {screen.name === "builder" && (
         <BuilderHome
           gameType={buildType}
@@ -266,7 +299,10 @@ export function App() {
       {screen.name === "ai" &&
         (screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
 
-      {settingsOpen && <SettingsPanel theme={theme} onTheme={changeTheme} onClose={() => setSettingsOpen(false)} />}
+      <SoundToggle />
+      <StartupIntro />
+      {device === null && <DevicePrompt onChoose={chooseDevice} />}
+      {settingsOpen && <SettingsPanel theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} onClose={() => setSettingsOpen(false)} />}
     </>
   );
 }

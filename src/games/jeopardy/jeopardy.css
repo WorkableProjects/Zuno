@@ -219,7 +219,7 @@
 .score {
   position: relative;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
@@ -252,7 +252,7 @@
 }
 .score-edit {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   flex: none;
   padding: 2px 6px;
@@ -472,7 +472,7 @@
 .standing {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
   padding: 16px 0;
   border-top: 1px solid var(--hairline);

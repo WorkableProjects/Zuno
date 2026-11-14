@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "gameType": "liar",
+  "metadata": {
+    "title": "Party Starter",
+    "description": "Neutral follow-up questions to spark the investigation. Players write their own statements during the game.",
+    "author": "Zuno",
+    "coverImage": null
+  },
+  "appearance": { "accentColor": "#FF6B8B", "backgroundPreset": "aurora" },
+  "content": {
+    "questionPrompts": [
+      { "id": "prompt-next", "text": "What happened next?" },
+      { "id": "prompt-when", "text": "When did that happen?" },
+      { "id": "prompt-why", "text": "What made you try that?" },
+      { "id": "prompt-who", "text": "Who was with you?" },
+      { "id": "prompt-again", "text": "Would you do it again?" },
+      { "id": "prompt-detail", "text": "What is one detail you remember?" },
+      { "id": "prompt-feel", "text": "How did it feel at the time?" },
+      { "id": "prompt-learn", "text": "What did you learn from it?" }
+    ]
+  },
+  "settings": { "minPlayers": 3, "maxPlayers": 10, "defaultRounds": 1, "scoringEnabled": true, "allowAbstain": false }
+}

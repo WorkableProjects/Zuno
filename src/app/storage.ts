@@ -36,6 +36,16 @@ export function saveTheme(theme: Theme) {
   write(KEYS.theme, theme);
 }
 
+export type Device = "mobile" | "desktop";
+/** Null until the user has answered the launch question. */
+export function loadDevice(): Device | null {
+  const v = read("zuno.device");
+  return v === "mobile" || v === "desktop" ? v : null;
+}
+export function saveDevice(device: Device) {
+  write("zuno.device", device);
+}
+
 export function loadLastTile(): string | null {
   return read(KEYS.lastTile);
 }
