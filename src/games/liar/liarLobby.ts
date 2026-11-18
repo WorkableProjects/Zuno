@@ -24,6 +24,8 @@ import {
   type Statement,
   type Turn,
   type Vote,
+  tally,
+  type ScoreEvent,
 } from "./liarEngine";
 
 /**
@@ -64,6 +66,17 @@ export interface LiarOnline {
   votes: Record<string, Vote> | null;
   scores: Record<string, number>;
   recap: RecapEntry[];
+  /** State revision; phones ignore updates older than what they hold. */
+  revision?: number;
+  /** Score changes with the rule behind each (revealed turns only). */
+  scoreLog?: ScoreEvent[];
+  /** Totals during voting, only when live results are enabled. */
+  liveCounts?: number[] | null;
+}
+
+/** True when an incoming broadcast is older than the one already shown. */
+export function isStaleOnline(current: LiarOnline | null, incoming: LiarOnline): boolean {
+  return !!current && (incoming.revision ?? 0) < (current.revision ?? 0);
 }
 
 export type LiarMove =
@@ -87,9 +100,12 @@ export function toLiarOnline(s: LiarState): LiarOnline {
     statements: view?.statements ?? null,
     lieIndex: view?.lieIndex ?? null,
     voted: Object.keys(s.votes),
-    votes: revealed ? s.votes : null,
+    votes: revealed && !s.options.anonymousVotes ? s.votes : null,
     scores: s.scores,
-    recap: s.recap,
+    recap: s.options.anonymousVotes ? s.recap.map((r) => ({ ...r, votes: {} })) : s.recap,
+    revision: s.revision ?? 0,
+    scoreLog: s.scoreLog ?? [],
+    liveCounts: s.phase === "vote" && s.options.liveResults ? tally(s.votes).counts : null,
   };
 }
 

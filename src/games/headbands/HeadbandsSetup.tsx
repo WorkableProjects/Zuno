@@ -11,7 +11,7 @@ import type { LoadedGame } from "../../components/import/loadGame";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { useAutoFocus } from "../../components/ui/useAutoFocus";
 import { IdentityCard } from "./IdentityCard";
-import { deckOf, randomAssign, setupProblems, type PlayerSetup, type Rules } from "./headbandsEngine";
+import { deckHealth, deckOf, randomAssign, setupProblems, type PlayerSetup, type Rules } from "./headbandsEngine";
 import "../jeopardy/jeopardy.css";
 import "../jeopardy/setup.css";
 import "./headbands.css";
@@ -46,7 +46,12 @@ export function HeadbandsSetup({ game, onBack, onStart, onLobby }: Props) {
   const [names, setNames] = useState<string[]>(["Player 1", "Player 2", "Player 3"].slice(0, Math.max(2, Math.min(3, maxPlayers))));
   const [method, setMethod] = useState<Method>("random");
   const [showDeal, setShowDeal] = useState(false);
-  const [rules, setRules] = useState<Rules>({ continueAfterYes: file.settings.continueAfterYes, unlimitedGuesses: file.settings.unlimitedGuesses });
+  const [rules, setRules] = useState<Rules>({
+    continueAfterYes: file.settings.continueAfterYes,
+    unlimitedGuesses: file.settings.unlimitedGuesses,
+    duplicateQuestionCheck: file.settings.duplicateQuestionCheck ?? false,
+    maxGuessesPerIdentity: file.settings.maxGuessesPerIdentity ?? 0,
+  });
   const deal = (count: number, m: HeadbandsMode) => randomAssign(count, eligibleIdentities(file, m), allowDuplicates) ?? Array.from({ length: count }, () => "");
   const [assigned, setAssigned] = useState<string[]>(() => deal(names.length, mode));
   const root = useAutoFocus<HTMLElement>();
@@ -56,6 +61,7 @@ export function HeadbandsSetup({ game, onBack, onStart, onLobby }: Props) {
   const excluded = exclusionReasons(file, mode);
   const players: PlayerSetup[] = names.map((name, i) => ({ name, identityId: assigned[i] ?? "" }));
   const problems = setupProblems({ players, mode, deck, allowDuplicates, maxPlayers });
+  const health = deckHealth(file.content.identities, names.length);
 
   const changeMode = (m: HeadbandsMode) => {
     setMode(m);
@@ -261,6 +267,40 @@ export function HeadbandsSetup({ game, onBack, onStart, onLobby }: Props) {
               <span className="switch-track" />
             </label>
           </div>
+
+          <details className="setup-field">
+            <summary className="setup-label">Fairness settings</summary>
+            <label className="switch" data-nav-row="42">
+              <span>
+                Block repeated questions
+                <span className="field-hint switch-hint">A player cannot ask the same typed question twice.</span>
+              </span>
+              <input type="checkbox" checked={!!rules.duplicateQuestionCheck} onChange={(e) => setRules((r) => ({ ...r, duplicateQuestionCheck: e.target.checked }))} />
+              <span className="switch-track" />
+            </label>
+            <label className="field" data-nav-row="43">
+              <span>Attempts per identity</span>
+              <select className="input" value={rules.maxGuessesPerIdentity ?? 0} onChange={(e) => setRules((r) => ({ ...r, maxGuessesPerIdentity: Number(e.target.value) }))}>
+                <option value={0}>Unlimited</option>
+                {[1, 2, 3, 5].map((n) => (
+                  <option key={n} value={n}>
+                    {n} {n === 1 ? "guess" : "guesses"}, then passed
+                  </option>
+                ))}
+              </select>
+            </label>
+          </details>
+
+          <section className="setup-field" aria-label="Deck health">
+            <span className="setup-label">Deck health</span>
+            <dl className="hb-deck-health">
+              <div><dt>Text</dt><dd>{health.text}</dd></div>
+              <div><dt>Image</dt><dd>{health.image}</dd></div>
+              <div><dt>Duplicates</dt><dd>{health.duplicates}</dd></div>
+              <div><dt>Difficulty mix</dt><dd>{health.mix.easy} easy · {health.mix.medium} medium · {health.mix.hard} hard</dd></div>
+              <div><dt>Estimated round</dt><dd>~{health.estimatedMinutes} min</dd></div>
+            </dl>
+          </section>
 
           <div aria-live="polite">
             {problems.length === 0 ? (

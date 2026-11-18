@@ -1,7 +1,8 @@
-import { useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { Check, Eye, EyeOff, Pause, Play, Plus, SkipForward, Trash2, UserMinus, X } from "lucide-react";
 import type { LiarFile } from "../../game-files/schema/liar";
 import {
+  MAX_STATEMENT_LENGTH,
   STATEMENT_COUNT,
   activePlayers,
   allVotesIn,
@@ -13,6 +14,7 @@ import {
   tally,
   validateTurn,
   voters,
+  votePaths,
   votesIn,
   winners,
   type Options,
@@ -142,6 +144,34 @@ export function Prep({ name, prompts, onSubmit, direct = false }: { name: string
   const [tried, setTried] = useState(false);
   const [comfy, setComfy] = useState(false);
   const [preview, setPreview] = useState(false);
+  const draftKey = `zuno.liar.draft.${name}`;
+  const [saved] = useState<Turn | null>(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      return raw ? (JSON.parse(raw) as Turn) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [restorable, setRestorable] = useState(saved !== null);
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      try {
+        if (draft.statements.some((x) => x.text.trim() !== "")) localStorage.setItem(draftKey, JSON.stringify(draft));
+      } catch {
+        /* storage unavailable: drafts just are not kept */
+      }
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, [draft, draftKey]);
+  const submit = (t: Turn) => {
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {
+      /* ignore */
+    }
+    onSubmit(t);
+  };
   const errors = useMemo(() => validateTurn(draft), [draft]);
   const patch = (i: number, fn: (s: Statement) => Statement) => setDraft((d) => ({ ...d, statements: d.statements.map((s, k) => (k === i ? fn(s) : s)) }));
 
@@ -173,17 +203,25 @@ export function Prep({ name, prompts, onSubmit, direct = false }: { name: string
       onSubmit={(e) => {
         e.preventDefault();
         setTried(true);
-        if (errors.length === 0 && comfy) onSubmit(draft);
+        if (errors.length === 0 && comfy) submit(draft);
       }}
     >
       <h2 className="liar-h">{name}: two truths and a lie</h2>
-      <p className="meta">Write three statements, add a question for each, and mark the one that is false. Only you can see this screen.</p>
+      <p className="meta">Write three statements, add a question for each, and mark the one that is false. Only you can see this screen. Drafts are saved on this device.</p>
+      {restorable && saved && (
+        <div className="notice" role="status">
+          You have a saved draft.{" "}
+          <button type="button" className="btn btn-quiet btn-sm" onClick={() => { setDraft(saved); setRestorable(false); }}>Restore draft</button>
+          <button type="button" className="btn btn-quiet btn-sm" onClick={() => setRestorable(false)}>Start fresh</button>
+        </div>
+      )}
       {draft.statements.map((s, i) => (
         <fieldset key={i} className="liar-statement">
           <legend>Statement {i + 1}</legend>
           <label className="liar-field">
             <span className="field-label">What you will say</span>
             <input className="input" maxLength={200} value={s.text} data-autofocus={i === 0 ? "" : undefined} onChange={(e) => patch(i, (x) => ({ ...x, text: e.target.value }))} />
+            <span className="field-hint">{s.text.trim() === "" ? "No text entered" : `${s.text.length} / ${MAX_STATEMENT_LENGTH}`}</span>
           </label>
           {s.questions.map((q, k) => (
             <div key={k} className="liar-q">
@@ -346,6 +384,21 @@ function Reveal({ state, dispatch }: { state: ReturnType<typeof createSession>; 
         {t.counts.map((n, i) => <li key={i}>Statement {i + 1}: {n} {n === 1 ? "vote" : "votes"}</li>)}
         {t.abstained > 0 && <li>Abstained: {t.abstained}</li>}
       </ul>
+      <p className="meta">Storyteller: <strong>{byId[last.storytellerId]}</strong>. The lie: statement {last.turn.lieIndex + 1}.</p>
+      {!state.options.anonymousVotes && (
+        <ul className="liar-tally" aria-label="Vote paths">
+          {Object.entries(votePaths(state)).map(([id, path]) => (
+            <li key={id}>{byId[id]}: {path.map((r) => (r.vote === "abstain" ? "abstain" : `#${r.vote + 1}`) + (r.confidence !== undefined ? ` (${r.confidence}%)` : "")).join(" -> ")} {path[path.length - 1]?.vote === last.turn.lieIndex ? "(correct)" : "(wrong)"}</li>
+          ))}
+        </ul>
+      )}
+      {state.options.scoring && (
+        <ul className="liar-tally" aria-label="Points this turn" aria-live="polite">
+          {(state.scoreLog ?? []).filter((e) => e.round === state.round && e.turnIndex === state.turnIndex).map((e, i) => (
+            <li key={i}>{byId[e.playerId]} {e.points > 0 ? "+" : ""}{e.points}: {e.explanation}</li>
+          ))}
+        </ul>
+      )}
       <p className="meta">
         {correct.length > 0 ? `Spotted it: ${correct.join(", ")}.` : `Nobody spotted it. ${storyteller(state)?.name} fooled everyone.`}
         {t.counts.filter((n) => n > 0 && n === Math.max(...t.counts)).length > 1 ? " The vote was a tie." : ""}

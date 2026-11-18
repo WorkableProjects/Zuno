@@ -2,6 +2,7 @@ import { initializeApp, type FirebaseApp } from "firebase/app";
 import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, onValue, push, ref, remove, runTransaction, serverTimestamp, set, update, type Database } from "firebase/database";
 import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatarData";
 import type { HeadbandsMode } from "../../game-files/schema/headbands";
+import { CONFIDENCE_LABELS, GROUP_ANSWERS, type GuessConfidence } from "./headbandsEngine";
 import type { GroupAnswer, GuessOutcome, LogEntry, PendingQuestion, Player, Rules, SessionAction } from "./headbandsEngine";
 
 /**
@@ -55,7 +56,9 @@ export interface OnlineGame {
   revealed: boolean;
   endedEarly: boolean;
   order: string[];
-  players: Array<Pick<Player, "id" | "name" | "solved" | "solvedOrder" | "byHost" | "removed" | "questions" | "guesses">>;
+  players: Array<Pick<Player, "id" | "name" | "solved" | "solvedOrder" | "byHost" | "removed" | "questions" | "guesses" | "status" | "passes">>;
+  /** Host session revision; phones ignore older snapshots. */
+  revision?: number;
   pending: PendingQuestion | null;
   lastGuess: GuessOutcome | null;
   log: LogEntry[];
@@ -65,7 +68,7 @@ export interface OnlineGame {
 export type PlayerMove =
   | { type: "pose"; question: string }
   | { type: "ask"; answer: GroupAnswer }
-  | { type: "guess"; text: string }
+  | { type: "guess"; text: string; confidence?: GuessConfidence }
   | { type: "skip" }
   | { type: "continue" };
 
@@ -74,9 +77,9 @@ export function moveToAction(move: PlayerMove, from: string): SessionAction | nu
     case "pose":
       return typeof move.question === "string" ? { type: "pose", question: move.question, from } : null;
     case "ask":
-      return move.answer === "yes" || move.answer === "no" || move.answer === "unsure" ? { type: "ask", answer: move.answer, from } : null;
+      return (GROUP_ANSWERS as readonly unknown[]).includes(move.answer) ? { type: "ask", answer: move.answer, from } : null;
     case "guess":
-      return typeof move.text === "string" ? { type: "guess", text: move.text, from } : null;
+      return typeof move.text === "string" ? { type: "guess", text: move.text, from, ...(move.confidence && move.confidence in CONFIDENCE_LABELS ? { confidence: move.confidence } : {}) } : null;
     case "skip":
       return { type: "skip", from };
     case "continue":

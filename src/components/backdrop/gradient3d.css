@@ -188,92 +188,45 @@
 }
 
 
-/* ---------- 3D gradient space ----------
-   The lights live in a perspective space that fills the right side of the
-   screen. The space tilts and turns, and each light orbits at its own depth,
-   so the gradients slide past one another instead of drifting flat. */
+/* ---------- Gradient depth ----------
+   Depth is faked with 2D translate + scale only. Real 3D rotation of large
+   blurred layers made the browser clip them against plane edges, which drew
+   hard boxes and lines across the screen. Keep everything flat here. */
 .g3d {
   position: absolute;
-  inset: -20%;
-  perspective: 1400px;
-  perspective-origin: 68% 45%;
+  inset: 0;
+  overflow: hidden;
+  contain: paint;
 }
 .g3d-space {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
   animation: g3d-turn 48s ease-in-out infinite;
 }
 @keyframes g3d-turn {
-  0%,
-  100% {
-    transform: rotateX(10deg) rotateY(-16deg) rotateZ(0deg);
-  }
-  25% {
-    transform: rotateX(-6deg) rotateY(-4deg) rotateZ(3deg);
-  }
-  50% {
-    transform: rotateX(4deg) rotateY(14deg) rotateZ(-2deg);
-  }
-  75% {
-    transform: rotateX(12deg) rotateY(6deg) rotateZ(2deg);
-  }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(-2%, 1.5%, 0) scale(1.04); }
+  66% { transform: translate3d(1.5%, -1%, 0) scale(0.98); }
 }
-.g3d .scene {
-  inset: 0;
-  overflow: visible;
-  transform-style: preserve-3d;
-}
-.g3d .light {
-  mix-blend-mode: screen;
-}
-/* Each light gets its own depth and a 3D orbit. Presets keep their layout. */
-.g3d .light-a {
-  --z: 120px;
-  animation: g3d-orbit-a 30s ease-in-out infinite !important;
-}
-.g3d .light-b {
-  --z: -80px;
-  animation: g3d-orbit-b 38s ease-in-out infinite !important;
-}
-.g3d .light-c {
-  --z: 220px;
-  animation: g3d-orbit-c 46s ease-in-out infinite !important;
-}
+.g3d .scene { inset: 0; overflow: visible; }
+.g3d .light-a { animation: g3d-orbit-a 30s ease-in-out infinite !important; }
+.g3d .light-b { animation: g3d-orbit-b 38s ease-in-out infinite !important; }
+.g3d .light-c { animation: g3d-orbit-c 46s ease-in-out infinite !important; }
 @keyframes g3d-orbit-a {
-  0%,
-  100% {
-    transform: translate3d(-6%, 0, var(--z)) rotate(var(--rot, 0deg)) scale(1);
-  }
-  33% {
-    transform: translate3d(4%, -6%, calc(var(--z) + 160px)) rotate(calc(var(--rot, 0deg) + 10deg)) scale(1.08);
-  }
-  66% {
-    transform: translate3d(8%, 5%, calc(var(--z) - 120px)) rotate(calc(var(--rot, 0deg) - 6deg)) scale(0.96);
-  }
+  0%, 100% { transform: translate3d(-6%, 0, 0) rotate(var(--rot, 0deg)) scale(1); }
+  33% { transform: translate3d(4%, -6%, 0) rotate(calc(var(--rot, 0deg) + 10deg)) scale(1.12); }
+  66% { transform: translate3d(8%, 5%, 0) rotate(calc(var(--rot, 0deg) - 6deg)) scale(0.92); }
 }
 @keyframes g3d-orbit-b {
-  0%,
-  100% {
-    transform: translate3d(6%, 4%, var(--z)) rotate(var(--rot, 0deg)) scale(1.04);
-  }
-  40% {
-    transform: translate3d(-8%, -4%, calc(var(--z) - 180px)) rotate(calc(var(--rot, 0deg) - 12deg)) scale(1.12);
-  }
-  70% {
-    transform: translate3d(-2%, 8%, calc(var(--z) + 140px)) rotate(calc(var(--rot, 0deg) + 8deg)) scale(0.94);
-  }
+  0%, 100% { transform: translate3d(6%, 4%, 0) rotate(var(--rot, 0deg)) scale(1.04); }
+  40% { transform: translate3d(-8%, -4%, 0) rotate(calc(var(--rot, 0deg) - 12deg)) scale(0.9); }
+  70% { transform: translate3d(-2%, 8%, 0) rotate(calc(var(--rot, 0deg) + 8deg)) scale(1.1); }
 }
 @keyframes g3d-orbit-c {
-  0%,
-  100% {
-    transform: translate3d(0, -4%, var(--z)) rotate(var(--rot, 0deg)) scale(0.98);
-  }
-  50% {
-    transform: translate3d(-10%, 6%, calc(var(--z) - 240px)) rotate(calc(var(--rot, 0deg) + 16deg)) scale(1.1);
-  }
+  0%, 100% { transform: translate3d(0, -4%, 0) rotate(var(--rot, 0deg)) scale(1.02); }
+  50% { transform: translate3d(-10%, 6%, 0) rotate(calc(var(--rot, 0deg) + 16deg)) scale(0.88); }
 }
-/* A soft sheen that sweeps through the space and shifts the colors */
+/* A soft sheen that sweeps through and shifts the colors */
 .g3d-sheen {
   position: absolute;
   top: 18%;
@@ -281,17 +234,14 @@
   left: 46%;
   right: 12%;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, var(--c1), var(--c2), var(--c3), var(--c1));
+  background: radial-gradient(closest-side, var(--c2), transparent);
   opacity: calc(var(--field-opacity) * 0.35);
-  filter: blur(80px);
-  transform: translateZ(-200px);
-  animation: g3d-sheen 40s linear infinite;
+  animation: g3d-sheen 40s ease-in-out infinite alternate;
 }
 @keyframes g3d-sheen {
-  from {
-    transform: translateZ(-200px) rotateX(30deg) rotateZ(0deg);
-  }
-  to {
-    transform: translateZ(-200px) rotateX(30deg) rotateZ(360deg);
-  }
+  from { transform: translate3d(-4%, 2%, 0) scale(0.95); }
+  to { transform: translate3d(4%, -2%, 0) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .g3d-space, .g3d .light, .g3d-sheen { animation: none !important; }
 }

@@ -10,6 +10,8 @@ import { PhoneGame } from "./PhoneGame";
 import { useHeadbandsSounds } from "./useHeadbandsSounds";
 import { useJoinSound } from "../../lib/useGameSounds";
 import { customIdentityProblems } from "./headbandsEngine";
+import { adoptSeatId, clearSeat, loadSeat, saveSeat } from "../../lib/rejoin";
+import { isNewerRevision } from "./headbandsEngine";
 import { joinLobby, leaveLobby, lobbyExists, normalizeCode, playerId, submitEntry, watchLobby, type LobbyEntry, type LobbyState } from "./lobby";
 import "../jeopardy/setup.css";
 import "./headbands.css";
@@ -31,7 +33,10 @@ const savedName = () => {
 };
 
 /** A player's phone: join a room, then write the identity for the next player. */
+const seatAtLoad = loadSeat("headbands");
+
 export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
+  if (seatAtLoad && (!linkCode || linkCode === seatAtLoad.code)) adoptSeatId(seatAtLoad);
   const me = playerId();
   const [code, setCode] = useState(linkCode ?? "");
   const [name, setName] = useState(savedName);
@@ -46,28 +51,46 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
 
   useEffect(() => {
     if (!joined) return;
-    return watchLobby(joined, setLobby, setProblem);
+    // Ignore snapshots whose game is older than the one already shown.
+    return watchLobby(
+      joined,
+      (next) =>
+        setLobby((prev) => {
+          if (!next || !prev?.game || !next.game) return next;
+          return isNewerRevision(next.game as { revision?: number }, prev.game as { revision?: number }) || next.game.revision === prev.game.revision ? next : { ...next, game: prev.game };
+        }),
+      setProblem,
+    );
   }, [joined]);
 
-  const join = async () => {
-    const c = normalizeCode(code);
-    if (c.length !== 5 || name.trim() === "") return;
+  // A refresh or reopened tab rejoins the saved room.
+  useEffect(() => {
+    if (seatAtLoad && (!linkCode || linkCode === seatAtLoad.code)) void join(seatAtLoad.code, seatAtLoad.name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const join = async (rc?: string, rn?: string) => {
+    const c = normalizeCode(rc ?? code);
+    const nm = rn ?? name;
+    if (c.length !== 5 || nm.trim() === "") return;
     setBusy(true);
     setProblem(null);
     try {
       if (!(await lobbyExists(c))) {
         saveAvatar(avatar);
-        if (onOtherRoom && (await onOtherRoom(c, name.trim()))) return;
+        if (onOtherRoom && (await onOtherRoom(c, nm.trim()))) return;
+        if (rc) clearSeat("headbands");
         setProblem(`There is no open room ${c}. Check the code on the host's screen.`);
         return;
       }
-      await joinLobby(c, me, name, avatar);
+      await joinLobby(c, me, nm, avatar);
       saveAvatar(avatar);
       try {
-        localStorage.setItem(NAME_KEY, name.trim());
+        localStorage.setItem(NAME_KEY, nm.trim());
       } catch {
         /* optional */
       }
+      saveSeat("headbands", { code: c, name: nm.trim(), extra: `id:${me}` });
       setJoined(c);
     } catch {
       setProblem("Could not reach the room. Check your connection and try again.");
@@ -78,6 +101,7 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
 
   const leave = () => {
     if (joined) void leaveLobby(joined, me);
+    clearSeat("headbands");
     onExit();
   };
 

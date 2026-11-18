@@ -34,7 +34,8 @@ interface Props {
 const ANSWERS: Array<[GroupAnswer, string]> = [
   ["yes", "Yes"],
   ["no", "No"],
-  ["unsure", "Not sure"],
+  ["almost", "Almost"],
+  ["unsure", "Unsure"],
 ];
 
 /** The identity another player wrote for `target`: the writer sits just before them in the circle. */
@@ -58,7 +59,7 @@ export function cardFor(
 }
 
 const answerLabel = (a: GroupAnswer) =>
-  a === "yes" ? "Yes" : a === "no" ? "No" : "Not sure";
+  a === "yes" ? "Yes" : a === "no" ? "No" : a === "almost" ? "Almost" : "Unsure";
 
 /** A player's phone during the game: whose turn it is, everyone else's card, their moves and the activity. */
 export function PhoneGame({ code, me, lobby, game, onMove }: Props) {

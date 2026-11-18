@@ -5,7 +5,7 @@ import { useEscape } from "../../components/navigation/spatialNav";
 import { useAutoFocus } from "../../components/ui/useAutoFocus";
 import type { LiarFile } from "../../game-files/schema/liar";
 import { LIAR_LIMITS } from "../../game-files/schema/liar";
-import { validateSetup, type Options } from "./liarEngine";
+import { LIAR_PRESETS, estimateMinutes, scoreRulesFor, validateSetup, type Options } from "./liarEngine";
 import "./liar.css";
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
   onBack: () => void;
   onStart: (names: string[], options: Options) => void;
   /** Host this game online, with players on their own phones. */
-  onLobby?: () => void;
+  onLobby?: (options: Options) => void;
 }
 
 export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
@@ -24,10 +24,27 @@ export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
   const [scoring, setScoring] = useState(file.settings.scoringEnabled);
   const [abstain, setAbstain] = useState(file.settings.allowAbstain);
   const [tried, setTried] = useState(false);
+  const [preset, setPreset] = useState<string | null>(null);
+  const [discuss, setDiscuss] = useState(60);
+  const [hideHints, setHideHints] = useState(false);
+  const [liveResults, setLiveResults] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
+  const [streak, setStreak] = useState(false);
+  const applyPreset = (id: string) => {
+    const p = LIAR_PRESETS.find((x) => x.id === id);
+    if (!p) return;
+    setPreset(id);
+    setRounds(Math.min(LIAR_LIMITS.maxRounds, p.options.rounds));
+    setScoring(p.options.scoring);
+    setAbstain(p.options.allowAbstain);
+    setDiscuss(p.options.discussSeconds ?? 60);
+    setHideHints(!!p.options.hideHints);
+  };
   const root = useAutoFocus<HTMLElement>();
   useEscape(onBack);
 
-  const options: Options = { rounds, scoring, allowAbstain: abstain };
+  const options: Options = { rounds, scoring, allowAbstain: abstain, discussSeconds: discuss, hideHints, liveResults, anonymousVotes: anonymous, streakBonus: streak };
+  const minutes = estimateMinutes(Math.max(names.length, minPlayers), rounds, discuss);
   const errors = validateSetup(names, options, minPlayers, maxPlayers);
   const move = (i: number, d: number) =>
     setNames((p) => {
@@ -61,6 +78,18 @@ export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
             Each player shares two truths and a lie, with a follow-up question for every statement. The group asks questions, then votes on the lie. {minPlayers} to {maxPlayers} players.
           </p>
         </div>
+        <fieldset className="liar-presets" data-nav-row={5}>
+          <legend className="setup-label">Mode</legend>
+          {LIAR_PRESETS.map((p) => (
+            <button key={p.id} type="button" className={`card liar-preset${preset === p.id ? " is-active" : ""}`} aria-pressed={preset === p.id} onClick={() => applyPreset(p.id)}>
+              <strong>{p.label}</strong>
+              <span className="field-hint">{p.description}</span>
+            </button>
+          ))}
+        </fieldset>
+        <p className="meta" aria-live="polite">
+          About {minutes} minutes for {Math.max(names.length, minPlayers)} players and {rounds} {rounds === 1 ? "round" : "rounds"}. The storyteller is always known: players take turns in the order below.
+        </p>
         <div className="card liar-panel">
           <div className="liar-row">
             <span className="setup-label" id="liar-players">Players, in turn order</span>
@@ -122,8 +151,46 @@ export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
             <span className="switch-track" />
           </label>
 
+          <details className="liar-optional">
+            <summary>More options</summary>
+            <label className="liar-row">
+              <span className="setup-label">Discussion seconds</span>
+              <select className="input" value={discuss} onChange={(e) => setDiscuss(Number(e.target.value))}>
+                {[30, 60, 90, 120].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+            {([
+              ["Hide follow-up hints", "Hardcore: the group asks its own questions", hideHints, setHideHints],
+              ["Live vote totals", "Show totals while voting is open instead of at reveal", liveResults, setLiveResults],
+              ["Anonymous votes", "The reveal shows totals but not who voted for what", anonymous, setAnonymous],
+              ["Streak bonus", "+1 for a second correct pick in a row", streak, setStreak],
+            ] as const).map(([label, hint, value, set]) => (
+              <label key={label} className="switch">
+                <span>
+                  {label}
+                  <span className="field-hint switch-hint">{hint}</span>
+                </span>
+                <input type="checkbox" checked={value} onChange={(e) => set(e.target.checked)} />
+                <span className="switch-track" />
+              </label>
+            ))}
+          </details>
+          <div className="liar-rules">
+            <span className="setup-label">How points work</span>
+            <ul>{scoreRulesFor(options).map((r) => <li key={r}>{r}</li>)}</ul>
+          </div>
+          <details className="liar-optional">
+            <summary>First time? How a turn works</summary>
+            <ol>
+              <li>The storyteller privately writes three statements and marks the lie.</li>
+              <li>Statements are read out; the group asks questions.</li>
+              <li>Everyone else votes for the lie. You can change your vote until the host closes voting.</li>
+              <li>The reveal shows each statement, who voted for what, and the points.</li>
+            </ol>
+          </details>
+
           {tried && errors.length > 0 && (
-            <div className="notice" role="alert">
+            <div className="notice" role="alert" ref={(el) => el?.scrollIntoView({ block: "nearest" })}>
               <ul>{errors.map((e) => <li key={e}>{e}</li>)}</ul>
             </div>
           )}
@@ -133,13 +200,13 @@ export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
               Start game
             </button>
             {onLobby && (
-              <button type="button" className="btn btn-secondary" onClick={onLobby}>
+              <button type="button" className="btn btn-secondary" onClick={() => onLobby(options)}>
                 <Radio size={18} strokeWidth={1.5} />
                 Play online instead
               </button>
             )}
           </div>
-          {names.length < minPlayers && <p className="field-hint">Add at least {minPlayers} players to start.</p>}
+          {errors.length > 0 && <p className="field-hint">Can't start yet: {errors[0]}</p>}
         </div>
       </form>
     </main>

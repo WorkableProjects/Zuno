@@ -906,3 +906,13 @@
   gap: 6px;
   flex-wrap: wrap;
 }
+
+.hb-log-filters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.hb-log-filters .btn { min-height: 44px; }
+.hb-confidence { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 12px 0 0; }
+.hb-confidence .btn { min-height: 44px; }
+.hb-notice { padding: 8px 12px; border-radius: 8px; border: 1px solid currentColor; margin-bottom: 8px; }
+.hb-deck-health { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 0; }
+.hb-deck-health dt { font-size: 0.8rem; opacity: 0.8; }
+.hb-deck-health dd { margin: 0; font-weight: 600; }
+.hb-pill-almost { font-weight: 600; }

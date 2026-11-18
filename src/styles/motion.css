@@ -45,3 +45,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Same rule when Background motion is set to Still in Settings. */
+[data-motion="off"] *,
+[data-motion="off"] *::before,
+[data-motion="off"] *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 80ms !important;
+  scroll-behavior: auto !important;
+}

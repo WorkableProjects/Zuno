@@ -140,6 +140,65 @@
           ".validate": false
         }
       }
+    },
+    "gauntlet": {
+      "$code": {
+        ".read": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".write": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".validate": "!newData.exists() || newData.hasChildren(['phase'])",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().matches(/^(lobby|playing)$/)"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "hostAway": {
+          ".validate": "newData.isNumber() || newData.isBoolean()"
+        },
+        "teams": {
+          ".validate": "newData.isString() && newData.val().length <= 4000"
+        },
+        "players": {
+          "$player": {
+            ".validate": "newData.hasChildren(['name']) && $player.length <= 40",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "team": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 16"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "game": {
+          ".validate": "newData.isString() && newData.val().length <= 200000"
+        },
+        "actions": {
+          "$move": {
+            ".validate": "newData.hasChildren(['by', 'type'])",
+            "by": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            },
+            "type": {
+              ".validate": "newData.isString() && newData.val().matches(/^(answer|lane|choice|ready)$/)"
+            },
+            "value": {
+              ".validate": "newData.isString() && newData.val().length <= 200"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

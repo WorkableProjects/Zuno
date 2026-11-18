@@ -27,11 +27,88 @@ export interface Turn {
 export type Vote = number | "abstain";
 export type Phase = "prep" | "discuss" | "vote" | "reveal" | "done";
 
+/** Spec phase names (Writing -> Assigned -> Reading -> Questioning -> Voting -> Reveal -> Scoring) mapped from engine phases. */
+export const PHASE_LABEL: Record<Phase, string> = {
+  prep: "Writing",
+  discuss: "Questioning",
+  vote: "Voting",
+  reveal: "Reveal",
+  done: "Scoring",
+};
+
 export interface Options {
   rounds: number;
   scoring: boolean;
   allowAbstain: boolean;
+  /** Show vote totals while voting is open. Off by default: totals appear at reveal. */
+  liveResults?: boolean;
+  /** Hide who voted for what in the reveal. */
+  anonymousVotes?: boolean;
+  /** Streak bonus: +1 for a voter's second consecutive correct guess and onward. */
+  streakBonus?: boolean;
+  /** Discussion length in seconds, used by presets and the session estimate. */
+  discussSeconds?: number;
+  /** Hide follow-up question hints from the group (Hardcore). */
+  hideHints?: boolean;
 }
+
+export const MAX_STATEMENT_LENGTH = 200;
+
+/** One vote change, kept for audit. */
+export interface VoteRevision {
+  round: number;
+  turnIndex: number;
+  voter: string;
+  vote: Vote;
+  confidence?: number;
+  /** Ordinal of this revision for the voter in this turn: 1 is the initial vote. */
+  revision: number;
+}
+
+/** One score change with the exact rule that caused it. */
+export type ScoreRule = "caughtLie" | "fooledPlayers" | "streak" | "hostFix";
+export interface ScoreEvent {
+  round: number;
+  turnIndex: number;
+  playerId: string;
+  points: number;
+  rule: ScoreRule;
+  explanation: string;
+}
+
+export const SCORE_RULES: Record<Exclude<ScoreRule, "hostFix">, string> = {
+  caughtLie: "+1 to each voter who picks the lie.",
+  fooledPlayers: "+1 to the storyteller for every voter fooled (at least one needed).",
+  streak: "+1 streak bonus for a second correct pick in a row (only if enabled).",
+};
+
+/** The ordered rule list to show before a round. */
+export function scoreRulesFor(options: Options): string[] {
+  if (!options.scoring) return ["Casual play: no points, just a recap."];
+  const list = [SCORE_RULES.caughtLie, SCORE_RULES.fooledPlayers, "Wrong picks and abstentions never lose points."];
+  if (options.streakBonus) list.push(SCORE_RULES.streak);
+  return list;
+}
+
+/** Rough session length in minutes from players, rounds and discussion length. */
+export function estimateMinutes(players: number, rounds: number, discussSeconds = 60): number {
+  const perTurn = 1.5 + discussSeconds / 60 + 1; // write/read, discuss, vote and reveal
+  return Math.max(1, Math.round(Math.max(players, 1) * Math.max(rounds, 1) * perTurn));
+}
+
+export interface LiarPreset {
+  id: "party" | "quick" | "hardcore" | "local";
+  label: string;
+  description: string;
+  options: Options;
+}
+
+export const LIAR_PRESETS: LiarPreset[] = [
+  { id: "party", label: "Party", description: "6-12 players, 60-second discussion, points on.", options: { rounds: 1, scoring: true, allowAbstain: false, discussSeconds: 60 } },
+  { id: "quick", label: "Quick", description: "4-8 players, 30-second discussion, two rounds.", options: { rounds: 2, scoring: true, allowAbstain: false, discussSeconds: 30 } },
+  { id: "hardcore", label: "Hardcore", description: "5-10 players, no follow-up hints, points on.", options: { rounds: 1, scoring: true, allowAbstain: false, discussSeconds: 60, hideHints: true } },
+  { id: "local", label: "Local", description: "Pass-and-play statement entry on one device.", options: { rounds: 1, scoring: false, allowAbstain: true, discussSeconds: 60 } },
+];
 
 export interface RecapEntry {
   round: number;
@@ -39,6 +116,8 @@ export interface RecapEntry {
   turn: Turn;
   votes: Record<string, Vote>;
 }
+
+export type StatementMark = "suspicious" | "reviewed";
 
 export interface LiarState {
   players: Player[];
@@ -54,12 +133,25 @@ export interface LiarState {
   recap: RecapEntry[];
   paused: boolean;
   endedEarly: boolean;
+  /** Increments on every accepted action, for stale-update checks. */
+  revision?: number;
+  /** Optional confidence (0-100) per voter for the current turn. */
+  confidence?: Record<string, number>;
+  /** Every vote change, for audit. */
+  voteLog?: VoteRevision[];
+  /** Every score change with its rule. */
+  scoreLog?: ScoreEvent[];
+  /** Per-player notes on statements in the current turn. */
+  marks?: Record<string, Record<number, StatementMark>>;
+  /** Consecutive correct picks per player, for the streak bonus. */
+  streaks?: Record<string, number>;
 }
 
 export type LiarAction =
   | { type: "submitTurn"; turn: Turn }
   | { type: "startVoting" }
-  | { type: "vote"; voter: string; vote: Vote }
+  | { type: "vote"; voter: string; vote: Vote; confidence?: number }
+  | { type: "mark"; player: string; statement: number; mark: StatementMark | null }
   | { type: "closeVoting" }
   | { type: "fixLie"; lieIndex: number }
   | { type: "next" }
@@ -96,8 +188,11 @@ export function validateTurn(turn: Turn): string[] {
   }
   turn.statements.forEach((s, i) => {
     if (s.text.trim() === "") errors.push(`Statement ${i + 1} is empty.`);
+    else if (s.text.trim().length > MAX_STATEMENT_LENGTH) errors.push(`Statement ${i + 1} is longer than ${MAX_STATEMENT_LENGTH} characters.`);
     if (!s.questions.some((q) => q.trim() !== "")) errors.push(`Statement ${i + 1} needs at least one follow-up question.`);
   });
+  const texts = turn.statements.map((s) => s.text.trim().toLowerCase()).filter(Boolean);
+  if (new Set(texts).size !== texts.length) errors.push("Two statements are the same. Make each one different.");
   if (!Number.isInteger(turn.lieIndex) || turn.lieIndex < 0 || turn.lieIndex >= STATEMENT_COUNT) {
     errors.push("Mark exactly one statement as the lie.");
   }
@@ -133,6 +228,12 @@ export function createSessionWith(list: Player[], options: Options): LiarState {
     recap: [],
     paused: false,
     endedEarly: false,
+    revision: 0,
+    confidence: {},
+    voteLog: [],
+    scoreLog: [],
+    marks: {},
+    streaks: {},
   };
 }
 
@@ -190,6 +291,84 @@ export function scoreTurn(options: Options, storytellerId: string, turn: Turn, v
   return delta;
 }
 
+/** Score changes for one turn as events naming the rule behind each. */
+export function scoreEvents(s: LiarState, storytellerId: string, turn: Turn, votes: Record<string, Vote>): ScoreEvent[] {
+  if (!s.options.scoring) return [];
+  const at = { round: s.round, turnIndex: s.turnIndex };
+  const out: ScoreEvent[] = [];
+  let fooled = 0;
+  for (const [id, v] of Object.entries(votes)) {
+    if (id === storytellerId || v === "abstain") continue;
+    if (v === turn.lieIndex) {
+      out.push({ ...at, playerId: id, points: 1, rule: "caughtLie", explanation: "Picked the lie." });
+      if (s.options.streakBonus && (s.streaks?.[id] ?? 0) >= 1) out.push({ ...at, playerId: id, points: 1, rule: "streak", explanation: "Streak bonus: correct again." });
+    } else fooled++;
+  }
+  if (fooled > 0) out.push({ ...at, playerId: storytellerId, points: fooled, rule: "fooledPlayers", explanation: `Fooled ${fooled} ${fooled === 1 ? "player" : "players"}.` });
+  return out;
+}
+
+function nextStreaks(prev: Record<string, number>, storytellerId: string, turn: Turn, votes: Record<string, Vote>): Record<string, number> {
+  const out = { ...prev };
+  for (const [id, v] of Object.entries(votes)) {
+    if (id === storytellerId) continue;
+    out[id] = v === turn.lieIndex ? (out[id] ?? 0) + 1 : 0;
+  }
+  return out;
+}
+
+/** Points from events, summed per player. */
+export function sumEvents(events: ScoreEvent[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const e of events) out[e.playerId] = (out[e.playerId] ?? 0) + e.points;
+  return out;
+}
+
+/** Each voter's revisions this turn, oldest first: their vote path. */
+export function votePaths(s: LiarState, round = s.round, turnIndex = s.turnIndex): Record<string, VoteRevision[]> {
+  const out: Record<string, VoteRevision[]> = {};
+  for (const r of s.voteLog ?? []) if (r.round === round && r.turnIndex === turnIndex) (out[r.voter] ??= []).push(r);
+  return out;
+}
+
+/** Statements with the most votes; more than one means a tie. */
+export function topSuspects(votes: Record<string, Vote>): number[] {
+  const { counts } = tally(votes);
+  const top = Math.max(...counts);
+  return top === 0 ? [] : counts.flatMap((c, i) => (c === top ? [i] : []));
+}
+
+/** Tally visible to players: hidden until reveal unless live results are on. */
+export function visibleTally(s: LiarState): ReturnType<typeof tally> | null {
+  if (s.phase === "reveal" || s.phase === "done" || (s.phase === "vote" && s.options.liveResults)) return tally(s.votes);
+  return null;
+}
+
+/**
+ * State safe to broadcast: no lie marker, no other players' votes or marks
+ * before reveal. Statements are only included once the turn is submitted.
+ */
+export function broadcastState(s: LiarState, viewerId?: string): LiarState {
+  const revealed = s.phase === "reveal" || s.phase === "done";
+  const turn = s.turn && !revealed ? { ...s.turn, lieIndex: -1 } : s.turn;
+  const own = <T,>(rec: Record<string, T> | undefined) => (viewerId && rec && viewerId in rec ? { [viewerId]: rec[viewerId] } : {});
+  const votes = revealed ? (s.options.anonymousVotes ? {} : s.votes) : own(s.votes);
+  return {
+    ...s,
+    turn,
+    votes,
+    confidence: revealed && !s.options.anonymousVotes ? s.confidence : own(s.confidence),
+    marks: own(s.marks),
+    voteLog: revealed && !s.options.anonymousVotes ? s.voteLog : (s.voteLog ?? []).filter((r) => r.voter === viewerId),
+    recap: s.options.anonymousVotes ? s.recap.map((r) => ({ ...r, votes: {} })) : s.recap,
+  };
+}
+
+/** True when an incoming update is older than the state already held. */
+export function isStale(current: LiarState, incoming: LiarState): boolean {
+  return (incoming.revision ?? 0) < (current.revision ?? 0);
+}
+
 export function winners(s: LiarState): Player[] {
   if (!s.options.scoring) return [];
   const list = activePlayers(s);
@@ -199,7 +378,7 @@ export function winners(s: LiarState): Player[] {
 
 function advance(s: LiarState): LiarState {
   const count = activePlayers(s).length;
-  const base = { ...s, turn: null, votes: {}, phase: "prep" as Phase };
+  const base = { ...s, turn: null, votes: {}, confidence: {}, marks: {}, phase: "prep" as Phase };
   if (s.turnIndex + 1 < count) return { ...base, turnIndex: s.turnIndex + 1 };
   if (s.round + 1 < s.options.rounds) return { ...base, round: s.round + 1, turnIndex: 0 };
   return { ...base, phase: "done" };
@@ -210,6 +389,11 @@ function advance(s: LiarState): LiarState {
  * can never corrupt a game or discard a turn.
  */
 export function liarReducer(s: LiarState, a: LiarAction): LiarState {
+  const next = reduce(s, a);
+  return next === s ? s : { ...next, revision: (s.revision ?? 0) + 1 };
+}
+
+function reduce(s: LiarState, a: LiarAction): LiarState {
   if (a.type === "pause") return s.phase === "done" ? s : { ...s, paused: a.paused };
   if (s.phase === "done") return s;
   if (a.type === "end") return { ...s, phase: "done", endedEarly: true, turn: null, votes: {} };
@@ -227,18 +411,32 @@ export function liarReducer(s: LiarState, a: LiarAction): LiarState {
       if (a.vote === "abstain") {
         if (!s.options.allowAbstain) return s;
       } else if (!Number.isInteger(a.vote) || a.vote < 0 || a.vote >= STATEMENT_COUNT) return s;
-      return { ...s, votes: { ...s.votes, [a.voter]: a.vote } };
+      const prior = (s.voteLog ?? []).filter((r) => r.round === s.round && r.turnIndex === s.turnIndex && r.voter === a.voter).length;
+      if (s.votes[a.voter] === a.vote && a.confidence === undefined) return s;
+      const confidence = a.confidence === undefined ? s.confidence ?? {} : { ...(s.confidence ?? {}), [a.voter]: Math.max(0, Math.min(100, Math.round(a.confidence))) };
+      const entry: VoteRevision = { round: s.round, turnIndex: s.turnIndex, voter: a.voter, vote: a.vote, revision: prior + 1, ...(a.confidence === undefined ? {} : { confidence: confidence[a.voter] }) };
+      return { ...s, votes: { ...s.votes, [a.voter]: a.vote }, confidence, voteLog: [...(s.voteLog ?? []), entry] };
+    }
+    case "mark": {
+      if (s.phase !== "discuss" && s.phase !== "vote") return s;
+      if (!activePlayers(s).some((p) => p.id === a.player) || a.statement < 0 || a.statement >= STATEMENT_COUNT) return s;
+      const mine = { ...(s.marks?.[a.player] ?? {}) };
+      if (a.mark === null) delete mine[a.statement];
+      else mine[a.statement] = a.mark;
+      return { ...s, marks: { ...(s.marks ?? {}), [a.player]: mine } };
     }
     case "closeVoting": {
       const st = storyteller(s);
       if (s.phase !== "vote" || !s.turn || !st) return s;
-      const delta = scoreTurn(s.options, st.id, s.turn, s.votes);
+      const events = scoreEvents(s, st.id, s.turn, s.votes);
       const scores = { ...s.scores };
-      for (const [id, n] of Object.entries(delta)) scores[id] = (scores[id] ?? 0) + n;
+      for (const [id, n] of Object.entries(sumEvents(events))) scores[id] = (scores[id] ?? 0) + n;
       return {
         ...s,
         phase: "reveal",
         scores,
+        scoreLog: [...(s.scoreLog ?? []), ...events],
+        streaks: nextStreaks(s.streaks ?? {}, st.id, s.turn, s.votes),
         recap: [...s.recap, { round: s.round, storytellerId: st.id, turn: s.turn, votes: s.votes }],
       };
     }
@@ -253,7 +451,13 @@ export function liarReducer(s: LiarState, a: LiarAction): LiarState {
       const scores = { ...s.scores };
       for (const [id, n] of Object.entries(undo)) scores[id] = (scores[id] ?? 0) - n;
       for (const [id, n] of Object.entries(redo)) scores[id] = (scores[id] ?? 0) + n;
-      return { ...s, turn: fixed, scores, recap: [...s.recap.slice(0, -1), { ...last, turn: fixed }] };
+      const at = { round: s.round, turnIndex: s.turnIndex, rule: "hostFix" as const };
+      const fixLog: ScoreEvent[] = [];
+      for (const id of new Set([...Object.keys(undo), ...Object.keys(redo)])) {
+        const d = (redo[id] ?? 0) - (undo[id] ?? 0);
+        if (d !== 0) fixLog.push({ ...at, playerId: id, points: d, explanation: `Host corrected the lie to statement ${a.lieIndex + 1}.` });
+      }
+      return { ...s, turn: fixed, scores, scoreLog: [...(s.scoreLog ?? []), ...fixLog], recap: [...s.recap.slice(0, -1), { ...last, turn: fixed }] };
     }
     case "next":
       return s.phase === "reveal" ? advance(s) : s;
@@ -279,7 +483,7 @@ export function liarReducer(s: LiarState, a: LiarAction): LiarState {
 /** The storyteller left: their turn is dropped and the next player takes the same position. */
 function advanceAfterRemoval(s: LiarState, position: number): LiarState {
   const count = activePlayers(s).length;
-  const base = { ...s, turn: null, votes: {}, phase: "prep" as Phase };
+  const base = { ...s, turn: null, votes: {}, confidence: {}, marks: {}, phase: "prep" as Phase };
   if (position < count) return { ...base, turnIndex: position };
   if (s.round + 1 < s.options.rounds) return { ...base, round: s.round + 1, turnIndex: 0 };
   return { ...base, phase: "done" };
