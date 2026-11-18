@@ -119,7 +119,7 @@ const engines: GameEngine[] = [
     title: "Trivia Gauntlet",
     description: "Teams race through Quickfire, Puzzle and Wild lanes, gamble in the Choice round, survive Chaos and climb the Final Gauntlet. Hosted from one shared screen.",
     schemaVersions: [1],
-    hasBuilder: false,
+    hasBuilder: true,
     appearance: { accentColor: "#7EE0B5", backgroundPreset: "horizon" },
     validate: validateGauntlet as GameEngine["validate"],
     artwork: "board",

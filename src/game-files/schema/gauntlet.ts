@@ -282,3 +282,65 @@ export function validateGauntlet(raw: Record<string, unknown>): ValidationResult
   if (errors.length > 0) return { ok: false, errors };
   return { ok: true, warnings, file: { schemaVersion: CURRENT_SCHEMA_VERSION, gameType: GAUNTLET_TYPE, metadata, appearance, content, settings } };
 }
+
+let blankSeq = 0;
+const bid = (p: string) => `${p}-${Date.now().toString(36)}${(blankSeq++).toString(36)}`;
+export const blankGauntletQuestion = (p = "q"): GauntletQuestion => ({ id: bid(p), prompt: "", answer: "" });
+
+/** An empty deck with the minimum number of slots in every section. */
+export function blankGauntletFile(): GauntletFile {
+  const n = (count: number, p: string) => Array.from({ length: count }, () => blankGauntletQuestion(p));
+  return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    gameType: GAUNTLET_TYPE,
+    metadata: { title: "My Trivia Gauntlet", description: "", author: "", coverImage: null },
+    appearance: { accentColor: "#7EE0B5", backgroundPreset: "horizon" },
+    content: {
+      warmup: n(3, "w"),
+      lanes: {
+        quickfire: n(GAUNTLET_LIMITS.minLaneItems, "qf"),
+        puzzle: n(GAUNTLET_LIMITS.minLaneItems, "pz").map((q) => ({ ...q, hints: ["", ""] })),
+        wild: n(GAUNTLET_LIMITS.minLaneItems, "wd").map((q, i) => ({ ...q, effect: WILD_EFFECTS[i % WILD_EFFECTS.length] })),
+      },
+      choice: [{ id: bid("ch"), safe: blankGauntletQuestion("s"), bold: blankGauntletQuestion("b"), unknown: blankGauntletQuestion("u") }],
+      chaos: n(2, "cx"),
+      final: {
+        climb: n(GAUNTLET_LIMITS.minClimb, "cl"),
+        crossroads: n(1, "cr").map((q) => ({ ...q, category: "" })),
+        lock: [{ id: bid("lk"), prompt: "Which statement is false?", statements: ["", "", "", ""], falseIndex: 0 }],
+        summit: n(1, "sm"),
+      },
+    },
+    settings: { ...DEFAULT_GAUNTLET_SETTINGS, playersPerTeam: [...DEFAULT_GAUNTLET_SETTINGS.playersPerTeam] },
+  };
+}
+
+/** Copy-paste guide for an AI assistant. */
+export function buildGauntletGuide(opts: { size: "short" | "standard" | "long"; topic?: string }): string {
+  const k = opts.size === "short" ? 1 : opts.size === "long" ? 2 : 1.5;
+  const c = (base: number) => Math.max(base, Math.round(base * k));
+  const L = GAUNTLET_LIMITS;
+  return `You are creating a game file for Zuno, a browser-based party game platform.
+
+Create a Trivia Gauntlet deck as valid Zuno JSON (schema version ${CURRENT_SCHEMA_VERSION}). Teams race through Quickfire, Puzzle and Wild lanes, gamble in a Choice round, survive Chaos and climb a Final Gauntlet.${opts.topic ? `\n\nTopic and audience: ${opts.topic}` : ""}
+
+Requirements:
+- Output JSON only. No Markdown code fences, no explanation.
+- schemaVersion: ${CURRENT_SCHEMA_VERSION}, gameType: "${GAUNTLET_TYPE}".
+- metadata: title, description, author, coverImage (null). appearance: accentColor (six-digit hex) and backgroundPreset "horizon".
+- Every question object has a unique "id" (short lowercase words with hyphens), a "prompt" and an "answer". Optional "choices": a list of options that includes the answer exactly.
+- content.warmup: ${c(5)} very easy questions.
+- content.lanes.quickfire: ${c(8)} short, fast questions with one-word answers.
+- content.lanes.puzzle: ${c(L.minLaneItems)} harder riddles or logic puzzles, each with "hints": up to 2 hints that get more helpful.
+- content.lanes.wild: ${c(L.minLaneItems)} questions, each with "effect": one of ${WILD_EFFECTS.map((e) => `"${e}"`).join(", ")}.
+- content.choice: ${c(2)} challenges, each { "id", "safe", "bold", "unknown" } where each is a question: safe is easy, bold is hard, unknown is a surprise topic.
+- content.chaos: ${c(2)} questions any team may answer first.
+- content.final.climb: ${c(L.minClimb + 1)} medium questions.
+- content.final.crossroads: ${c(3)} questions, each with a short "category".
+- content.final.lock: ${c(3)} challenges { "id", "prompt", "statements": exactly 4 short statements, "falseIndex": 0 to 3 for the one false statement }.
+- content.final.summit: ${c(2)} hard tie-breaker questions.
+- settings: { "minTeams": 2, "maxTeams": 8, "playersPerTeam": [1, 8], "defaultRoundSeconds": 15, "allowNegativeScores": true, "elimination": false }.
+- Keep prompts under ${L.maxPromptLength} characters and answers under ${L.maxAnswerLength}. Plain text only: no HTML or code.
+- Facts must be accurate and unambiguous. Prefer answers a host can judge quickly.
+`;
+}

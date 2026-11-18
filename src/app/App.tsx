@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BuilderHome } from "../components/builder/BuilderHome";
 import { HeadbandsAIGuide } from "../components/builder/HeadbandsAIGuide";
 import { HeadbandsVisualEditor } from "../components/builder/HeadbandsVisualEditor";
+import { GauntletAIGuide } from "../components/builder/GauntletAIGuide";
+import { GauntletVisualEditor } from "../components/builder/GauntletVisualEditor";
 import { JeopardyAIGuide } from "../components/builder/JeopardyAIGuide";
 import { JeopardyVisualEditor } from "../components/builder/JeopardyVisualEditor";
 import { AmbientBackground, type BackdropSpec } from "../components/dashboard/AmbientBackground";
@@ -427,13 +429,15 @@ export function App() {
         />
       )}
       {screen.name === "editor" &&
-        (screen.gameType === HEADBANDS_TYPE ? (
+        (screen.gameType === GAUNTLET_TYPE ? (
+          <GauntletVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: GAUNTLET_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
+        ) : screen.gameType === HEADBANDS_TYPE ? (
           <HeadbandsVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: HEADBANDS_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
         ) : (
           <JeopardyVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: JEOPARDY_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
         ))}
       {screen.name === "ai" &&
-        (screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
+        (screen.gameType === GAUNTLET_TYPE ? <GauntletAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
 
       {pending && <ConfirmDialog title={pending.title} text={pending.text} confirmLabel={pending.label} danger onConfirm={pending.run} onClose={() => setPending(null)} />}
       {resumeHost && screen.name === "dashboard" && (
