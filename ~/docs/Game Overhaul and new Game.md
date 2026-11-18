@@ -1,4 +1,4 @@
-# Zuno Game Overhaul and New Game Specification
+# Zuno Game Overhaul and New Game Specification 11/17
 
 ## Document status
 
