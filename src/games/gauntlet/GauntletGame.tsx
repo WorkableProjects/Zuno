@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Eye, FastForward, Flag, Lightbulb, Pause, Play, SkipForward, Undo2, X } from "lucide-react";
 import type { GauntletFile } from "../../game-files/schema/gauntlet";
 import * as G from "./gauntletEngine";
 import { GauntletResults } from "./GauntletResults";
+import { TimerBadge } from "../../components/ui/Status";
+import { clearHost, markHost, publishGauntlet, saveHost, toGauntletPublic, watchGauntletLobby, watchGauntletMoves, applyGauntletMove } from "./gauntletLobby";
 import "./gauntlet.css";
 
 interface Props {
@@ -11,6 +13,8 @@ interface Props {
   options: G.Options;
   onAgain: () => void;
   onExit: () => void;
+  /** Online room: phones send moves; this host publishes a public view. */
+  online?: { code: string; teamMap: Record<number, string>; initial?: G.GauntletState };
 }
 
 const LANE_INFO: Record<G.LaneType, { title: string; blurb: string }> = {
@@ -63,8 +67,39 @@ function turnContent(file: GauntletFile, t: G.Turn): { prompt: string; answer: s
   }
 }
 
-export function GauntletGame({ file, teams, options, onAgain, onExit }: Props) {
-  const [state, setState] = useState(() => G.createGauntlet(file, teams, options));
+function onlineStart(file: GauntletFile, teams: G.TeamSetup[], options: G.Options): G.GauntletState {
+  // Players are present on their phones, so everyone starts ready.
+  const s = G.createGauntlet(file, teams, options, `s${Date.now().toString(36)}`);
+  return s.teams.reduce((acc, t) => t.players.reduce((a, p) => G.setReady(a, p.id, true), acc), s);
+}
+
+export function GauntletGame({ file, teams, options, onAgain, onExit, online }: Props) {
+  const [state, setState] = useState(() => (online?.initial ? { ...online.initial, timer: { ...online.initial.timer, runningSince: null } } : null) ?? (online ? onlineStart(file, teams, options) : G.createGauntlet(file, teams, options)));
+  const seats = useRef<Record<string, string>>({});
+  const code = online?.code;
+  const teamMap = online?.teamMap;
+
+  // Track which team each phone belongs to, including late joiners.
+  useEffect(() => {
+    if (!code || !teamMap) return;
+    void markHost(code).catch(() => undefined);
+    const stopLobby = watchGauntletLobby(code, (l) => {
+      seats.current = Object.fromEntries(Object.entries(l?.players ?? {}).map(([id, p]) => [id, p.team === null ? "" : (teamMap[p.team] ?? "")]));
+    }, () => undefined);
+    const stopMoves = watchGauntletMoves(code, (by, move) => setState((s) => applyGauntletMove(s, seats.current[by] || null, move, Date.now())));
+    return () => {
+      stopLobby();
+      stopMoves();
+    };
+  }, [code, teamMap]);
+
+  // Publish every revision and keep a copy so a refreshed host can resume.
+  useEffect(() => {
+    if (!code || !teamMap) return;
+    void publishGauntlet(code, toGauntletPublic(file, state)).catch(() => undefined);
+    if (state.phase === "results") clearHost();
+    else saveHost({ code, file, state, seats: Object.fromEntries(Object.entries(teamMap).map(([k, v]) => [k, v])) });
+  }, [code, teamMap, file, state]);
   const [now, setNow] = useState(() => Date.now());
   const [reveal, setReveal] = useState(false);
   const [partial, setPartial] = useState("");
@@ -100,7 +135,7 @@ export function GauntletGame({ file, teams, options, onAgain, onExit }: Props) {
       <div className="gl-wrap">
         <header className="gl-row" data-nav-row="0">
           <div>
-            <p className="meta">{file.metadata.title} · {options.mode === "survival" ? "Survival" : "Standard"}{options.safeMode ? " · Safe mode" : ""}</p>
+            <p className="meta">{file.metadata.title}{code ? ` · Room ${code}` : ""} · {options.mode === "survival" ? "Survival" : "Standard"}{options.safeMode ? " · Safe mode" : ""}</p>
             <h1 className="page-title">{PHASE_TITLE[state.phase]}{state.phase === "laneRound" || state.phase === "laneChoice" ? ` ${state.roundIndex + 1}` : ""}</h1>
           </div>
           <div className="gl-actions">
@@ -221,11 +256,7 @@ export function GauntletGame({ file, teams, options, onAgain, onExit }: Props) {
                 {content.extra ? `${content.extra} · ` : ""}Question {state.turnIndex + 1} of {state.turns.length} · {turn.teamId ? G.teamName(state, turn.teamId) : "All teams"}
                 {turn.teamId && !turn.resolved ? ` · worth ${G.turnValue(state, turn, turn.teamId)}` : ""}
               </span>
-              {open && (
-                <span className={`gl-timer${secs <= 5 ? " is-low" : ""}`} role="timer" aria-label={`${secs} seconds left`}>
-                  {secs}s
-                </span>
-              )}
+              {open && <TimerBadge seconds={secs} paused={state.timer.runningSince === null} />}
             </div>
             <p id="gl-q" className="gl-prompt">{content.prompt}</p>
             {content.statements && <ol>{content.statements.map((x) => <li key={x}>{x}</li>)}</ol>}

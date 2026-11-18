@@ -65,6 +65,8 @@ export interface Turn {
   resolved: boolean;
   outcome?: "correct" | "wrong" | "partial" | "pass" | "expired";
   points?: number;
+  /** Milliseconds from the turn opening to the answer arriving. */
+  answerMs?: number;
 }
 
 export interface WildModifier {
@@ -119,6 +121,12 @@ export interface GauntletState {
   /** Snapshots for undo; the newest is last. */
   history: GauntletState[];
   winners: string[];
+  /** Worst rank each team held at any point, for the comeback award. */
+  worstRank?: Record<string, number>;
+  /** Quickest correct answer so far. */
+  fastest?: { teamId: string; ms: number } | null;
+  /** Teams that landed a Bold challenge. */
+  boldWins?: string[];
 }
 
 export interface TeamSetup {
@@ -207,7 +215,9 @@ export const multiplier = (streak: number) => Math.min(MAX_STREAK_MULTIPLIER, Ma
 /** Commits a change: snapshot for undo, bump revision, append to log. */
 function commit(prev: GauntletState, next: Omit<GauntletState, "history" | "revision">, message: string): GauntletState {
   const snapshot: GauntletState = { ...prev, history: [] };
-  return { ...next, revision: prev.revision + 1, history: [...prev.history, snapshot].slice(-MAX_UNDO), log: [...prev.log, message].slice(-100) };
+  const worstRank = { ...(prev.worstRank ?? {}) };
+  if (prev.phase !== "lobby") for (const r of standings(prev)) worstRank[r.team.id] = Math.max(worstRank[r.team.id] ?? 0, r.rank);
+  return { ...next, worstRank, revision: prev.revision + 1, history: [...prev.history, snapshot].slice(-MAX_UNDO), log: [...prev.log, message].slice(-100) };
 }
 
 function draw(s: { cursors: GauntletState["cursors"]; sizes: DeckSizes }, deck: keyof DeckSizes): number {
@@ -409,7 +419,7 @@ export function submitAnswer(s: GauntletState, teamId: string, text: string, now
   if (turn.teamId !== null && turn.teamId !== teamId) return s;
   if (s.timer.expired || remaining(s.timer, now) <= 0) return s;
   if (turn.submission) return s;
-  const turns = s.turns.map((t, i) => (i === s.turnIndex ? { ...t, submission: { teamId, text: clean } } : t));
+  const turns = s.turns.map((t, i) => (i === s.turnIndex ? { ...t, submission: { teamId, text: clean }, answerMs: s.timer.durationMs - remaining(s.timer, now) } : t));
   return commit(s, { ...s, turns, timer: stopTimer(s.timer, now) }, `${team.name} answered`);
 }
 
@@ -447,7 +457,10 @@ export function resolveAnswer(s: GauntletState, correct: boolean, now: number, f
     }
     const streak = s.streaks[teamId] + 1;
     const next = resolveWith(s, "correct", teamId, value, now, `${name} correct +${value}`);
-    return { ...next, scores, streaks: { ...s.streaks, [teamId]: streak }, bestStreaks: { ...s.bestStreaks, [teamId]: Math.max(s.bestStreaks[teamId], streak) } };
+    const ms = turn.submission?.teamId === teamId ? turn.answerMs : undefined;
+    const fastest = ms !== undefined && (!s.fastest || ms < s.fastest.ms) ? { teamId, ms } : (s.fastest ?? null);
+    const boldWins = turn.kind === "choice" && turn.tier === "bold" ? [...(s.boldWins ?? []), teamId] : s.boldWins;
+    return { ...next, fastest, boldWins, scores, streaks: { ...s.streaks, [teamId]: streak }, bestStreaks: { ...s.bestStreaks, [teamId]: Math.max(s.bestStreaks[teamId], streak) } };
   }
   // A shared turn stays open for other teams after a wrong answer.
   const penalty = wrongPenalty(s, turn);
@@ -578,4 +591,27 @@ export function undoLastAction(s: GauntletState): GauntletState {
   // A restored running timer comes back paused so it cannot expire instantly.
   const timer = prev.timer.runningSince === null ? prev.timer : { ...prev.timer, runningSince: null };
   return { ...prev, timer, history: s.history.slice(0, -1), revision: s.revision + 1, log: [...prev.log, "Undo"] };
+}
+
+/** Fun awards for the results screen. All derived from state, so they work after a host refresh too. */
+export interface Award {
+  title: string;
+  team: string;
+  detail: string;
+}
+
+export function awards(s: GauntletState): Award[] {
+  const out: Award[] = [];
+  const name = (id: string) => teamName(s, id);
+  if (s.fastest) out.push({ title: "Fastest answer", team: name(s.fastest.teamId), detail: `${(s.fastest.ms / 1000).toFixed(1)} seconds` });
+  const final = standings(s);
+  const comeback = final
+    .map((r) => ({ id: r.team.id, climb: (s.worstRank?.[r.team.id] ?? r.rank) - r.rank }))
+    .sort((a, b) => b.climb - a.climb)[0];
+  if (comeback && comeback.climb > 0) out.push({ title: "Biggest comeback", team: name(comeback.id), detail: `climbed ${comeback.climb} place${comeback.climb > 1 ? "s" : ""}` });
+  const streak = Object.entries(s.bestStreaks).sort((a, b) => b[1] - a[1])[0];
+  if (streak && streak[1] >= 2) out.push({ title: "Hot streak", team: name(streak[0]), detail: `${streak[1]} in a row` });
+  const bold = s.boldWins ?? [];
+  if (bold.length) out.push({ title: "Fortune favours the bold", team: [...new Set(bold)].map(name).join(", "), detail: "landed a Bold challenge" });
+  return out;
 }

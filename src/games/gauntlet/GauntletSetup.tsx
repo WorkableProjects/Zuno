@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Play, Plus, X } from "lucide-react";
+import { ArrowLeft, Play, Plus, Smartphone, X } from "lucide-react";
 import type { LoadedGame } from "../../components/import/loadGame";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { useAutoFocus } from "../../components/ui/useAutoFocus";
@@ -11,9 +11,11 @@ interface Props {
   game: LoadedGame<GauntletFile>;
   onBack: () => void;
   onStart: (teams: TeamSetup[], options: Options) => void;
+  /** Host online: players join on phones and pick a team. */
+  onLobby?: (teamNames: string[], options: Options) => void;
 }
 
-export function GauntletSetup({ game, onBack, onStart }: Props) {
+export function GauntletSetup({ game, onBack, onStart, onLobby }: Props) {
   const { file } = game;
   const s = file.settings;
   const [teams, setTeams] = useState<TeamSetup[]>(() => Array.from({ length: Math.max(3, s.minTeams) }, (_, i) => ({ name: `Team ${i + 1}`, players: ["", ""] })).slice(0, s.maxTeams));
@@ -24,6 +26,9 @@ export function GauntletSetup({ game, onBack, onStart }: Props) {
   const root = useAutoFocus<HTMLElement>();
   useEscape(onBack);
   const errors = validateTeams(teams, file);
+  const options: Options = { mode, safeMode, allowNegativeScores: negative, roundSeconds: s.defaultRoundSeconds };
+  const names = teams.map((t) => t.name.trim());
+  const namesOk = names.every(Boolean) && new Set(names.map((n) => n.toLowerCase())).size === names.length;
   const edit = (i: number, f: (t: TeamSetup) => TeamSetup) => setTeams((p) => p.map((t, k) => (k === i ? f(t) : t)));
 
   return (
@@ -39,7 +44,7 @@ export function GauntletSetup({ game, onBack, onStart }: Props) {
         onSubmit={(e) => {
           e.preventDefault();
           setTried(true);
-          if (errors.length === 0) onStart(teams.map((t) => ({ name: t.name.trim(), players: t.players.map((p) => p.trim()).filter(Boolean) })), { mode, safeMode, allowNegativeScores: negative, roundSeconds: s.defaultRoundSeconds });
+          if (errors.length === 0) onStart(teams.map((t) => ({ name: t.name.trim(), players: t.players.map((p) => p.trim()).filter(Boolean) })), options);
         }}
       >
         <div>
@@ -116,6 +121,11 @@ export function GauntletSetup({ game, onBack, onStart }: Props) {
             <button type="submit" className="btn btn-primary">
               <Play size={18} strokeWidth={1.5} /> Open lobby
             </button>
+            {onLobby && (
+              <button type="button" className="btn btn-secondary" disabled={!namesOk} onClick={() => onLobby(names, options)}>
+                <Smartphone size={18} strokeWidth={1.5} /> Host online
+              </button>
+            )}
           </div>
         </div>
       </form>

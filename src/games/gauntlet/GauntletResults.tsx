@@ -1,5 +1,5 @@
 import { RotateCcw, Home, Trophy } from "lucide-react";
-import { standings, type GauntletState } from "./gauntletEngine";
+import { awards, standings, type GauntletState } from "./gauntletEngine";
 
 export function GauntletResults({ state, onAgain, onExit }: { state: GauntletState; onAgain: () => void; onExit: () => void }) {
   const ladder = standings(state);
@@ -25,6 +25,17 @@ export function GauntletResults({ state, onAgain, onExit }: { state: GauntletSta
           </li>
         ))}
       </ol>
+      {awards(state).length > 0 && (
+        <ul className="gl-awards" aria-label="Awards">
+          {awards(state).map((a) => (
+            <li key={a.title} className="card">
+              <span className="meta">{a.title}</span>
+              <strong>{a.team}</strong>
+              <span className="meta">{a.detail}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="gl-actions">
         <button type="button" className="btn btn-primary" onClick={onAgain}>
           <RotateCcw size={18} strokeWidth={1.5} /> Rematch
