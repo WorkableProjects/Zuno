@@ -14,6 +14,7 @@ import { useSpatialNav } from "../components/navigation/spatialNav";
 import { DevicePrompt, StartupIntro } from "../components/intro/Intro";
 import { SoundToggle } from "../components/ui/SoundToggle";
 import { installHoverSounds, setSoundTheme } from "../lib/audio";
+import { installClickSounds, playSfx } from "../lib/sfx";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
@@ -144,6 +145,17 @@ export function App() {
   }, []);
 
   useEffect(() => installHoverSounds(), []);
+  useEffect(() => installClickSounds(), []);
+  // A soft transition whenever the screen changes.
+  const screenName = stack[stack.length - 1].name;
+  const firstScreen = useRef(true);
+  useEffect(() => {
+    if (firstScreen.current) {
+      firstScreen.current = false;
+      return;
+    }
+    playSfx("navigate");
+  }, [screenName, stack.length]);
 
   /** A validated file is about to be hosted: remember it, then set up the session. */
   const host = useCallback(

@@ -7,6 +7,8 @@ import { loadAvatar, saveAvatar } from "../../components/avatar/avatar";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { IdentityCard } from "./IdentityCard";
 import { PhoneGame } from "./PhoneGame";
+import { useHeadbandsSounds } from "./useHeadbandsSounds";
+import { useJoinSound } from "../../lib/useGameSounds";
 import { customIdentityProblems } from "./headbandsEngine";
 import { joinLobby, leaveLobby, lobbyExists, normalizeCode, playerId, submitEntry, watchLobby, type LobbyEntry, type LobbyState } from "./lobby";
 import "../jeopardy/setup.css";
@@ -39,6 +41,8 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEscape(onExit);
+  useHeadbandsSounds(lobby?.game);
+  useJoinSound(lobby ? Object.keys(lobby.players).length : 0);
 
   useEffect(() => {
     if (!joined) return;

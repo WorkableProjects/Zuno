@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { Check, CircleCheck, Pause, PenLine } from "lucide-react";
 import { Avatar } from "../../components/avatar/Avatar";
+import { Notepad } from "../../components/notepad/Notepad";
 import { Prep } from "./LiarGame";
 import { tally } from "./liarEngine";
+import { useLiarSounds } from "./useLiarSounds";
 import {
   sendLiarMove,
   type LiarLobbyState,
@@ -32,6 +34,7 @@ export function LiarOnlinePlay({
   onMove,
   host,
 }: Props) {
+  useLiarSounds(game.phase, game.voted.length, game.paused, game.storytellerId);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const players = game.players.filter((p) => !p.removed);
@@ -213,6 +216,7 @@ export function LiarOnlinePlay({
             ))}
           </ol>
         </section>
+        <Notepad storageKey={`zuno.liar.notes.${code}.${me}`} me={me} players={players} meHint="Your statements, reminders…" className="card liar-online-block" />
       </aside>
     </div>
   );

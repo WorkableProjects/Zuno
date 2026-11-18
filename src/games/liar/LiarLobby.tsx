@@ -16,6 +16,7 @@ import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";
 import { LIAR_LIMITS, type LiarFile } from "../../game-files/schema/liar";
 import { playerId } from "../headbands/lobby";
+import { useJoinSound } from "../../lib/useGameSounds";
 import type { Options, Player } from "./liarEngine";
 import {
   closeLiarLobby,
@@ -117,6 +118,7 @@ export function LiarLobby({
   const list = Object.entries(lobby?.players ?? {})
     .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
     .map(([id, p]) => ({ id, ...p }));
+  useJoinSound(list.length);
   const { minPlayers, maxPlayers } = file.settings;
   const hostIn = list.some((p) => p.id === me);
   const names = list.map((p) => p.name.trim().toLowerCase());

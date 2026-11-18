@@ -1,26 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw } from "lucide-react";
+import { playSfx } from "../../lib/sfx";
 
 function beep() {
-  try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.7);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.75);
-    osc.onended = () => void ctx.close().catch(() => undefined);
-  } catch {
-    /* Audio is optional. */
-  }
+  playSfx("timeUp");
 }
 
 /**
@@ -37,6 +20,10 @@ export function Timer({ seconds }: { seconds: number }) {
     if (!running || remaining <= 0) return;
     const id = window.setTimeout(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
     return () => window.clearTimeout(id);
+  }, [running, remaining]);
+
+  useEffect(() => {
+    if (running && remaining > 0 && remaining <= 5) playSfx("tick");
   }, [running, remaining]);
 
   useEffect(() => {

@@ -8,6 +8,7 @@ import type { HeadbandsStart } from "./HeadbandsSetup";
 import { IdentityCard } from "./IdentityCard";
 import { PhoneGame } from "./PhoneGame";
 import { ActivityLog } from "./ActivityLog";
+import { useHeadbandsSounds } from "./useHeadbandsSounds";
 import { moveToAction, playerId, publishGame, watchLobby, watchMoves, type LobbyState, type OnlineGame, type PlayerMove } from "./lobby";
 import {
   activePlayers,
@@ -87,6 +88,7 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
     [me],
   );
 
+  useHeadbandsSounds(state);
   const current = getPlayer(state, state.current);
   const solved = solvedCount(state);
   const total = state.players.filter((p) => !p.removed).length;

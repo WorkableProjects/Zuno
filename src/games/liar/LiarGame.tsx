@@ -19,6 +19,8 @@ import {
   type Statement,
   type Turn,
 } from "./liarEngine";
+import { useLiarSounds } from "./useLiarSounds";
+import { Notepad } from "../../components/notepad/Notepad";
 import "./liar.css";
 
 interface Props {
@@ -38,8 +40,10 @@ export function LiarGame({ file, names, options, onAgain, onExit }: Props) {
   const [state, dispatch] = useReducer(liarReducer, undefined, () => createSession(names, options));
   const [confirm, setConfirm] = useState<null | "end" | "skip">(null);
   const [showPlayers, setShowPlayers] = useState(false);
+  const [sessionId] = useState(() => Date.now().toString(36));
   const st = storyteller(state);
   const prog = progress(state);
+  useLiarSounds(state.phase, Object.keys(state.votes).length, state.paused, st?.id ?? null);
 
   if (state.phase === "done") return <Done state={state} onAgain={onAgain} onExit={onExit} />;
 
@@ -126,6 +130,7 @@ export function LiarGame({ file, names, options, onAgain, onExit }: Props) {
         </section>
       )}
       <Scores state={state} />
+      <Notepad storageKey={`zuno.liar.notes.local.${sessionId}`} me="" players={activePlayers(state)} className="card liar-panel" />
     </main>
   );
 }

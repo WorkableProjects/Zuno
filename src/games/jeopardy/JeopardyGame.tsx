@@ -21,6 +21,26 @@ import {
   type TeamSetup,
 } from "./jeopardyEngine";
 import { Timer } from "./Timer";
+import { playSfx, type Sfx } from "../../lib/sfx";
+
+function jeopardySound(a: SessionAction): Sfx | null {
+  switch (a.type) {
+    case "open":
+      return "select";
+    case "revealAnswer":
+    case "startFinal":
+      return "reveal";
+    case "mark":
+    case "finalMark":
+      return a.mark === 1 ? "correct" : a.mark === -1 ? "wrong" : null;
+    case "ddLock":
+      return "turn";
+    case "finish":
+      return "win";
+    default:
+      return null;
+  }
+}
 import { WinnerReveal } from "./WinnerReveal";
 import "./jeopardy.css";
 
@@ -39,7 +59,12 @@ const formatScore = (n: number) => n.toLocaleString("en-US");
 
 export function JeopardyGame({ file, teams, allowNegativeScores, timeLimitSeconds, onExit }: Props) {
   const reducer = useCallback((state: SessionState, action: SessionAction) => sessionReducer(file, state, action), [file]);
-  const [state, dispatch] = useReducer(reducer, null, () => createSession(teams, allowNegativeScores));
+  const [state, rawDispatch] = useReducer(reducer, null, () => createSession(teams, allowNegativeScores));
+  const dispatch = useCallback((a: SessionAction) => {
+    const sound = jeopardySound(a);
+    if (sound) playSfx(sound);
+    rawDispatch(a);
+  }, []);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const stage = useRef<HTMLDivElement>(null);
 

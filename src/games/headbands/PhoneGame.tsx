@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   CircleCheck,
   EyeOff,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { HeadbandsIdentity } from "../../game-files/schema/headbands";
 import { Avatar } from "../../components/avatar/Avatar";
+import { Notepad } from "../../components/notepad/Notepad";
 import { ActivityLog } from "./ActivityLog";
 import { IdentityCard } from "./IdentityCard";
 import { HeadbandsTable } from "./HeadbandsTable";
@@ -201,6 +202,7 @@ export function PhoneGame({ code, me, lobby, game, onMove }: Props) {
               solved: p.solved,
               current: p.id === game.current,
               isMe: p.id === me,
+              avatar: lobby.players[p.id]?.avatar,
             }))}
           />
           {!game.paused && current && current.id !== me && (
@@ -221,7 +223,7 @@ export function PhoneGame({ code, me, lobby, game, onMove }: Props) {
         </section>
 
         <div className="hb-play-side">
-          <Notepad code={code} me={me} players={players} />
+          <Notepad storageKey={`zuno.hb.notes.${code}.${me}`} me={me} players={players} meHint="What you've learned about your card…" />
 
           <section className="card hb-phone-card">
             <h2 className="aside-title">Players</h2>
@@ -245,77 +247,6 @@ export function PhoneGame({ code, me, lobby, game, onMove }: Props) {
         </div>
       </div>
     </div>
-  );
-}
-
-/** Private notes, one page per player, kept only on this device. */
-function Notepad({
-  code,
-  me,
-  players,
-}: {
-  code: string;
-  me: string;
-  players: OnlineGame["players"];
-}) {
-  const [target, setTarget] = useState(me);
-  const key = `zuno.hb.notes.${code}.${me}`;
-  const [notes, setNotes] = useState<Record<string, string>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(key) ?? "{}") as Record<
-        string,
-        string
-      >;
-    } catch {
-      return {};
-    }
-  });
-  useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(notes));
-    } catch {
-      /* storage unavailable: notes last for this session only */
-    }
-  }, [key, notes]);
-  const selected = players.some((p) => p.id === target) ? target : me;
-  const who = players.find((p) => p.id === selected);
-  return (
-    <section className="card hb-phone-card hb-notepad">
-      <h2 className="aside-title">Notepad</h2>
-      <div className="hb-notepad-tabs" role="tablist" aria-label="Notes about">
-        {players.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            role="tab"
-            aria-selected={p.id === selected}
-            className={`btn btn-sm ${p.id === selected ? "btn-secondary" : "btn-quiet"}`}
-            onClick={() => setTarget(p.id)}
-          >
-            {p.id === me ? "Me" : p.name}
-            {notes[p.id]?.trim() ? " •" : ""}
-          </button>
-        ))}
-      </div>
-      <textarea
-        className="input hb-notepad-text"
-        value={notes[selected] ?? ""}
-        maxLength={2000}
-        placeholder={
-          selected === me
-            ? "What you've learned about your card…"
-            : `Notes about ${who?.name ?? "this player"}…`
-        }
-        aria-label={
-          selected === me
-            ? "Notes about your card"
-            : `Notes about ${who?.name ?? "this player"}`
-        }
-        onChange={(e) =>
-          setNotes((n) => ({ ...n, [selected]: e.target.value }))
-        }
-      />
-    </section>
   );
 }
 

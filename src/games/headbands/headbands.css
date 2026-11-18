@@ -854,27 +854,49 @@
 .hb-play-table {
   align-content: start;
 }
-.hb-notepad-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.hb-notepad-text {
-  min-height: 120px;
-  resize: vertical;
-  font: inherit;
-  line-height: 1.4;
+.hb-play > .card {
+  align-content: start;
 }
 @container (min-width: 900px) {
   .hb-play {
-    grid-template-columns: minmax(300px, 1fr) minmax(280px, 1fr) minmax(280px, 340px);
-    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    grid-template-rows: auto minmax(0, 1fr);
     flex: 1;
     min-height: 0;
+    align-items: start;
   }
-  .hb-play > * {
-    min-height: 0;
+  .hb-play > .hb-turn-banner {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .hb-play > .hb-play-table {
+    grid-column: 1;
+    grid-row: 2;
+    max-height: 100%;
     overflow-y: auto;
+  }
+  .hb-play > .hb-play-side {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  /* Ask on the left, guess on the right. */
+  .hb-my-turn {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    column-gap: 20px;
+  }
+  .hb-my-turn > .hb-hidden-note,
+  .hb-my-turn > .hb-question,
+  .hb-my-turn > .btn-quiet {
+    grid-column: 1 / -1;
+  }
+  .hb-my-turn > .btn-quiet {
+    justify-self: start;
+  }
+  .hb-play .hb-turn-title {
+    font-size: clamp(24px, 2.6vw, 34px);
   }
 }
 .hb-phone-player-head .hb-roster-name,

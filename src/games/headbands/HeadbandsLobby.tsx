@@ -11,6 +11,7 @@ import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
 import { customIdentityProblems, shuffle, writingPairs, type Rules } from "./headbandsEngine";
 import { closeLobby, createLobby, joinLink, joinLobby, leaveLobby, playerId, setLobby, syncCircle, watchLobby, type LobbyState } from "./lobby";
 import { WriteFor } from "./HeadbandsJoin";
+import { useJoinSound } from "../../lib/useGameSounds";
 import "../jeopardy/jeopardy.css";
 import "../jeopardy/setup.css";
 import "./headbands.css";
@@ -117,6 +118,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
     if (next.join() !== lobby.circle.join()) void setLobby(code, { circle: next });
   }, [code, lobby, players]);
 
+  useJoinSound(lobby ? Object.keys(lobby.players).length : 0);
   const circle = lobby?.circle ?? [];
   const pairs = useMemo(() => writingPairs(circle.map((_, i) => i)), [circle]);
   const nameOf = (id: string) => lobby?.players[id]?.name ?? "Someone";
