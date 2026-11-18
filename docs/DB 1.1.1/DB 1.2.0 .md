@@ -1,0 +1,4 @@
+- Make animated backgrounds for ALL games bigger (to fit whole right part of screen) + have the gradients MOVE dynamicly in a 3d way
+  - So seperate them, have a seperate Gradient 3d System with a 3d Parts System for things like the Cards for Headbands.
+- Add version # into settings
+- Add more settings into settings
