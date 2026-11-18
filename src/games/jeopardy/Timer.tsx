@@ -24,7 +24,7 @@ export function Timer({ seconds, paused = false }: { seconds: number; paused?: b
 
   useEffect(() => {
     if (running && !paused && remaining > 0 && remaining <= 5) playSfx("tick");
-  }, [running, remaining]);
+  }, [running, paused, remaining]);
 
   useEffect(() => {
     if (remaining === 0 && !beeped.current) {

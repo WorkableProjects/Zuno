@@ -54,3 +54,31 @@
   color: #fff;
   font-weight: 500;
 }
+
+.preset-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.preset-card {
+  display: grid;
+  gap: 4px;
+  min-height: 44px;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.preset-card.is-active { border: 2px solid var(--game, currentColor); }
+.preset-card.is-active strong::after { content: " ✓"; }
+.board-preview { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 4px; margin: 12px 0; overflow-x: auto; }
+.preview-col { display: grid; gap: 4px; align-content: start; }
+.preview-head { font: 500 11px / 1.2 var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.preview-cell { padding: 4px; text-align: center; border: 1px solid var(--hairline); border-radius: 4px; font: 500 12px / 1.2 var(--font-ui); }
+.preview-cell.is-dd { border: 2px dashed var(--game, currentColor); font-weight: 700; }
+.team-tools { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.drag-handle { cursor: grab; display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; color: var(--text-2); }
+.team-card.is-dragging { opacity: 0.5; }
+.team-color input { width: 44px; height: 44px; padding: 0; border: none; background: none; }
+.team-initials .input { width: 56px; text-transform: uppercase; }
+.field-error { color: #b91c1c; font: 500 13px / 1.3 var(--font-ui); }
+.setup-optional summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 500; }
+.setup-optional[open] { display: grid; gap: 12px; }
