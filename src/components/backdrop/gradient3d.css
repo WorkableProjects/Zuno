@@ -1,0 +1,297 @@
+/* ---------- Generated scenes ---------- */
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.light {
+  position: absolute;
+  border-radius: 50%;
+  opacity: var(--field-opacity);
+  will-change: transform;
+}
+.light-a {
+  background: radial-gradient(closest-side, var(--c1), transparent);
+}
+.light-b {
+  background: radial-gradient(closest-side, var(--c2), transparent);
+}
+.light-c {
+  background: radial-gradient(closest-side, var(--c3), transparent);
+}
+
+@keyframes drift-x {
+  from {
+    transform: translate3d(-4%, 0, 0) rotate(var(--rot, 0deg));
+  }
+  to {
+    transform: translate3d(5%, 3%, 0) rotate(var(--rot, 0deg));
+  }
+}
+@keyframes drift-y {
+  from {
+    transform: translate3d(0, 4%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, -5%, 0) scale(1.06);
+  }
+}
+@keyframes sway {
+  from {
+    transform: rotate(calc(var(--rot) - 3deg));
+  }
+  to {
+    transform: rotate(calc(var(--rot) + 3deg));
+  }
+}
+
+/* Aurora: wide ribbons of light across the upper right */
+.scene-aurora .light {
+  width: 110vmax;
+  height: 44vmax;
+  animation: drift-x 36s ease-in-out infinite alternate;
+}
+.scene-aurora .light-a {
+  top: -14vmax;
+  right: -30vmax;
+  --rot: -14deg;
+}
+.scene-aurora .light-b {
+  top: 6vmax;
+  right: -44vmax;
+  --rot: -8deg;
+  animation-duration: 44s;
+  animation-direction: alternate-reverse;
+}
+.scene-aurora .light-c {
+  top: 26vmax;
+  right: -20vmax;
+  --rot: -18deg;
+  animation-duration: 52s;
+}
+
+/* Tide: slow swells rising from the lower edge */
+.scene-tide .light {
+  width: 96vmax;
+  height: 56vmax;
+  animation: drift-y 32s ease-in-out infinite alternate;
+}
+.scene-tide .light-a {
+  bottom: -30vmax;
+  right: -18vmax;
+}
+.scene-tide .light-b {
+  bottom: -36vmax;
+  right: 24vmax;
+  animation-duration: 40s;
+  animation-direction: alternate-reverse;
+}
+.scene-tide .light-c {
+  bottom: -18vmax;
+  right: -44vmax;
+  animation-duration: 48s;
+}
+
+/* Spotlight: two stage beams and the pool of light they land in */
+.scene-spotlight .light-a,
+.scene-spotlight .light-b {
+  top: -30vmax;
+  width: 44vmax;
+  height: 130vmax;
+  transform-origin: 50% 0%;
+  animation: sway 28s ease-in-out infinite alternate;
+}
+.scene-spotlight .light-a {
+  right: 30vmax;
+  --rot: 24deg;
+}
+.scene-spotlight .light-b {
+  right: -6vmax;
+  --rot: -16deg;
+  animation-duration: 36s;
+  animation-direction: alternate-reverse;
+}
+.scene-spotlight .light-c {
+  width: 90vmax;
+  height: 44vmax;
+  bottom: -24vmax;
+  right: -10vmax;
+  animation: drift-y 40s ease-in-out infinite alternate;
+}
+
+/* Horizon: a banded sun going down on the right */
+.scene-horizon .light-a {
+  width: 96vmax;
+  height: 70vmax;
+  right: -22vmax;
+  bottom: -34vmax;
+  animation: drift-y 44s ease-in-out infinite alternate;
+}
+.scene-horizon .light-b {
+  width: 70vmax;
+  height: 40vmax;
+  right: -6vmax;
+  bottom: -4vmax;
+  animation: drift-x 52s ease-in-out infinite alternate;
+}
+.scene-horizon .light-c {
+  width: 120vmax;
+  height: 40vmax;
+  right: -30vmax;
+  bottom: -26vmax;
+  animation: drift-x 60s ease-in-out infinite alternate-reverse;
+}
+.sun {
+  position: absolute;
+  right: clamp(24px, 12vw, 220px);
+  bottom: 14vh;
+  width: min(46vmin, 520px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--c2) 4%, var(--c1) 52%, var(--c3) 100%);
+  /* Slits widen toward the horizon, as the sun sinks into it */
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0 50%,
+    transparent 50% 51.5%,
+    #000 51.5% 61%,
+    transparent 61% 63.5%,
+    #000 63.5% 72%,
+    transparent 72% 76%,
+    #000 76% 83%,
+    transparent 83% 88.5%,
+    #000 88.5% 93.5%,
+    transparent 93.5%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0 50%,
+    transparent 50% 51.5%,
+    #000 51.5% 61%,
+    transparent 61% 63.5%,
+    #000 63.5% 72%,
+    transparent 72% 76%,
+    #000 76% 83%,
+    transparent 83% 88.5%,
+    #000 88.5% 93.5%,
+    transparent 93.5%
+  );
+  animation: sun-set 46s ease-in-out infinite alternate;
+}
+@keyframes sun-set {
+  from {
+    transform: translate3d(0, -1.5%, 0);
+  }
+  to {
+    transform: translate3d(0, 2.5%, 0);
+  }
+}
+
+
+/* ---------- 3D gradient space ----------
+   The lights live in a perspective space that fills the right side of the
+   screen. The space tilts and turns, and each light orbits at its own depth,
+   so the gradients slide past one another instead of drifting flat. */
+.g3d {
+  position: absolute;
+  inset: -20%;
+  perspective: 1400px;
+  perspective-origin: 68% 45%;
+}
+.g3d-space {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: g3d-turn 48s ease-in-out infinite;
+}
+@keyframes g3d-turn {
+  0%,
+  100% {
+    transform: rotateX(10deg) rotateY(-16deg) rotateZ(0deg);
+  }
+  25% {
+    transform: rotateX(-6deg) rotateY(-4deg) rotateZ(3deg);
+  }
+  50% {
+    transform: rotateX(4deg) rotateY(14deg) rotateZ(-2deg);
+  }
+  75% {
+    transform: rotateX(12deg) rotateY(6deg) rotateZ(2deg);
+  }
+}
+.g3d .scene {
+  inset: 0;
+  overflow: visible;
+  transform-style: preserve-3d;
+}
+.g3d .light {
+  mix-blend-mode: screen;
+}
+/* Each light gets its own depth and a 3D orbit. Presets keep their layout. */
+.g3d .light-a {
+  --z: 120px;
+  animation: g3d-orbit-a 30s ease-in-out infinite !important;
+}
+.g3d .light-b {
+  --z: -80px;
+  animation: g3d-orbit-b 38s ease-in-out infinite !important;
+}
+.g3d .light-c {
+  --z: 220px;
+  animation: g3d-orbit-c 46s ease-in-out infinite !important;
+}
+@keyframes g3d-orbit-a {
+  0%,
+  100% {
+    transform: translate3d(-6%, 0, var(--z)) rotate(var(--rot, 0deg)) scale(1);
+  }
+  33% {
+    transform: translate3d(4%, -6%, calc(var(--z) + 160px)) rotate(calc(var(--rot, 0deg) + 10deg)) scale(1.08);
+  }
+  66% {
+    transform: translate3d(8%, 5%, calc(var(--z) - 120px)) rotate(calc(var(--rot, 0deg) - 6deg)) scale(0.96);
+  }
+}
+@keyframes g3d-orbit-b {
+  0%,
+  100% {
+    transform: translate3d(6%, 4%, var(--z)) rotate(var(--rot, 0deg)) scale(1.04);
+  }
+  40% {
+    transform: translate3d(-8%, -4%, calc(var(--z) - 180px)) rotate(calc(var(--rot, 0deg) - 12deg)) scale(1.12);
+  }
+  70% {
+    transform: translate3d(-2%, 8%, calc(var(--z) + 140px)) rotate(calc(var(--rot, 0deg) + 8deg)) scale(0.94);
+  }
+}
+@keyframes g3d-orbit-c {
+  0%,
+  100% {
+    transform: translate3d(0, -4%, var(--z)) rotate(var(--rot, 0deg)) scale(0.98);
+  }
+  50% {
+    transform: translate3d(-10%, 6%, calc(var(--z) - 240px)) rotate(calc(var(--rot, 0deg) + 16deg)) scale(1.1);
+  }
+}
+/* A soft sheen that sweeps through the space and shifts the colors */
+.g3d-sheen {
+  position: absolute;
+  top: 18%;
+  bottom: 18%;
+  left: 46%;
+  right: 12%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--c1), var(--c2), var(--c3), var(--c1));
+  opacity: calc(var(--field-opacity) * 0.35);
+  filter: blur(80px);
+  transform: translateZ(-200px);
+  animation: g3d-sheen 40s linear infinite;
+}
+@keyframes g3d-sheen {
+  from {
+    transform: translateZ(-200px) rotateX(30deg) rotateZ(0deg);
+  }
+  to {
+    transform: translateZ(-200px) rotateX(30deg) rotateZ(360deg);
+  }
+}

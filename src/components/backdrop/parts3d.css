@@ -1,0 +1,367 @@
+/* ---------- Engine artwork: the board ---------- */
+.art-board {
+  position: absolute;
+  right: clamp(-40px, 1vw, 40px);
+  top: 50%;
+  width: min(58vw, 1040px);
+  transform: translateY(-44%);
+  perspective: 1600px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 34%), linear-gradient(180deg, #000 62%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 34%), linear-gradient(180deg, #000 62%, transparent 100%);
+  mask-composite: intersect;
+}
+.art-board-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  transform: rotateY(-24deg) rotateX(10deg) rotateZ(1.5deg);
+  transform-origin: 100% 50%;
+}
+.art-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1.5;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--surface-2) 78%, transparent);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--top-light);
+  color: color-mix(in oklab, var(--c1) 82%, var(--text));
+  font: 500 clamp(14px, 1.7vw, 28px) / 1 var(--font-display);
+}
+.art-head {
+  aspect-ratio: 2.4;
+  background: color-mix(in oklab, var(--surface) 80%, transparent);
+}
+.art-head span {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--text-3);
+  opacity: 0.5;
+}
+.art-cell.is-used {
+  color: transparent;
+  background: color-mix(in oklab, var(--surface) 60%, transparent);
+}
+/* The host's pick moves across the board: one cell lights up every 3s. */
+.art-cell.is-pick {
+  position: relative;
+  isolation: isolate;
+  animation: pick-ink 15s var(--ease) calc(var(--pick) * 3s) infinite both;
+}
+.art-cell.is-pick::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--c1);
+  box-shadow: 0 0 48px color-mix(in oklab, var(--c1) 50%, transparent);
+  opacity: 0;
+  animation: pick-fill 15s var(--ease) calc(var(--pick) * 3s) infinite both;
+}
+@keyframes pick-fill {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  3%,
+  16% {
+    opacity: 1;
+  }
+  21% {
+    opacity: 0;
+  }
+}
+@keyframes pick-ink {
+  0%,
+  100% {
+    color: color-mix(in oklab, var(--c1) 82%, var(--text));
+  }
+  3%,
+  16% {
+    color: #0b1018;
+  }
+  21% {
+    color: color-mix(in oklab, var(--c1) 82%, var(--text));
+  }
+}
+
+/* ---------- Engine artwork: the headband cards ---------- */
+.art-cards {
+  position: absolute;
+  right: clamp(80px, 19vw, 420px);
+  top: 50%;
+  width: min(22vw, 340px);
+  aspect-ratio: 5 / 7;
+  transform: translateY(-46%);
+  perspective: 1400px;
+  animation: fan-sway 18s ease-in-out infinite alternate;
+}
+@keyframes fan-sway {
+  from {
+    rotate: -1.5deg;
+  }
+  to {
+    rotate: 1.5deg;
+  }
+}
+.art-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface-2) 86%, transparent);
+  box-shadow: var(--top-light), 0 24px 60px rgb(0 0 0 / 0.35);
+  overflow: hidden;
+}
+/* The headband itself: a strip across the top of every card */
+.art-band {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 14%;
+  background: color-mix(in oklab, var(--c1) 70%, var(--surface-3));
+}
+.art-card-back {
+  align-content: center;
+  gap: 12px;
+  justify-items: center;
+}
+.art-line {
+  width: 58%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--text-3);
+  opacity: 0.4;
+}
+.art-line.is-short {
+  width: 36%;
+}
+.art-card-back.is-left {
+  transform: translate(-58%, 8%) rotate(-14deg);
+}
+.art-card-back.is-right {
+  transform: translate(56%, 6%) rotate(12deg);
+}
+.art-card-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: card-turn 10s var(--ease) infinite;
+}
+@keyframes card-turn {
+  0%,
+  42% {
+    transform: rotateY(0deg);
+  }
+  50%,
+  88% {
+    transform: rotateY(180deg);
+  }
+  96%,
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+.art-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.art-face.is-mystery {
+  background: var(--c1);
+  border-color: transparent;
+  box-shadow: 0 0 64px color-mix(in oklab, var(--c1) 36%, transparent), 0 24px 60px rgb(0 0 0 / 0.35);
+}
+.art-face.is-mystery .art-band {
+  background: rgb(11 16 24 / 0.16);
+}
+.art-mark {
+  color: #0b1018;
+  font: 600 clamp(64px, 9vw, 128px) / 1 var(--font-display);
+}
+.art-face.is-reveal {
+  transform: rotateY(180deg);
+  background: var(--surface);
+}
+.art-word {
+  padding: 0 12px;
+  color: var(--text);
+  font: 500 clamp(18px, 2vw, 30px) / 1.1 var(--font-display);
+  text-align: center;
+}
+
+/* ---------- Engine artwork: LIAR's three statements ---------- */
+.art-statements {
+  position: absolute;
+  right: clamp(48px, 10vw, 260px);
+  top: 50%;
+  width: min(40vw, 600px);
+  display: grid;
+  gap: 18px;
+  transform: translateY(-50%) rotate(-3deg);
+  /* One cycle per statement set; the iteration swaps the set. */
+  animation: statements-cycle 9s var(--ease) infinite;
+}
+@keyframes statements-cycle {
+  0% {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  8%,
+  90% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -12px;
+  }
+}
+.art-statement {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface-2) 86%, transparent);
+  box-shadow: var(--top-light), 0 20px 50px rgb(0 0 0 / 0.32);
+  animation: statement-bob 6s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -2s);
+}
+.art-statement:nth-child(2) {
+  margin-left: 28px;
+}
+@keyframes statement-bob {
+  from {
+    translate: 0 -4px;
+  }
+  to {
+    translate: 0 4px;
+  }
+}
+.art-statement-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--c1) 80%, var(--surface-3));
+  color: #0b1018;
+  font: 600 16px/1 var(--font-display);
+}
+.art-statement-text {
+  color: var(--text);
+  font: 500 clamp(16px, 1.7vw, 26px) / 1.2 var(--font-display);
+}
+.art-statement.is-lie .art-statement-text {
+  animation: lie-strike 9s var(--ease) infinite;
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 55% / 0% 2px;
+}
+@keyframes lie-strike {
+  0%,
+  52% {
+    background-size: 0% 2px;
+    opacity: 1;
+  }
+  62%,
+  100% {
+    background-size: 100% 2px;
+    opacity: 0.55;
+  }
+}
+.art-stamp {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  padding: 4px 12px;
+  border: 3px solid var(--c1);
+  border-radius: 8px;
+  color: var(--c1);
+  font: 700 22px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transform: translateY(-50%) rotate(-12deg) scale(1.8);
+  animation: lie-stamp 9s var(--ease) infinite;
+}
+@keyframes lie-stamp {
+  0%,
+  55% {
+    opacity: 0;
+    transform: translateY(-50%) rotate(-12deg) scale(1.8);
+  }
+  60%,
+  90% {
+    opacity: 0.95;
+    transform: translateY(-50%) rotate(-12deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) rotate(-12deg) scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .art-statements,
+  .art-board,
+  .art-cards {
+    display: none;
+  }
+  .sun {
+    width: 56vmin;
+    right: -8vmin;
+    bottom: 30vh;
+  }
+}
+
+
+/* ---------- 3D parts rig ----------
+   Every engine part sits on one stage that fills the right side of the
+   screen. The rig slowly orbits, and each part floats at its own depth. */
+.p3d {
+  position: absolute;
+  inset: 0;
+  perspective: 1800px;
+  perspective-origin: 72% 50%;
+  pointer-events: none;
+}
+.p3d-rig {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform-origin: 72% 50%;
+  animation: p3d-orbit 34s ease-in-out infinite;
+}
+@keyframes p3d-orbit {
+  0%,
+  100% {
+    transform: rotateX(3deg) rotateY(-7deg) translateZ(0);
+  }
+  33% {
+    transform: rotateX(-3deg) rotateY(5deg) translateZ(40px);
+  }
+  66% {
+    transform: rotateX(4deg) rotateY(9deg) translateZ(-30px);
+  }
+}
+.p3d-rig > * {
+  transform-style: preserve-3d;
+}
+/* Headband cards: the side cards sit behind the flipping one */
+.p3d .art-card-back.is-left {
+  transform: translate3d(-58%, 8%, -90px) rotate(-14deg);
+}
+.p3d .art-card-back.is-right {
+  transform: translate3d(56%, 6%, -70px) rotate(12deg);
+}
+.p3d .art-card-flip {
+  translate: 0 0 60px;
+}
+/* Statements step out toward the viewer one after another */
+.p3d .art-statement {
+  transform: translateZ(calc(var(--i) * 28px));
+}
