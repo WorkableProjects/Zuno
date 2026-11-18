@@ -496,3 +496,108 @@ svg {
   display: grid;
   gap: 4px;
 }
+
+/* ---------- Shared status, timer and player components ---------- */
+.status-view {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-2);
+}
+.status-view .page-title {
+  font-size: 22px;
+}
+.status-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--hairline);
+  border-top-color: var(--status-info);
+  animation: status-spin 0.9s linear infinite;
+}
+@keyframes status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.status-view.is-error svg {
+  color: var(--status-danger);
+}
+.notice-warning {
+  border-color: color-mix(in oklab, var(--status-warning) 40%, transparent);
+}
+.notice-warning svg {
+  color: var(--status-warning);
+}
+.timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 64px;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.timer-badge.is-low {
+  color: var(--timer-low);
+  background: color-mix(in oklab, var(--timer-low) 14%, var(--surface));
+}
+.timer-badge.is-paused {
+  color: var(--text-3);
+}
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  font-size: 14px;
+}
+.player-chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.player-chip.is-ready .dot,
+.player-chip.is-online .dot {
+  background: var(--status-success);
+}
+.player-chip.is-away {
+  opacity: 0.6;
+}
+
+/* Responsive rules: comfortable tap targets and no horizontal scroll on phones. */
+@media (max-width: 600px) {
+  .btn,
+  .icon-btn,
+  .segment {
+    min-height: var(--tap-min);
+  }
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+  .dialog-actions .btn {
+    width: 100%;
+  }
+}
+@media (pointer: coarse) {
+  .btn-sm {
+    min-height: 40px;
+  }
+}
+body {
+  overflow-x: hidden;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

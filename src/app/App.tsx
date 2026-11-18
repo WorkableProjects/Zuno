@@ -55,7 +55,7 @@ type Screen =
   | { name: "glSetup"; game: LoadedGame<GauntletFile> }
   | { name: "glPlay"; game: LoadedGame<GauntletFile>; teams: GauntletTeamSetup[]; options: GauntletOptions }
   | { name: "liarPlay"; game: LoadedGame<LiarFile>; names: string[]; options: LiarOptions }
-  | { name: "liarLobby"; file: LiarFile; code: string | null }
+  | { name: "liarLobby"; file: LiarFile; code: string | null; defaults?: Partial<LiarOptions> }
   | { name: "liarOnline"; file: LiarFile; code: string; players: LiarPlayer[]; options: LiarOptions }
   | { name: "liarJoin"; code: string | null; playerName?: string }
   | { name: "builder" }
@@ -328,6 +328,7 @@ export function App() {
           key={stack.length}
           file={screen.file}
           code={screen.code}
+          defaults={screen.defaults}
           onCode={(code) => {
             hostedLiar.current = code;
             setStack((s) => s.map((x, i) => (i === s.length - 1 && x.name === "liarLobby" ? { ...x, code } : x)));
@@ -346,7 +347,7 @@ export function App() {
           game={screen.game}
           onBack={pop}
           onStart={(names, options) => push({ name: "liarPlay", game: screen.game, names, options })}
-          onLobby={lobbiesAvailable() ? () => push({ name: "liarLobby", file: screen.game.file, code: null }) : undefined}
+          onLobby={lobbiesAvailable() ? (options) => push({ name: "liarLobby", file: screen.game.file, code: null, defaults: options }) : undefined}
         />
       )}
       {screen.name === "liarPlay" && <LiarGame key={stack.length} file={screen.game.file} names={screen.names} options={screen.options} onAgain={pop} onExit={home} />}

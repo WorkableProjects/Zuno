@@ -45,3 +45,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Same rule when the person asks for reduced motion in Settings. */
+[data-motion="reduce"] *,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 80ms !important;
+  scroll-behavior: auto !important;
+}

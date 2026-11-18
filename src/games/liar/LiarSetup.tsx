@@ -13,7 +13,7 @@ interface Props {
   onBack: () => void;
   onStart: (names: string[], options: Options) => void;
   /** Host this game online, with players on their own phones. */
-  onLobby?: () => void;
+  onLobby?: (options: Options) => void;
 }
 
 export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
@@ -200,7 +200,7 @@ export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
               Start game
             </button>
             {onLobby && (
-              <button type="button" className="btn btn-secondary" onClick={onLobby}>
+              <button type="button" className="btn btn-secondary" onClick={() => onLobby(options)}>
                 <Radio size={18} strokeWidth={1.5} />
                 Play online instead
               </button>

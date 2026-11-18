@@ -88,3 +88,17 @@
 [data-theme="light"] .game-scope {
   --game-ink: color-mix(in oklab, var(--game) 52%, #05070c);
 }
+
+/* Semantic status tokens. Components use these, never raw hues. */
+:root {
+  --status-success: var(--positive);
+  --status-danger: var(--negative);
+  --status-warning: #f2b54a;
+  --status-info: var(--accent);
+  --timer-low: var(--negative);
+  --focus-ring: 0 0 0 3px var(--ring);
+  --tap-min: 44px;
+}
+[data-theme="light"] {
+  --status-warning: #a8620a;
+}

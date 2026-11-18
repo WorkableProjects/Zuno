@@ -38,6 +38,8 @@ interface Props {
   onCode: (code: string) => void;
   onBack: () => void;
   onStart: (players: Player[], options: Options) => void;
+  /** Options chosen on the setup screen, carried into the online room. */
+  defaults?: Partial<Options>;
 }
 
 const NAME_KEY = "zuno.hb.name";
@@ -56,6 +58,7 @@ export function LiarLobby({
   onCode,
   onBack,
   onStart,
+  defaults,
 }: Props) {
   const me = playerId();
   const [name, setName] = useState(savedName);
@@ -66,9 +69,12 @@ export function LiarLobby({
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
-  const [rounds, setRounds] = useState(file.settings.defaultRounds);
-  const [scoring, setScoring] = useState(file.settings.scoringEnabled);
-  const [abstain, setAbstain] = useState(file.settings.allowAbstain);
+  const [rounds, setRounds] = useState(defaults?.rounds ?? file.settings.defaultRounds);
+  const [scoring, setScoring] = useState(defaults?.scoring ?? file.settings.scoringEnabled);
+  const [abstain, setAbstain] = useState(defaults?.allowAbstain ?? file.settings.allowAbstain)
+  const [liveResults, setLiveResults] = useState(!!defaults?.liveResults);
+  const [anonymous, setAnonymous] = useState(!!defaults?.anonymousVotes);
+  const [streak, setStreak] = useState(!!defaults?.streakBonus);;
   const created = useRef(false);
   useEscape(() => setConfirmLeave(true), !confirmLeave);
 
@@ -146,7 +152,7 @@ export function LiarLobby({
     await setLiarLobby(code, { phase: "playing" });
     onStart(
       list.map((p) => ({ id: p.id, name: p.name })),
-      { rounds, scoring, allowAbstain: abstain },
+      { ...defaults, rounds, scoring, allowAbstain: abstain, liveResults, anonymousVotes: anonymous, streakBonus: streak },
     );
   };
 
@@ -318,6 +324,21 @@ export function LiarLobby({
               checked={abstain}
               onChange={(e) => setAbstain(e.target.checked)}
             />
+            <span className="switch-track" />
+          </label>
+          <label className="switch">
+            <span>Show live vote totals</span>
+            <input type="checkbox" checked={liveResults} onChange={(e) => setLiveResults(e.target.checked)} />
+            <span className="switch-track" />
+          </label>
+          <label className="switch">
+            <span>Anonymous votes</span>
+            <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
+            <span className="switch-track" />
+          </label>
+          <label className="switch">
+            <span>Streak bonus</span>
+            <input type="checkbox" checked={streak} onChange={(e) => setStreak(e.target.checked)} />
             <span className="switch-track" />
           </label>
 

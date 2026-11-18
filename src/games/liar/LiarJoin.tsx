@@ -12,6 +12,8 @@ import {
   watchLiarLobby,
   type LiarLobbyState,
 } from "./liarLobby";
+import { adoptSeatId, clearSeat, loadSeat, saveSeat } from "../../lib/rejoin";
+import { isStaleOnline } from "./liarLobby";
 import "../headbands/headbands.css";
 import "./liar.css";
 
@@ -32,7 +34,11 @@ const savedName = () => {
 };
 
 /** A player's phone in an online LIAR room. */
+const seatAtLoad = loadSeat("liar");
+
 export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
+  const resume = !givenName && seatAtLoad && (!linkCode || linkCode === seatAtLoad.code) ? seatAtLoad : null;
+  if (resume) adoptSeatId(resume);
   const me = playerId();
   const [code, setCode] = useState(linkCode ?? "");
   const [name, setName] = useState(givenName ?? savedName());
@@ -47,7 +53,12 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
 
   useEffect(() => {
     if (!joined) return;
-    return watchLiarLobby(joined, setLobby, setProblem);
+    // Drop broadcasts older than the game already on screen.
+    return watchLiarLobby(
+      joined,
+      (next) => setLobby((prev) => (next && prev?.game && next.game && isStaleOnline(prev.game, next.game) ? { ...next, game: prev.game } : next)),
+      setProblem,
+    );
   }, [joined]);
 
   const join = async (c: string, n: string) => {
@@ -56,6 +67,7 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
     setProblem(null);
     try {
       if (!(await liarLobbyExists(c))) {
+        clearSeat("liar");
         setProblem(
           `There is no open room ${c}. Check the code on the host's screen.`,
         );
@@ -68,6 +80,7 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
       } catch {
         /* optional */
       }
+      saveSeat("liar", { code: c, name: n.trim(), extra: `id:${me}` });
       setJoined(c);
     } catch {
       setProblem(
@@ -81,6 +94,7 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
   // Arriving from the shared Join screen: the code and name are already known.
   useEffect(() => {
     if (givenName && linkCode) void join(linkCode, givenName);
+    else if (resume) void join(resume.code, resume.name);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,6 +114,7 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
           aria-label="Leave"
           onClick={() => {
             if (joined) void leaveLiarLobby(joined, me);
+            clearSeat("liar");
             onExit();
           }}
         >
