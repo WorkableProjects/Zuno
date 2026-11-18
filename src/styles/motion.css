@@ -46,10 +46,10 @@
   }
 }
 
-/* Same rule when the person asks for reduced motion in Settings. */
-[data-motion="reduce"] *,
-[data-motion="reduce"] *::before,
-[data-motion="reduce"] *::after {
+/* Same rule when Background motion is set to Still in Settings. */
+[data-motion="off"] *,
+[data-motion="off"] *::before,
+[data-motion="off"] *::after {
   animation-duration: 1ms !important;
   animation-delay: 0ms !important;
   animation-iteration-count: 1 !important;

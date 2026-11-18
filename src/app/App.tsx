@@ -304,7 +304,7 @@ export function App() {
           onLoaded={setLoaded}
           onLobby={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbLobby", base: blankHeadbandsFile(), code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarLobby", file: blankLiarFile(), code: null }) : undefined}
           onlineText={screen.gameType === LIAR_TYPE ? "Players join on their phones, write their statements privately and vote from their own device." : undefined}
-          onJoin={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbJoin", code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarJoin", code: null }) : undefined}
+          onJoin={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbJoin", code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarJoin", code: null }) : screen.gameType === GAUNTLET_TYPE ? () => push({ name: "glJoin", code: null }) : undefined}
         />
       )}
       {screen.name === "setup" && (
