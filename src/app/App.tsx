@@ -16,7 +16,7 @@ import { SoundToggle } from "../components/ui/SoundToggle";
 import { installHoverSounds, setSoundTheme } from "../lib/audio";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
-import { LIAR_TYPE, type LiarFile } from "../game-files/schema/liar";
+import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
 import { HEADBANDS_TYPE, blankHeadbandsFile, type HeadbandsFile } from "../game-files/schema/headbands";
 import { JEOPARDY_TYPE, type JeopardyFile } from "../game-files/schema/jeopardy";
 import { HeadbandsGame } from "../games/headbands/HeadbandsGame";
@@ -26,7 +26,11 @@ import { HeadbandsSetup, type HeadbandsStart } from "../games/headbands/Headband
 import { closeLobby, codeFromHash, lobbiesAvailable } from "../games/headbands/lobby";
 import { LiarGame } from "../games/liar/LiarGame";
 import { LiarSetup } from "../games/liar/LiarSetup";
-import type { Options as LiarOptions } from "../games/liar/liarEngine";
+import type { Options as LiarOptions, Player as LiarPlayer } from "../games/liar/liarEngine";
+import { LiarJoin } from "../games/liar/LiarJoin";
+import { LiarLobby } from "../games/liar/LiarLobby";
+import { LiarOnlineGame } from "../games/liar/LiarOnlineGame";
+import { closeLiarLobby, liarCodeFromHash, liarLobbyExists } from "../games/liar/liarLobby";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
@@ -44,6 +48,9 @@ type Screen =
   | { name: "hbJoin"; code: string | null }
   | { name: "liarSetup"; game: LoadedGame<LiarFile> }
   | { name: "liarPlay"; game: LoadedGame<LiarFile>; names: string[]; options: LiarOptions }
+  | { name: "liarLobby"; file: LiarFile; code: string | null }
+  | { name: "liarOnline"; file: LiarFile; code: string; players: LiarPlayer[]; options: LiarOptions }
+  | { name: "liarJoin"; code: string | null; playerName?: string }
   | { name: "builder" }
   | { name: "editor"; gameType: string }
   | { name: "ai"; gameType: string };
@@ -63,7 +70,7 @@ function backdropForGame(game: LoadedGame): BackdropSpec {
 function backdropTheme(screen: Screen, tileGameType: string): "jeopardy" | "headbands" | "liar" {
   if (screen.name === "dashboard") return tileGameType === "jeopardy" ? "jeopardy" : tileGameType === "liar" ? "liar" : "headbands";
   if (screen.name === "setup" || screen.name === "play") return "jeopardy";
-  if (screen.name === "liarSetup" || screen.name === "liarPlay") return "liar";
+  if (screen.name.startsWith("liar")) return "liar";
   return "headbands";
 }
 
@@ -75,11 +82,14 @@ export function App() {
   const [stack, setStack] = useState<Screen[]>(() => {
     // A phone opened from a lobby's QR code or link goes straight to joining.
     const code = lobbiesAvailable() ? codeFromHash(window.location.hash) : null;
-    if (code) history.replaceState(null, "", window.location.pathname + window.location.search);
+    const liarCode = lobbiesAvailable() ? liarCodeFromHash(window.location.hash) : null;
+    if (code || liarCode) history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (liarCode) return [{ name: "dashboard" }, { name: "liarJoin", code: liarCode }];
     return code ? [{ name: "dashboard" }, { name: "hbJoin", code }] : [{ name: "dashboard" }];
   });
   /** The online lobby this device is hosting, closed when the host goes home. */
   const hostedLobby = useRef<string | null>(null);
+  const hostedLiar = useRef<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState<LoadedGame | null>(null);
   const [draftBackdrop, setDraftBackdrop] = useState<BackdropSpec | null>(null);
@@ -98,6 +108,8 @@ export function App() {
   const home = useCallback(() => {
     if (hostedLobby.current) void closeLobby(hostedLobby.current).catch(() => undefined);
     hostedLobby.current = null;
+    if (hostedLiar.current) void closeLiarLobby(hostedLiar.current).catch(() => undefined);
+    hostedLiar.current = null;
     setLoaded(null);
     setStack([{ name: "dashboard" }]);
   }, []);
@@ -196,6 +208,7 @@ export function App() {
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
   else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "liarLobby" || screen.name === "liarOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "hbLobby") backdrop = backdropForGame({ file: screen.base, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
 
@@ -240,8 +253,9 @@ export function App() {
           onHost={host}
           onBuilder={() => toBuilder(screen.gameType)}
           onLoaded={setLoaded}
-          onLobby={screen.gameType === HEADBANDS_TYPE && lobbiesAvailable() ? () => push({ name: "hbLobby", base: blankHeadbandsFile(), code: null }) : undefined}
-          onJoin={screen.gameType === HEADBANDS_TYPE && lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
+          onLobby={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbLobby", base: blankHeadbandsFile(), code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarLobby", file: blankLiarFile(), code: null }) : undefined}
+          onlineText={screen.gameType === LIAR_TYPE ? "Players join on their phones, write their statements privately and vote from their own device." : undefined}
+          onJoin={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbJoin", code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarJoin", code: null }) : undefined}
         />
       )}
       {screen.name === "setup" && (
@@ -278,9 +292,44 @@ export function App() {
           onStart={(file, start) => push({ name: "hbPlay", game: { file, filename: "lobby", text: "", warnings: [] }, start, lobbyCode: hostedLobby.current ?? undefined })}
         />
       )}
-      {screen.name === "hbJoin" && <HeadbandsJoin code={screen.code} onExit={home} />}
+      {screen.name === "hbJoin" && (
+        <HeadbandsJoin
+          code={screen.code}
+          onExit={home}
+          onOtherRoom={async (code, playerName) => {
+            if (!(await liarLobbyExists(code))) return false;
+            setStack((s) => [...s.slice(0, -1), { name: "liarJoin", code, playerName }]);
+            return true;
+          }}
+        />
+      )}
+      {screen.name === "liarJoin" && <LiarJoin code={screen.code} name={screen.playerName} onExit={home} />}
+      {screen.name === "liarLobby" && (
+        <LiarLobby
+          key={stack.length}
+          file={screen.file}
+          code={screen.code}
+          onCode={(code) => {
+            hostedLiar.current = code;
+            setStack((s) => s.map((x, i) => (i === s.length - 1 && x.name === "liarLobby" ? { ...x, code } : x)));
+          }}
+          onBack={() => {
+            hostedLiar.current = null;
+            pop();
+          }}
+          onStart={(players, options) => screen.code && push({ name: "liarOnline", file: screen.file, code: screen.code, players, options })}
+        />
+      )}
+      {screen.name === "liarOnline" && <LiarOnlineGame key={stack.length} file={screen.file} code={screen.code} players={screen.players} options={screen.options} onAgain={pop} onExit={home} />}
       {screen.name === "hbPlay" && <HeadbandsGame key={stack.length} file={screen.game.file} start={screen.start} lobbyCode={screen.lobbyCode} onAgain={pop} onExit={home} />}
-      {screen.name === "liarSetup" && <LiarSetup game={screen.game} onBack={pop} onStart={(names, options) => push({ name: "liarPlay", game: screen.game, names, options })} />}
+      {screen.name === "liarSetup" && (
+        <LiarSetup
+          game={screen.game}
+          onBack={pop}
+          onStart={(names, options) => push({ name: "liarPlay", game: screen.game, names, options })}
+          onLobby={lobbiesAvailable() ? () => push({ name: "liarLobby", file: screen.game.file, code: null }) : undefined}
+        />
+      )}
       {screen.name === "liarPlay" && <LiarGame key={stack.length} file={screen.game.file} names={screen.names} options={screen.options} onAgain={pop} onExit={home} />}
       {screen.name === "builder" && (
         <BuilderHome

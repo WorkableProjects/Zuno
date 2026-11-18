@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Play, RotateCcw, Shuffle, UserMinus } from "lucide-react";
 import type { HeadbandsFile, HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
+import { Avatar, AvatarPicker } from "../../components/avatar/Avatar";
+import { loadAvatar, saveAvatar } from "../../components/avatar/avatar";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";
 import type { HeadbandsStart } from "./HeadbandsSetup";
@@ -57,6 +59,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
   /** The host plays too: this device joins its own room as a regular player. */
   const me = playerId();
   const [name, setName] = useState(savedName);
+  const [avatar, setAvatar] = useState(loadAvatar);
   const [code, setCode] = useState<string | null>(initialCode);
   const [lobby, setLobbyState] = useState<LobbyState | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -91,7 +94,8 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
   useEffect(() => {
     if (!code || trimmed === "") return;
     const t = window.setTimeout(() => {
-      void joinLobby(code, me, trimmed).catch(() => setProblem("Could not add you to the room."));
+      void joinLobby(code, me, trimmed, avatar).catch(() => setProblem("Could not add you to the room."));
+      saveAvatar(avatar);
       try {
         localStorage.setItem(NAME_KEY, trimmed);
       } catch {
@@ -99,7 +103,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
       }
     }, 350);
     return () => window.clearTimeout(t);
-  }, [code, me, trimmed]);
+  }, [code, me, trimmed, avatar]);
 
   useEffect(() => {
     if (code) void QRCode.toDataURL(joinLink(code), { margin: 1, width: 240 }).then(setQr).catch(() => setQr(""));
@@ -205,6 +209,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
             <input className="input" value={name} maxLength={24} autoComplete="nickname" disabled={phase !== "lobby"} placeholder="You play as well" onChange={(e) => setName(e.target.value)} />
             {!hostIn && <span className="field-hint">Enter your name to join the circle.</span>}
           </label>
+          {phase === "lobby" && <AvatarPicker name={name} value={avatar} onChange={setAvatar} />}
 
           {phase === "writing" && code && lobby && hostIn && myTarget && (
             <WriteFor key={`${myTarget}-${lobby.mode}`} code={code} me={me} targetName={nameOf(myTarget)} lobby={lobby} />
@@ -265,7 +270,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
                     <li key={id} className="hb-circle-row" data-nav-row={10 + writer}>
                       <span className="team-index">{writer + 1}</span>
                       <span className="hb-circle-who">
-                        <strong>{nameOf(id)}</strong>
+                        <Avatar name={nameOf(id)} avatar={lobby?.players[id]?.avatar} size={24} /> <strong>{nameOf(id)}</strong>
                         {id === me && <span className="meta"> (you)</span>} writes for {nameOf(circle[target])}
                       </span>
                       {phase === "writing" ? (

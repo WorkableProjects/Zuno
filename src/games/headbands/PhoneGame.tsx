@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import type { HeadbandsIdentity } from "../../game-files/schema/headbands";
+import { Avatar } from "../../components/avatar/Avatar";
 import { ActivityLog } from "./ActivityLog";
 import { IdentityCard } from "./IdentityCard";
 import { HeadbandsTable } from "./HeadbandsTable";
@@ -476,6 +477,11 @@ function PlayerRow({
     >
       <div className="hb-phone-player-head">
         <span className="hb-roster-name">
+          <Avatar
+            name={player.name}
+            avatar={lobby.players[player.id]?.avatar}
+            size={24}
+          />
           {player.name}
           {mine && <span className="meta"> · you</span>}
         </span>

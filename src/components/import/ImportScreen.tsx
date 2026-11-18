@@ -14,11 +14,13 @@ interface Props {
   onLoaded: (game: LoadedGame | null) => void;
   /** Headbands: open an online lobby where players write the identities. */
   onLobby?: () => void;
+  /** What players do online, under "No file needed". */
+  onlineText?: string;
   /** Headbands: join someone else's lobby from this device. */
   onJoin?: () => void;
 }
 
-export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoaded, onLobby, onJoin }: Props) {
+export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoaded, onLobby, onlineText, onJoin }: Props) {
   const engine = getEngine(gameType);
   const root = useAutoFocus<HTMLElement>();
   useEscape(onBack);
@@ -39,7 +41,7 @@ export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoad
           {(onLobby || onJoin) && (
             <div className="import-online card" data-nav-row="5">
               <p className="import-online-title">No file needed</p>
-              <p className="meta">Players join on their phones and write each other's identities.</p>
+              <p className="meta">{onlineText ?? "Players join on their phones and write each other's identities."}</p>
               <div className="import-online-actions">
                 {onLobby && (
                   <button type="button" className="btn btn-secondary btn-sm" onClick={onLobby}>

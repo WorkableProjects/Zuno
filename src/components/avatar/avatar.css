@@ -1,0 +1,69 @@
+.avatar {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  background: var(--surface-2);
+  border: 2px solid var(--hairline);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-picker {
+  display: grid;
+  gap: 10px;
+}
+.avatar-picker-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.avatar-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.avatar-swatches,
+.avatar-emojis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.avatar-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.avatar-swatch.is-active {
+  border-color: var(--text-1, #fff);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.avatar-emoji {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 18px;
+  cursor: pointer;
+}
+.avatar-emoji.is-active {
+  border-color: var(--game, var(--accent));
+  background: color-mix(in oklab, var(--game, var(--accent)) 18%, transparent);
+}
+.avatar-problem {
+  color: var(--negative);
+}

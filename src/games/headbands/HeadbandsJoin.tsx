@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, CircleAlert, CircleCheck, EyeOff, LogIn } from "lucide-react";
 import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
 import { IdentityImageField } from "../../components/builder/IdentityImageField";
+import { AvatarPicker } from "../../components/avatar/Avatar";
+import { loadAvatar, saveAvatar } from "../../components/avatar/avatar";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { IdentityCard } from "./IdentityCard";
 import { PhoneGame } from "./PhoneGame";
@@ -13,6 +15,8 @@ import "./headbands.css";
 interface Props {
   code: string | null;
   onExit: () => void;
+  /** Called with a code that is not a Headbands room; resolves true when another game took it. */
+  onOtherRoom?: (code: string, name: string) => Promise<boolean>;
 }
 
 const NAME_KEY = "zuno.hb.name";
@@ -25,10 +29,11 @@ const savedName = () => {
 };
 
 /** A player's phone: join a room, then write the identity for the next player. */
-export function HeadbandsJoin({ code: linkCode, onExit }: Props) {
+export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
   const me = playerId();
   const [code, setCode] = useState(linkCode ?? "");
   const [name, setName] = useState(savedName);
+  const [avatar, setAvatar] = useState(loadAvatar);
   const [joined, setJoined] = useState<string | null>(null);
   const [lobby, setLobby] = useState<LobbyState | null | undefined>(undefined);
   const [problem, setProblem] = useState<string | null>(null);
@@ -47,10 +52,13 @@ export function HeadbandsJoin({ code: linkCode, onExit }: Props) {
     setProblem(null);
     try {
       if (!(await lobbyExists(c))) {
+        saveAvatar(avatar);
+        if (onOtherRoom && (await onOtherRoom(c, name.trim()))) return;
         setProblem(`There is no open room ${c}. Check the code on the host's screen.`);
         return;
       }
-      await joinLobby(c, me, name);
+      await joinLobby(c, me, name, avatar);
+      saveAvatar(avatar);
       try {
         localStorage.setItem(NAME_KEY, name.trim());
       } catch {
@@ -118,6 +126,7 @@ export function HeadbandsJoin({ code: linkCode, onExit }: Props) {
               <span className="field-label">Your name</span>
               <input className="input input-lg" value={name} maxLength={24} autoComplete="nickname" data-autofocus={linkCode ? "" : undefined} autoFocus={!!linkCode} onChange={(e) => setName(e.target.value)} />
             </label>
+            <AvatarPicker name={name} value={avatar} onChange={setAvatar} />
             <button type="submit" className="btn btn-primary" disabled={busy || normalizeCode(code).length !== 5 || name.trim() === ""}>
               <LogIn size={18} strokeWidth={1.5} />
               {busy ? "Joining…" : "Join"}

@@ -1,5 +1,6 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, onValue, push, ref, remove, runTransaction, serverTimestamp, set, update, type Database } from "firebase/database";
+import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatar";
 import type { HeadbandsMode } from "../../game-files/schema/headbands";
 import type { GroupAnswer, GuessOutcome, LogEntry, PendingQuestion, Player, Rules, SessionAction } from "./headbandsEngine";
 
@@ -16,6 +17,7 @@ export type LobbyPhase = "lobby" | "writing" | "playing" | "over";
 export interface LobbyPlayer {
   name: string;
   joinedAt: number;
+  avatar: AvatarSpec | null;
 }
 
 export interface LobbyEntry {
@@ -108,7 +110,7 @@ export function lobbiesAvailable(): boolean {
 
 let app: FirebaseApp | null = null;
 let db: Database | null = null;
-function database(): Database {
+export function database(): Database {
   if (!lobbiesAvailable()) throw new Error("Online lobbies are not set up for this site.");
   if (!db) {
     app = initializeApp(config, "zuno-lobby");
@@ -157,7 +159,7 @@ export function readLobby(raw: unknown): LobbyState | null {
   const players: Record<string, LobbyPlayer> = {};
   if (r.players && typeof r.players === "object") {
     for (const [id, p] of Object.entries(r.players as Record<string, unknown>)) {
-      if (p && typeof p === "object" && typeof (p as LobbyPlayer).name === "string") players[id] = { name: (p as LobbyPlayer).name, joinedAt: Number((p as LobbyPlayer).joinedAt) || 0 };
+      if (p && typeof p === "object" && typeof (p as LobbyPlayer).name === "string") players[id] = { name: (p as LobbyPlayer).name, joinedAt: Number((p as LobbyPlayer).joinedAt) || 0, avatar: parseAvatar((p as Record<string, unknown>).avatar) };
     }
   }
   const circle = Array.isArray(r.circle) ? (r.circle as unknown[]).filter((id): id is string => typeof id === "string" && id in players) : [];
@@ -205,9 +207,9 @@ export async function lobbyExists(code: string): Promise<boolean> {
 }
 
 /** Adds or renames a player. Their entry in the circle is added by the host. */
-export async function joinLobby(code: string, id: string, name: string): Promise<void> {
+export async function joinLobby(code: string, id: string, name: string, avatar?: AvatarSpec | null): Promise<void> {
   const d = database();
-  await set(ref(d, path(code, "players", id)), { name: name.trim().slice(0, 24), joinedAt: serverTimestamp() });
+  await set(ref(d, path(code, "players", id)), { name: name.trim().slice(0, 24), joinedAt: serverTimestamp(), ...(avatar ? { avatar: JSON.stringify(avatar) } : {}) });
   await onDisconnect(ref(d, path(code, "players", id))).remove();
 }
 
@@ -254,7 +256,7 @@ export function joinLink(code: string): string {
 
 /** Room code from a #join=CODE link, if the page was opened with one. */
 export function codeFromHash(hash: string): string | null {
-  const m = /join=([a-z0-9]{5})/i.exec(hash);
+  const m = /(?:^|[#&])join=([a-z0-9]{5})/i.exec(hash);
   return m ? normalizeCode(m[1]) : null;
 }
 

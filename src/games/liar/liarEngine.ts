@@ -112,7 +112,15 @@ export function cleanTurn(turn: Turn): Turn {
 }
 
 export function createSession(names: string[], options: Options): LiarState {
-  const players = names.map((n, i) => ({ id: `p${i + 1}`, name: n.trim() }));
+  return createSessionWith(
+    names.map((n, i) => ({ id: `p${i + 1}`, name: n.trim() })),
+    options,
+  );
+}
+
+/** A session with given player ids, as online games use the lobby's ids. */
+export function createSessionWith(list: Player[], options: Options): LiarState {
+  const players = list.map((p) => ({ id: p.id, name: p.name.trim() }));
   return {
     players,
     options,

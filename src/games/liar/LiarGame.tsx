@@ -131,8 +131,8 @@ export function LiarGame({ file, names, options, onAgain, onExit }: Props) {
 }
 
 /** Private entry: the device is handed to the storyteller before anything is typed. */
-function Prep({ name, prompts, onSubmit }: { name: string; prompts: string[]; onSubmit: (t: Turn) => void }) {
-  const [ready, setReady] = useState(false);
+export function Prep({ name, prompts, onSubmit, direct = false }: { name: string; prompts: string[]; onSubmit: (t: Turn) => void; direct?: boolean }) {
+  const [ready, setReady] = useState(direct);
   const [draft, setDraft] = useState(blankTurn);
   const [tried, setTried] = useState(false);
   const [comfy, setComfy] = useState(false);
