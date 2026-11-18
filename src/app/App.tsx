@@ -32,6 +32,10 @@ import { LiarJoin } from "../games/liar/LiarJoin";
 import { LiarLobby } from "../games/liar/LiarLobby";
 import { LiarOnlineGame } from "../games/liar/LiarOnlineGame";
 import { closeLiarLobby, liarCodeFromHash, liarLobbyExists } from "../games/liar/liarLobby";
+import { GAUNTLET_TYPE, type GauntletFile } from "../game-files/schema/gauntlet";
+import { GauntletGame } from "../games/gauntlet/GauntletGame";
+import { GauntletSetup } from "../games/gauntlet/GauntletSetup";
+import type { Options as GauntletOptions, TeamSetup as GauntletTeamSetup } from "../games/gauntlet/gauntletEngine";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
@@ -48,6 +52,8 @@ type Screen =
   | { name: "hbLobby"; base: HeadbandsFile; code: string | null }
   | { name: "hbJoin"; code: string | null }
   | { name: "liarSetup"; game: LoadedGame<LiarFile> }
+  | { name: "glSetup"; game: LoadedGame<GauntletFile> }
+  | { name: "glPlay"; game: LoadedGame<GauntletFile>; teams: GauntletTeamSetup[]; options: GauntletOptions }
   | { name: "liarPlay"; game: LoadedGame<LiarFile>; names: string[]; options: LiarOptions }
   | { name: "liarLobby"; file: LiarFile; code: string | null }
   | { name: "liarOnline"; file: LiarFile; code: string; players: LiarPlayer[]; options: LiarOptions }
@@ -69,8 +75,8 @@ function backdropForGame(game: LoadedGame): BackdropSpec {
 
 /** Each game's screens use its own track; everything else uses the Headbands track. */
 function backdropTheme(screen: Screen, tileGameType: string): "jeopardy" | "headbands" | "liar" {
-  if (screen.name === "dashboard") return tileGameType === "jeopardy" ? "jeopardy" : tileGameType === "liar" ? "liar" : "headbands";
-  if (screen.name === "setup" || screen.name === "play") return "jeopardy";
+  if (screen.name === "dashboard") return tileGameType === "jeopardy" || tileGameType === GAUNTLET_TYPE ? "jeopardy" : tileGameType === "liar" ? "liar" : "headbands";
+  if (screen.name === "setup" || screen.name === "play" || screen.name.startsWith("gl")) return "jeopardy";
   if (screen.name.startsWith("liar")) return "liar";
   return "headbands";
 }
@@ -175,7 +181,8 @@ export function App() {
       });
       setRecent(list);
       setLoaded(game);
-      if (file.gameType === LIAR_TYPE) push({ name: "liarSetup", game: game as LoadedGame<LiarFile> });
+      if (file.gameType === GAUNTLET_TYPE) push({ name: "glSetup", game: game as LoadedGame<GauntletFile> });
+      else if (file.gameType === LIAR_TYPE) push({ name: "liarSetup", game: game as LoadedGame<LiarFile> });
       else if (file.gameType === HEADBANDS_TYPE) push({ name: "hbSetup", game: game as LoadedGame<HeadbandsFile> });
       else push({ name: "setup", game: game as LoadedGame<JeopardyFile> });
     },
@@ -219,7 +226,7 @@ export function App() {
   if (screen.name === "editor") backdrop = draftBackdrop ?? buildBackdrop;
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
-  else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay" || screen.name === "glSetup" || screen.name === "glPlay") backdrop = backdropForGame(screen.game);
   else if (screen.name === "liarLobby" || screen.name === "liarOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "hbLobby") backdrop = backdropForGame({ file: screen.base, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
@@ -343,6 +350,8 @@ export function App() {
         />
       )}
       {screen.name === "liarPlay" && <LiarGame key={stack.length} file={screen.game.file} names={screen.names} options={screen.options} onAgain={pop} onExit={home} />}
+      {screen.name === "glSetup" && <GauntletSetup game={screen.game} onBack={pop} onStart={(teams, options) => push({ name: "glPlay", game: screen.game, teams, options })} />}
+      {screen.name === "glPlay" && <GauntletGame key={stack.length} file={screen.game.file} teams={screen.teams} options={screen.options} onAgain={pop} onExit={home} />}
       {screen.name === "builder" && (
         <BuilderHome
           gameType={buildType}
