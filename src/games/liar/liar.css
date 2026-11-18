@@ -71,3 +71,11 @@
   .liar-online { grid-template-rows: minmax(0, 1fr); }
   .liar-online > * { min-height: 0; overflow-y: auto; }
 }
+
+.liar-presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; border: 0; padding: 0; margin: 0; }
+.liar-preset { display: flex; flex-direction: column; gap: 4px; text-align: left; min-height: 44px; cursor: pointer; }
+.liar-preset.is-active { outline: 2px solid var(--game); }
+.liar-preset:focus-visible, .liar-optional summary:focus-visible { outline: 3px solid var(--game); outline-offset: 2px; }
+.liar-optional summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.liar-rules ul { margin: 4px 0 0; padding-left: 20px; }
+.liar-privacy { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bg, #111); padding: 16px; text-align: center; }
