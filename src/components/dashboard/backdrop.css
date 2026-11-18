@@ -162,3 +162,13 @@
     animation: none !important;
   }
 }
+
+/* Settings → Background motion */
+:root[data-motion="calm"] .g3d-space,
+:root[data-motion="calm"] .p3d-rig {
+  animation: none !important;
+}
+:root[data-motion="off"] .backdrop *,
+:root[data-motion="off"] .backdrop *::before {
+  animation-play-state: paused !important;
+}

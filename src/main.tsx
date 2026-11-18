@@ -6,6 +6,9 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/motion.css";
 import { App } from "./app/App";
+import { applyMotion, loadMotion } from "./app/storage";
+
+applyMotion(loadMotion());
 
 // The border beam animates a registered custom property. Where that is not
 // supported, tiles fall back to a static high-contrast border.

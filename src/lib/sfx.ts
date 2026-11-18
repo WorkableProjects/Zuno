@@ -269,8 +269,20 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
 const last = new Map<Sfx, number>();
 let lastAny = 0;
 
+let sfxOn = (() => {
+  try {
+    return localStorage.getItem("zuno.sfx") !== "off";
+  } catch {
+    return true;
+  }
+})();
+/** Sound effects can be switched off on their own, leaving the music playing. */
+export function setSfxEnabled(on: boolean) {
+  sfxOn = on;
+}
+
 export function playSfx(name: Sfx): void {
-  if (isMuted() || getVolume() <= 0) return;
+  if (!sfxOn || isMuted() || getVolume() <= 0) return;
   const now = performance.now();
   if (now - (last.get(name) ?? 0) < (name === "hover" ? 45 : 60)) return;
   // A game sound right after a click replaces the plain click.

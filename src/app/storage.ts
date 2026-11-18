@@ -46,6 +46,26 @@ export function saveDevice(device: Device) {
   write("zuno.device", device);
 }
 
+export type Motion = "full" | "calm" | "off";
+export function loadMotion(): Motion {
+  const v = read("zuno.motion");
+  return v === "calm" || v === "off" ? v : "full";
+}
+export function saveMotion(motion: Motion) {
+  write("zuno.motion", motion);
+}
+/** Puts the motion choice on the root element, where the backdrop CSS reads it. */
+export function applyMotion(motion: Motion) {
+  document.documentElement.dataset.motion = motion;
+}
+
+export function loadSfxOn(): boolean {
+  return read("zuno.sfx") !== "off";
+}
+export function saveSfxOn(on: boolean) {
+  write("zuno.sfx", on ? "on" : "off");
+}
+
 export function loadLastTile(): string | null {
   return read(KEYS.lastTile);
 }

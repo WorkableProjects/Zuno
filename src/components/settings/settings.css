@@ -41,3 +41,31 @@
 [data-theme="dark"] .segment.is-on {
   background: var(--surface-3);
 }
+
+.settings-range {
+  display: grid;
+  grid-template-columns: auto 1fr 3.5ch;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+.settings-range input {
+  width: 100%;
+  accent-color: var(--text);
+}
+.settings-range-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.settings-version {
+  margin: 8px 0 0;
+  color: var(--text-3);
+  font-size: 13px;
+  text-align: center;
+}
+
+.settings-field + .settings-field {
+  margin-top: 14px;
+}
