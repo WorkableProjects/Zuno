@@ -36,6 +36,10 @@ export interface HeadbandsSettings {
   unlimitedGuesses: boolean;
   allowDuplicateAssignments: boolean;
   maxPlayers: number;
+  /** Optional: block repeated questions from the same player. */
+  duplicateQuestionCheck?: boolean;
+  /** Optional: guesses allowed per identity before it is passed. 0 = unlimited. */
+  maxGuessesPerIdentity?: number;
 }
 
 export type HeadbandsFile = GameFile<HeadbandsContent, HeadbandsSettings>;
@@ -176,6 +180,15 @@ export function validateHeadbands(raw: Record<string, unknown>): ValidationResul
         if (v === undefined || v === null) continue;
         if (typeof v !== "boolean") errors.push(`The ${key} setting must be true or false.`);
         else settings[key] = v;
+      }
+      if (s.duplicateQuestionCheck !== undefined && s.duplicateQuestionCheck !== null) {
+        if (typeof s.duplicateQuestionCheck !== "boolean") errors.push("The duplicateQuestionCheck setting must be true or false.");
+        else settings.duplicateQuestionCheck = s.duplicateQuestionCheck;
+      }
+      if (s.maxGuessesPerIdentity !== undefined && s.maxGuessesPerIdentity !== null) {
+        const v = s.maxGuessesPerIdentity;
+        if (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 20) errors.push("The maxGuessesPerIdentity setting must be a whole number from 0 to 20.");
+        else settings.maxGuessesPerIdentity = v;
       }
       if (s.maxPlayers !== undefined && s.maxPlayers !== null) {
         const v = s.maxPlayers;

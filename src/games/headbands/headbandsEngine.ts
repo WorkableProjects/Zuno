@@ -2,11 +2,23 @@ import { HEADBANDS_LIMITS, answerFor, isEligible, type HeadbandsIdentity, type H
 
 /** Pure Headbands rules. React screens only render this state and dispatch actions. */
 
-export type GroupAnswer = "yes" | "no" | "unsure";
+/** The exact allowed response set: Yes / No / Almost / Unsure. */
+export type GroupAnswer = "yes" | "no" | "almost" | "unsure";
+export const GROUP_ANSWERS: readonly GroupAnswer[] = ["yes", "no", "almost", "unsure"];
+
+/** How sure a player is about a guess. Recorded only; it never changes the check. */
+export type GuessConfidence = "correct" | "likely" | "uncertain";
+
+/** Identity lifecycle: Assigned -> Ready -> Asking -> Guessed -> Passed -> Reviewed. */
+export type IdentityStatus = "assigned" | "ready" | "asking" | "guessed" | "passed" | "reviewed";
 
 export interface Rules {
   continueAfterYes: boolean;
   unlimitedGuesses: boolean;
+  /** Block a question already asked by the same player. Off by default. */
+  duplicateQuestionCheck?: boolean;
+  /** Guesses allowed per identity before it is marked passed. 0 or unset = no limit. */
+  maxGuessesPerIdentity?: number;
 }
 
 export interface PlayerSetup {
@@ -28,6 +40,18 @@ export interface Player {
   removed: boolean;
   questions: number;
   guesses: number;
+  /** Lifecycle state of this player's identity. */
+  status?: IdentityStatus;
+  /** Times this player passed (skipped) a turn. */
+  passes?: number;
+  /** Turn on which this identity was first played. */
+  startedTurn?: number | null;
+  /** Wall-clock start of the first turn, when known. */
+  startedAt?: number | null;
+  /** Reason given when the host overrode the result. */
+  overrideReason?: string | null;
+  /** Confidence given with the latest guess. */
+  confidence?: GuessConfidence | null;
 }
 
 export interface QuestionRecord {
@@ -37,14 +61,15 @@ export interface QuestionRecord {
   turn: number;
 }
 
-export type GuessOutcome = { playerId: string; correct: boolean; guess: string };
+export type GuessOutcome = { playerId: string; correct: boolean; guess: string; confidence?: GuessConfidence };
 
 /** One line of the activity log. Never holds an unsolved identity. */
 export type LogEntry = { turn: number } & (
   | { kind: "ask"; playerId: string; question: string; answer: GroupAnswer; by: string | null }
-  | { kind: "guess"; playerId: string; guess: string; correct: boolean }
+  | { kind: "guess"; playerId: string; guess: string; correct: boolean; confidence?: GuessConfidence }
   | { kind: "skip"; playerId: string; byHost: boolean }
-  | { kind: "solved"; playerId: string }
+  | { kind: "solved"; playerId: string; reason?: string }
+  | { kind: "duplicate"; playerId: string }
   | { kind: "removed"; playerId: string }
   | { kind: "undo" }
   | { kind: "pause" }
@@ -84,6 +109,10 @@ export interface SessionState {
   /** Everything that happened, oldest first. */
   log: LogEntry[];
   pending: PendingQuestion | null;
+  /** Bumped on every change, for conflict-safe last-write handling online. */
+  revision?: number;
+  /** Set when the last question was rejected as a repeat. Cleared on the next action. */
+  duplicateRejected?: boolean;
 }
 
 /**
@@ -100,8 +129,8 @@ export type SessionAction =
   | { type: "pose"; question: string; from?: string }
   /** The group's answer. With no question, the pending one is used. */
   | { type: "ask"; question?: string; answer: GroupAnswer; from?: string }
-  | { type: "guess"; text: string; from?: string }
-  | { type: "markCorrect"; playerId?: string }
+  | { type: "guess"; text: string; confidence?: GuessConfidence; from?: string }
+  | { type: "markCorrect"; playerId?: string; reason?: string }
   | { type: "undoOverride" }
   /** Leave the guess feedback. Ends the turn unless Unlimited Guesses keeps it. */
   | { type: "continue"; from?: string }
@@ -234,6 +263,12 @@ export function createSession(players: PlayerSetup[], mode: HeadbandsMode, rules
     removed: false,
     questions: 0,
     guesses: 0,
+    status: "assigned",
+    passes: 0,
+    startedTurn: null,
+    startedAt: null,
+    overrideReason: null,
+    confidence: null,
   }));
   return {
     mode,
@@ -252,6 +287,7 @@ export function createSession(players: PlayerSetup[], mode: HeadbandsMode, rules
     undo: null,
     log: [],
     pending: null,
+    revision: 0,
   };
 }
 
@@ -304,9 +340,36 @@ function solve(state: SessionState, id: string, byHost: boolean): SessionState {
   return patchPlayer(state, id, { solved: true, solvedOrder: order, byHost });
 }
 
+/** Pure reducer with lifecycle bookkeeping and a revision counter. */
 export function sessionReducer(deck: Deck, state: SessionState, action: SessionAction): SessionState {
+  const next = reduce(deck, state, action);
+  if (next === state) return state;
+  return { ...withLifecycle(next), revision: (state.revision ?? 0) + 1 };
+}
+
+/** Derives each identity's lifecycle status from session facts. */
+function withLifecycle(state: SessionState): SessionState {
+  let changed = false;
+  const players = state.players.map((p) => {
+    let status: IdentityStatus;
+    if (state.phase === "over") status = "reviewed";
+    else if (p.solved) status = "guessed";
+    else if (p.removed) status = "passed";
+    else if (p.id === state.current) status = p.questions > 0 || p.guesses > 0 ? "asking" : "ready";
+    else if ((p.passes ?? 0) > 0 && p.questions === 0 && p.guesses === 0) status = "passed";
+    else status = p.questions > 0 || p.guesses > 0 ? "asking" : "assigned";
+    const startedTurn = p.startedTurn ?? (p.id === state.current ? state.turn : null);
+    if (status === p.status && startedTurn === (p.startedTurn ?? null)) return p;
+    changed = true;
+    return { ...p, status, startedTurn, startedAt: p.startedAt ?? (startedTurn !== null ? Date.now() : null) };
+  });
+  return changed ? { ...state, players } : state;
+}
+
+function reduce(deck: Deck, state: SessionState, action: SessionAction): SessionState {
   // Only an override can be undone, and only until something else happens.
-  const s = action.type === "undoOverride" || action.type === "continue" ? state : { ...state, undo: null };
+  const base = state.duplicateRejected ? { ...state, duplicateRejected: false } : state;
+  const s = action.type === "undoOverride" || action.type === "continue" ? base : { ...base, undo: null };
   const current = getPlayer(s, s.current);
   // A player's device may only act for the current player, and may not answer its own question.
   const from = "from" in action ? action.from : undefined;
@@ -336,12 +399,15 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
     case "ask": {
       if (s.phase !== "play" || s.paused || !current || s.lastGuess) return s;
       const question = (action.question ?? "").trim() || (s.pending?.playerId === current.id ? s.pending.question : "");
+      if (s.rules.duplicateQuestionCheck && question && isRepeatQuestion(s, current.id, question)) {
+        return logged({ ...s, pending: null, duplicateRejected: true }, { kind: "duplicate", playerId: current.id, turn: s.turn });
+      }
       const record: QuestionRecord = { playerId: current.id, question, answer: action.answer, turn: s.turn };
       let next: SessionState = { ...patchPlayer(s, current.id, { questions: current.questions + 1 }), history: [...s.history, record], lastGuess: null, pending: null };
       next = logged(next, { kind: "ask", playerId: current.id, question, answer: action.answer, by: from ?? null, turn: s.turn });
       // "Unsure" lets the player rephrase. "Yes" keeps the turn only when the house rule says so.
       if (action.answer === "unsure") return next;
-      if (action.answer === "yes" && s.rules.continueAfterYes) return next;
+      if ((action.answer === "yes" || action.answer === "almost") && s.rules.continueAfterYes) return next;
       return advance(next);
     }
 
@@ -352,9 +418,15 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
       const correct = !!identity && isCorrectGuess(action.text, identity, s.mode);
       const guess = action.text.trim().slice(0, 200);
       let next = patchPlayer(s, current.id, { guesses: current.guesses + 1 });
-      next = { ...next, pending: null, lastGuess: { playerId: current.id, correct, guess } };
-      next = logged(next, { kind: "guess", playerId: current.id, guess, correct, turn: s.turn });
-      return correct ? solve(next, current.id, false) : next;
+      const confidence = action.confidence;
+      next = patchPlayer(next, current.id, { confidence: confidence ?? null });
+      next = { ...next, pending: null, lastGuess: { playerId: current.id, correct, guess, ...(confidence ? { confidence } : {}) } };
+      next = logged(next, { kind: "guess", playerId: current.id, guess, correct, turn: s.turn, ...(confidence ? { confidence } : {}) });
+      if (correct) return solve(next, current.id, false);
+      const max = s.rules.maxGuessesPerIdentity ?? 0;
+      // Out of attempts: the identity is passed and stays in the recap, never deleted.
+      if (max > 0 && current.guesses + 1 >= max) return patchPlayer(next, current.id, { removed: true, passes: (current.passes ?? 0) + 1 });
+      return next;
     }
 
     case "continue": {
@@ -367,7 +439,8 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
       const id = action.playerId ?? s.current;
       const target = getPlayer(s, id);
       if (s.phase !== "play" || !target || target.solved || target.removed) return s;
-      const solved = logged(solve(s, target.id, true), { kind: "solved", playerId: target.id, turn: s.turn });
+      const reason = action.reason?.trim().slice(0, 120) || undefined;
+      const solved = logged(patchPlayer(solve(s, target.id, true), target.id, { overrideReason: reason ?? null }), { kind: "solved", playerId: target.id, turn: s.turn, ...(reason ? { reason } : {}) });
       return { ...solved, lastGuess: target.id === s.current ? { playerId: target.id, correct: true, guess: s.lastGuess?.guess ?? "" } : solved.lastGuess, undo: state };
     }
 
@@ -375,7 +448,7 @@ export function sessionReducer(deck: Deck, state: SessionState, action: SessionA
       return state.undo ? logged(state.undo, { kind: "undo", turn: state.undo.turn }) : state;
 
     case "skip":
-      return s.phase === "play" && current && !s.paused ? advance(logged(s, { kind: "skip", playerId: current.id, byHost: from === undefined, turn: s.turn })) : s;
+      return s.phase === "play" && current && !s.paused ? advance(logged(patchPlayer(s, current.id, { passes: (current.passes ?? 0) + 1 }), { kind: "skip", playerId: current.id, byHost: from === undefined, turn: s.turn })) : s;
 
     case "move": {
       const i = s.order.indexOf(action.playerId);
@@ -419,18 +492,20 @@ export function turnPosition(state: SessionState): { index: number; total: numbe
 
 /** One log line in plain words, such as "Maya guessed “Owl”, not it". */
 export function describeLog(entry: LogEntry, nameOf: (id: string) => string): string {
-  const answer = (a: GroupAnswer) => (a === "yes" ? "Yes" : a === "no" ? "No" : "Not sure");
+  const answer = answerLabel;
   switch (entry.kind) {
     case "ask": {
       const q = entry.question ? `“${entry.question}”` : "a question out loud";
       return `${nameOf(entry.playerId)} asked ${q}: ${answer(entry.answer)}${entry.by ? ` (${nameOf(entry.by)})` : ""}`;
     }
     case "guess":
-      return `${nameOf(entry.playerId)} guessed “${entry.guess}”${entry.correct ? ", correct" : ", not it"}`;
+      return `${nameOf(entry.playerId)} guessed “${entry.guess}”${entry.correct ? ", correct" : ", not it"}${entry.confidence ? ` (${CONFIDENCE_LABELS[entry.confidence]})` : ""}`;
     case "skip":
       return entry.byHost ? `The host skipped ${nameOf(entry.playerId)}’s turn` : `${nameOf(entry.playerId)} skipped their turn`;
     case "solved":
-      return `The host marked ${nameOf(entry.playerId)} solved`;
+      return `Host override: ${nameOf(entry.playerId)} marked solved${entry.reason ? ` (${entry.reason})` : ""}`;
+    case "duplicate":
+      return `${nameOf(entry.playerId)} repeated a question; ask something new`;
     case "removed":
       return `${nameOf(entry.playerId)} left the game`;
     case "undo":
@@ -442,4 +517,128 @@ export function describeLog(entry: LogEntry, nameOf: (id: string) => string): st
     case "end":
       return "The host ended the game";
   }
+}
+
+export const CONFIDENCE_LABELS: Record<GuessConfidence, string> = { correct: "Correct", likely: "Likely", uncertain: "Uncertain" };
+
+export function answerLabel(a: GroupAnswer): string {
+  return a === "yes" ? "Yes" : a === "no" ? "No" : a === "almost" ? "Almost" : "Unsure";
+}
+
+export const STATUS_LABELS: Record<IdentityStatus, string> = {
+  assigned: "Assigned",
+  ready: "Ready",
+  asking: "Asking",
+  guessed: "Guessed",
+  passed: "Passed",
+  reviewed: "Reviewed",
+};
+
+/** Same player already asked this question (normalized). */
+export function isRepeatQuestion(state: SessionState, playerId: string, question: string): boolean {
+  const q = normalizeGuess(question).replace(/[?!.]+$/, "");
+  if (!q) return false;
+  return state.history.some((h) => h.playerId === playerId && normalizeGuess(h.question).replace(/[?!.]+$/, "") === q);
+}
+
+/** Questions asked in the active turn, oldest first. */
+export function turnHistory(state: SessionState): QuestionRecord[] {
+  return state.history.filter((h) => h.turn === state.turn && h.playerId === state.current);
+}
+
+/** Activity log filters. */
+export type LogFilter = "all" | "questions" | "guesses" | "skips" | "overrides" | "system";
+export const LOG_FILTERS: Array<[LogFilter, string]> = [
+  ["all", "All"],
+  ["questions", "Questions"],
+  ["guesses", "Guesses"],
+  ["skips", "Skips"],
+  ["overrides", "Overrides"],
+  ["system", "System"],
+];
+
+export function logCategory(entry: LogEntry): Exclude<LogFilter, "all"> {
+  switch (entry.kind) {
+    case "ask":
+    case "duplicate":
+      return "questions";
+    case "guess":
+      return "guesses";
+    case "skip":
+      return "skips";
+    case "solved":
+    case "undo":
+    case "removed":
+      return "overrides";
+    default:
+      return "system";
+  }
+}
+
+export function filterLog(log: readonly LogEntry[], filter: LogFilter): LogEntry[] {
+  return filter === "all" ? [...log] : log.filter((e) => logCategory(e) === filter);
+}
+
+/** Scores split so a correct guess and a host override never mix. */
+export function scoreBreakdown(state: SessionState): { guessed: number; overridden: number; passed: number } {
+  return {
+    guessed: state.players.filter((p) => p.solved && !p.byHost).length,
+    overridden: state.players.filter((p) => p.solved && p.byHost).length,
+    passed: state.players.filter((p) => p.removed && !p.solved).length,
+  };
+}
+
+/** Conflict-safe last-write: accept an incoming state only when its revision is newer. */
+export function isNewerRevision(incoming: Pick<SessionState, "revision">, current: Pick<SessionState, "revision"> | null): boolean {
+  if (!current) return true;
+  return (incoming.revision ?? 0) > (current.revision ?? 0);
+}
+
+/** Typed reconnection state for a phone. */
+export type ReconnectState =
+  | { kind: "fresh" }
+  | { kind: "rejoin"; lobbyCode: string; playerId: string; savedAt: number }
+  | { kind: "stale"; lobbyCode: string; reason: "expired" | "removed" | "ended" };
+
+/** Saved sessions older than this are treated as stale. */
+export const STALE_SESSION_MS = 6 * 60 * 60 * 1000;
+
+export function reconnectPolicy(saved: { lobbyCode: string; playerId: string; savedAt: number } | null, now: number, game: Pick<SessionState, "players" | "phase"> | null): ReconnectState {
+  if (!saved) return { kind: "fresh" };
+  if (now - saved.savedAt > STALE_SESSION_MS) return { kind: "stale", lobbyCode: saved.lobbyCode, reason: "expired" };
+  if (game) {
+    const me = game.players.find((p) => p.id === saved.playerId);
+    if (!me || me.removed) return { kind: "stale", lobbyCode: saved.lobbyCode, reason: "removed" };
+  }
+  return { kind: "rejoin", ...saved };
+}
+
+/** Deck health for setup. */
+export interface DeckHealth {
+  text: number;
+  image: number;
+  duplicates: number;
+  /** Short (<=12 chars) / medium / long labels as a rough difficulty mix. */
+  mix: { easy: number; medium: number; hard: number };
+  /** Rough minutes for a round with this many players. */
+  estimatedMinutes: number;
+}
+
+export function deckHealth(identities: readonly HeadbandsIdentity[], players: number): DeckHealth {
+  const seen = new Map<string, number>();
+  let text = 0;
+  let image = 0;
+  const mix = { easy: 0, medium: 0, hard: 0 };
+  for (const i of identities) {
+    if (i.text.trim()) text++;
+    if (i.image && i.subtext) image++;
+    const key = normalizeGuess(i.text || i.subtext || "");
+    if (key) seen.set(key, (seen.get(key) ?? 0) + 1);
+    const words = key.split(" ").length;
+    if (words <= 1 && key.length <= 12) mix.easy++;
+    else if (words <= 3) mix.medium++;
+    else mix.hard++;
+  }
+  const duplicates = [...seen.values()].reduce((n, c) => n + (c > 1 ? c - 1 : 0), 0);
+  return { text, image, duplicates, mix, estimatedMinutes: Math.max(5, Math.round(players * 2.5)) };
 }

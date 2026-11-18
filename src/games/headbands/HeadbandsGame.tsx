@@ -21,6 +21,10 @@ import {
   solvedCount,
   turnPosition,
   type GroupAnswer,
+  type GuessConfidence,
+  CONFIDENCE_LABELS,
+  STATUS_LABELS,
+  answerLabel,
   type Player,
   type SessionAction,
   type SessionState,
@@ -38,13 +42,14 @@ interface Props {
   onExit: () => void;
 }
 
-type Confirm = "exit" | "restart" | "end" | "reveal" | { remove: string } | null;
+type Confirm = "exit" | "restart" | "end" | "reveal" | { remove: string } | { solve: string } | null;
 type Dispatch = (action: SessionAction) => void;
 
 const ANSWERS: Array<[GroupAnswer, string]> = [
   ["yes", "Yes"],
   ["no", "No"],
-  ["unsure", "Not sure"],
+  ["almost", "Almost"],
+  ["unsure", "Unsure"],
 ];
 
 /** What the phones see. No identities and no undo history. */
@@ -59,7 +64,8 @@ function toOnline(state: SessionState): OnlineGame {
     revealed: state.revealed,
     endedEarly: state.endedEarly,
     order: state.order,
-    players: state.players.map(({ id, name, solved, solvedOrder, byHost, removed, questions, guesses }) => ({ id, name, solved, solvedOrder, byHost, removed, questions, guesses })),
+    players: state.players.map(({ id, name, solved, solvedOrder, byHost, removed, questions, guesses, status, passes }) => ({ id, name, solved, solvedOrder, byHost, removed, questions, guesses, status, passes })),
+    revision: state.revision,
     pending: state.pending,
     lastGuess: state.lastGuess,
     log: state.log,
@@ -69,8 +75,20 @@ function toOnline(state: SessionState): OnlineGame {
 export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props) {
   const deck = useMemo(() => deckOf(file.content.identities), [file]);
   const reducer = useCallback((state: SessionState, action: SessionAction) => sessionReducer(deck, state, action), [deck]);
-  const [state, dispatch] = useReducer(reducer, null, () => createSession(start.players, start.mode, start.rules));
+  const [state, rawDispatch] = useReducer(reducer, null, () => createSession(start.players, start.mode, start.rules));
   const [confirm, setConfirm] = useState<Confirm>(null);
+  // Score-affecting host overrides always go through a confirmation.
+  const dispatch = useCallback<Dispatch>(
+    (action) => {
+      if (action.type === "markCorrect" && action.reason === undefined) {
+        const id = action.playerId ?? state.current;
+        if (id) setConfirm({ solve: id });
+        return;
+      }
+      rawDispatch(action);
+    },
+    [state.current],
+  );
   const [guessOpen, setGuessOpen] = useState(false);
   const [playersOpen, setPlayersOpen] = useState(false);
   /** Notes last for this game, across turns. */
@@ -174,7 +192,7 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
       {guessOpen && current && (
         <GuessDialog
           name={current.name}
-          onSubmit={(text) => dispatch({ type: "guess", text })}
+          onSubmit={(text, confidence) => dispatch({ type: "guess", text, confidence })}
           onClose={() => setGuessOpen(false)}
         />
       )}
@@ -210,7 +228,14 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
           onClose={() => setConfirm(null)}
         />
       )}
-      {confirm !== null && typeof confirm === "object" && (
+      {confirm !== null && typeof confirm === "object" && "solve" in confirm && (
+        <OverrideDialog
+          name={getPlayer(state, confirm.solve)?.name ?? "this player"}
+          onConfirm={(reason) => rawDispatch({ type: "markCorrect", playerId: confirm.solve, reason })}
+          onClose={() => setConfirm(null)}
+        />
+      )}
+      {confirm !== null && typeof confirm === "object" && "remove" in confirm && (
         <ConfirmDialog
           title={`Remove ${getPlayer(state, confirm.remove)?.name ?? "this player"}?`}
           text="They leave the turn order. The game continues with everyone else."
@@ -276,6 +301,11 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
   return (
     <div className="hb-turn">
       <section className="hb-main" aria-label="Current turn">
+        {state.duplicateRejected && (
+          <p className="hb-notice" role="alert">
+            That question was already asked. Ask something new.
+          </p>
+        )}
         <div className="hb-turn-head">
           <p className="meta">
             Turn {state.turn} · Player {index} of {total}
@@ -422,9 +452,9 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
                       <CircleCheck size={14} strokeWidth={1.5} /> Solved
                     </>
                   ) : p.id === current.id ? (
-                    "Asking now"
+                    `Asking now · ${p.questions}Q`
                   ) : (
-                    `${p.questions} ${p.questions === 1 ? "question" : "questions"}`
+                    `${STATUS_LABELS[p.status ?? "assigned"]} · ${p.questions}Q · ${p.guesses}G${p.passes ? ` · ${p.passes} passed` : ""}`
                   )}
                 </span>
               </li>
@@ -444,7 +474,7 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
             <ol className="hb-history">
               {mine.map((h, i) => (
                 <li key={i}>
-                  <span className={`hb-pill hb-pill-${h.answer}`}>{h.answer === "unsure" ? "Not sure" : h.answer === "yes" ? "Yes" : "No"}</span>
+                  <span className={`hb-pill hb-pill-${h.answer}`}>{answerLabel(h.answer)}</span>
                   <span className="hb-history-q">{h.question || "Asked out loud"}</span>
                 </li>
               ))}
@@ -456,8 +486,41 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
   );
 }
 
-function GuessDialog({ name, onSubmit, onClose }: { name: string; onSubmit: (text: string) => void; onClose: () => void }) {
+function OverrideDialog({ name, onConfirm, onClose }: { name: string; onConfirm: (reason: string) => void; onClose: () => void }) {
+  const [reason, setReason] = useState("");
+  return (
+    <Dialog title="Host override" onClose={onClose}>
+      {(close) => (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onConfirm(reason.trim());
+            close();
+          }}
+        >
+          <h2 className="dialog-title">Mark {name} solved?</h2>
+          <p className="dialog-text">This changes the score and is logged as a host override, separate from correct guesses.</p>
+          <label className="field">
+            <span className="setup-label">Reason (optional)</span>
+            <input className="input" data-autofocus value={reason} maxLength={120} autoComplete="off" onChange={(e) => setReason(e.target.value)} />
+          </label>
+          <div className="dialog-actions" data-nav-row="0">
+            <button type="button" className="btn btn-secondary" onClick={close}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Mark solved
+            </button>
+          </div>
+        </form>
+      )}
+    </Dialog>
+  );
+}
+
+function GuessDialog({ name, onSubmit, onClose }: { name: string; onSubmit: (text: string, confidence?: GuessConfidence) => void; onClose: () => void }) {
   const [text, setText] = useState("");
+  const [confidence, setConfidence] = useState<GuessConfidence | undefined>(undefined);
   return (
     <Dialog title="Make a guess" onClose={onClose}>
       {(close) => (
@@ -465,7 +528,7 @@ function GuessDialog({ name, onSubmit, onClose }: { name: string; onSubmit: (tex
           onSubmit={(e) => {
             e.preventDefault();
             if (text.trim() === "") return;
-            onSubmit(text);
+            onSubmit(text, confidence);
             close();
           }}
         >
@@ -475,6 +538,14 @@ function GuessDialog({ name, onSubmit, onClose }: { name: string; onSubmit: (tex
             <span className="sr-only">Your guess</span>
             <input className="input input-lg" data-autofocus value={text} maxLength={200} autoComplete="off" spellCheck={false} onChange={(e) => setText(e.target.value)} />
           </label>
+          <fieldset className="hb-confidence">
+            <legend className="setup-label">How sure? (optional)</legend>
+            {(Object.keys(CONFIDENCE_LABELS) as GuessConfidence[]).map((c) => (
+              <button key={c} type="button" className={`btn btn-sm ${confidence === c ? "btn-primary" : "btn-secondary"}`} aria-pressed={confidence === c} onClick={() => setConfidence(confidence === c ? undefined : c)}>
+                {CONFIDENCE_LABELS[c]}
+              </button>
+            ))}
+          </fieldset>
           <div className="dialog-actions" data-nav-row="0">
             <button type="button" className="btn btn-secondary" onClick={close}>
               Cancel
