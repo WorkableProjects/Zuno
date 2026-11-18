@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, Minus, Play, Plus, UserPlus, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Minus, Play, Plus, Radio, UserPlus, X } from "lucide-react";
 import type { LoadedGame } from "../../components/import/loadGame";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { useAutoFocus } from "../../components/ui/useAutoFocus";
@@ -12,9 +12,11 @@ interface Props {
   game: LoadedGame<LiarFile>;
   onBack: () => void;
   onStart: (names: string[], options: Options) => void;
+  /** Host this game online, with players on their own phones. */
+  onLobby?: () => void;
 }
 
-export function LiarSetup({ game, onBack, onStart }: Props) {
+export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
   const { file } = game;
   const { minPlayers, maxPlayers } = file.settings;
   const [names, setNames] = useState<string[]>(() => Array.from({ length: minPlayers }, () => ""));
@@ -130,6 +132,12 @@ export function LiarSetup({ game, onBack, onStart }: Props) {
               <Play size={18} strokeWidth={1.5} />
               Start game
             </button>
+            {onLobby && (
+              <button type="button" className="btn btn-secondary" onClick={onLobby}>
+                <Radio size={18} strokeWidth={1.5} />
+                Play online instead
+              </button>
+            )}
           </div>
           {names.length < minPlayers && <p className="field-hint">Add at least {minPlayers} players to start.</p>}
         </div>

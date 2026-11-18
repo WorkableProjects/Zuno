@@ -1,0 +1,15 @@
+.notepad {
+  display: grid;
+  gap: 12px;
+}
+.notepad-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.notepad-text {
+  min-height: 120px;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.4;
+}

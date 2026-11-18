@@ -77,7 +77,7 @@ describe("room codes", () => {
     expect(readLobby(null)).toBeNull();
     expect(readLobby({ phase: "party" })).toBeNull();
     const l = readLobby({ phase: "lobby", mode: "image", players: { a: { name: "A", joinedAt: 1 }, x: 5 }, circle: ["a", "ghost", 3], entries: { a: { text: 1 } } });
-    expect(l?.players).toEqual({ a: { name: "A", joinedAt: 1 } });
+    expect(l?.players).toEqual({ a: { name: "A", joinedAt: 1, avatar: null } });
     expect(l?.circle).toEqual(["a"]);
     expect(l?.entries.a).toEqual({ text: "", image: null, subtext: null });
   });

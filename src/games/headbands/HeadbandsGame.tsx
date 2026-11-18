@@ -8,6 +8,8 @@ import type { HeadbandsStart } from "./HeadbandsSetup";
 import { IdentityCard } from "./IdentityCard";
 import { PhoneGame } from "./PhoneGame";
 import { ActivityLog } from "./ActivityLog";
+import { Notepad } from "../../components/notepad/Notepad";
+import { useHeadbandsSounds } from "./useHeadbandsSounds";
 import { moveToAction, playerId, publishGame, watchLobby, watchMoves, type LobbyState, type OnlineGame, type PlayerMove } from "./lobby";
 import {
   activePlayers,
@@ -71,6 +73,8 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [guessOpen, setGuessOpen] = useState(false);
   const [playersOpen, setPlayersOpen] = useState(false);
+  /** Notes last for this game, across turns. */
+  const [notesId] = useState(() => Date.now().toString(36));
   const stage = useRef<HTMLDivElement>(null);
   /** Online, the host is a regular player on this device. */
   const me = useMemo(() => playerId(), []);
@@ -87,6 +91,7 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
     [me],
   );
 
+  useHeadbandsSounds(state);
   const current = getPlayer(state, state.current);
   const solved = solvedCount(state);
   const total = state.players.filter((p) => !p.removed).length;
@@ -162,7 +167,7 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
             {lobby ? <PhoneGame code={lobbyCode} me={me} lobby={lobby} game={toOnline(state)} onMove={onHostMove} /> : <p className="meta" role="status">Connecting…</p>}
           </div>
         )}
-        {state.phase === "play" && current && !lobbyCode && <Turn file={file} state={state} current={current} dispatch={dispatch} onGuess={() => setGuessOpen(true)} />}
+        {state.phase === "play" && current && !lobbyCode && <Turn file={file} state={state} current={current} dispatch={dispatch} notesId={notesId} onGuess={() => setGuessOpen(true)} />}
         {state.phase === "over" && <Recap file={file} state={state} onReveal={() => setConfirm("reveal")} onAgain={onAgain} onExit={onExit} />}
       </div>
 
@@ -249,7 +254,7 @@ function HostStrip({ state, current, dispatch }: { state: SessionState; current:
   );
 }
 
-function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile; state: SessionState; current: Player; dispatch: Dispatch; onGuess: () => void }) {
+function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: HeadbandsFile; state: SessionState; current: Player; dispatch: Dispatch; notesId: string; onGuess: () => void }) {
   const deck = useMemo(() => deckOf(file.content.identities), [file]);
   const [question, setQuestion] = useState("");
   const { index, total } = turnPosition(state);
@@ -430,6 +435,7 @@ function Turn({ file, state, current, dispatch, onGuess }: { file: HeadbandsFile
           <h2 className="aside-title">Activity</h2>
           <ActivityLog log={state.log} nameOf={nameOf} limit={30} />
         </section>
+        <Notepad storageKey={`zuno.hb.notes.local.${notesId}`} me="" players={activePlayers(state)} className="card hb-side-block" />
         <section className="card hb-side-block">
           <h2 className="aside-title">{current.name}’s answers so far</h2>
           {mine.length === 0 ? (

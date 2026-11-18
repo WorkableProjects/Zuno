@@ -44,3 +44,30 @@
 .liar-recap { list-style: none; padding: 0; }
 .liar-recap .card { padding: 14px; }
 @media (min-width: 900px) { .liar-prep { grid-template-columns: repeat(3, minmax(0, 1fr)); } .liar-prep > :not(fieldset) { grid-column: 1 / -1; } }
+
+/* ---------- Online play: turn on the left, table on the right ---------- */
+.liar-online-screen { display: flex; flex-direction: column; }
+.liar-online { container-type: inline-size; display: grid; gap: 16px; width: 100%; max-width: 1440px; margin: 0 auto; flex: 1; min-height: 0; }
+.liar-online-main, .liar-online-block { display: grid; gap: 14px; padding: 20px; align-content: start; }
+.liar-online-side { display: grid; gap: 16px; align-content: start; }
+.liar-online-title { display: flex; align-items: center; gap: 8px; }
+.liar-online-host { gap: 10px; }
+.liar-wait { display: grid; gap: 8px; justify-items: start; padding: 16px 0; }
+.liar-online-players { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.liar-online-players li { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; border: 1px solid var(--hairline); }
+.liar-online-players li.is-teller { border-color: var(--game, var(--accent)); background: color-mix(in oklab, var(--game, var(--accent)) 10%, transparent); }
+.liar-online-status { display: block; font-size: 13px; }
+.liar-online-score { font-size: 20px; font-variant-numeric: tabular-nums; }
+.liar-who-voted { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.liar-option.is-picked, .btn.is-picked { border-color: var(--game, var(--accent)); background: color-mix(in oklab, var(--game, var(--accent)) 18%, var(--surface-2)); }
+.liar-option:disabled { opacity: 0.6; cursor: default; }
+.liar-problem { color: var(--negative); }
+.liar-online-main .liar-prep { padding: 0; border: 0; background: none; box-shadow: none; }
+@media (min-width: 1000px) {
+  .liar-online { grid-template-columns: minmax(0, 1fr) 340px; }
+  .liar-online-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1000px) and (min-height: 600px) {
+  .liar-online { grid-template-rows: minmax(0, 1fr); }
+  .liar-online > * { min-height: 0; overflow-y: auto; }
+}

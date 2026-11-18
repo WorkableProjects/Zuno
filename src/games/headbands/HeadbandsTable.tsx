@@ -1,6 +1,8 @@
 import { CircleCheck } from "lucide-react";
 import type { HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
 import { IdentityCard } from "./IdentityCard";
+import { Avatar } from "../../components/avatar/Avatar";
+import type { AvatarSpec } from "../../components/avatar/avatar";
 
 export interface Seat {
   id: string;
@@ -12,6 +14,7 @@ export interface Seat {
   solved: boolean;
   current: boolean;
   isMe: boolean;
+  avatar?: AvatarSpec | null;
 }
 
 interface Props {
@@ -40,9 +43,7 @@ export function HeadbandsTable({ seats, mode }: Props) {
               <IdentityCard identity={s.card} mode={mode} size="sm" />
             )}
           </div>
-          <div className="hb-seat-avatar" aria-hidden="true">
-            {s.name.trim().charAt(0).toUpperCase() || "?"}
-          </div>
+          <Avatar name={s.name} avatar={s.avatar} className="hb-seat-avatar" />
           <p className="hb-seat-name">
             {s.name}
             {s.solved && <CircleCheck size={14} strokeWidth={1.5} aria-label="Solved" />}

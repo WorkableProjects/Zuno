@@ -7,7 +7,7 @@
 
 <p align="center"><em>Pick. Build. Play.</em></p>
 
-Zuno is a browser-based, console-style game launcher and game builder. It ships two game engines, Jeopardy and Headbands. Everything runs in the browser; the optional Headbands online lobby uses a free Firebase Realtime Database. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server of its own.
+Zuno is a browser-based, console-style game launcher and game builder. It ships three game engines: Jeopardy, Headbands and LIAR. Everything runs in the browser; the optional online lobbies for Headbands and LIAR use a free Firebase Realtime Database. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server of its own.
 
 The full product specification is in [Zuno_SPEC.md](docs/Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](docs/HeadbandsSPEC.md).
 
@@ -59,12 +59,29 @@ Players can join the host from their own phones and write each other's identitie
 
 Start a lobby from the Headbands load screen (**Host an online lobby**, no file needed) or from session setup (**Let players write them on their phones instead**, which keeps the loaded game's title and colors).
 
+## LIAR online
+
+LIAR can also be played with everyone on their own device. Start it from the LIAR load screen (**Host an online lobby**, no file needed) or from session setup (**Play online instead**). Players join from the QR code, the link, or **Join a game** with the room code.
+
+- The host plays too. Players take turns as storyteller in the order they joined.
+- The storyteller writes two truths and a lie privately on their own phone. The lie stays on the host's device until the reveal.
+- Everyone else votes from their own device and can change their vote until voting closes. The host starts voting, reveals, moves on, pauses, skips or removes players.
+- The reveal shows who voted for which statement. Scores, if on, update for everyone.
+
+Rooms live under `/liar/{code}`.
+
+## Profiles, notepads and sound
+
+- **Profile pictures**: in any online lobby, players pick a colour, an emoji, their initial, or a photo (cropped and shrunk to 96 px). The choice is remembered on the device.
+- **Notepad**: Headbands and LIAR have a notepad with a page per player. Online, notes stay on your own device; on a shared screen, they last for that game.
+- **Sound effects**: menus (hover, press, back, switches, dialogs, screen changes) and game events in all three games. They are synthesized in the browser, so there are no files to load, and follow the mute button and volume.
+
 ### Setting up Firebase (free)
 
 Lobbies use Firebase Realtime Database. The free Spark plan (100 simultaneous connections, 1 GB stored, 10 GB a month downloaded) is plenty, and no card is needed. Without this setup Zuno still works, and the online buttons are hidden.
 
 1. In the [Firebase console](https://console.firebase.google.com/), create a project, then **Build → Realtime Database → Create database** (start in locked mode).
-2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish. Publish them again whenever that file changes (version 1.0.2 added `game` and `actions`).
+2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish. Publish them again whenever that file changes (version 1.0.2 added `game` and `actions`; profile pictures and LIAR online added `avatar` and `/liar`).
 3. **Project settings → Your apps → Add app → Web**, and note `apiKey`, `databaseURL`, `projectId` and `appId`.
 4. Put them in [`.env.production`](.env.production), which every production build reads, including the GitHub Pages deploy. This repository already has its project's values there. For a different project locally, copy `.env.example` to `.env.local` and fill it in.
 
