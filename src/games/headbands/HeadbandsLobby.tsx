@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Play, RotateCcw, Shuffle, UserMinus } from "lucide-react";
 import type { HeadbandsFile, HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
-import { Avatar, AvatarPicker } from "../../components/avatar/Avatar";
+import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";

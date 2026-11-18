@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, CircleAlert, CircleCheck, EyeOff, LogIn } from "lucide-react";
 import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
 import { IdentityImageField } from "../../components/builder/IdentityImageField";
-import { AvatarPicker } from "../../components/avatar/Avatar";
+import { AvatarPicker } from "../../components/avatar/AvatarView";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { IdentityCard } from "./IdentityCard";

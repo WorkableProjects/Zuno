@@ -10,7 +10,7 @@ import {
   Plus,
   UserMinus,
 } from "lucide-react";
-import { Avatar, AvatarPicker } from "../../components/avatar/Avatar";
+import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";

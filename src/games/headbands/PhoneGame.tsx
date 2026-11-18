@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import type { HeadbandsIdentity } from "../../game-files/schema/headbands";
-import { Avatar } from "../../components/avatar/Avatar";
+import { Avatar } from "../../components/avatar/AvatarView";
 import { Notepad } from "../../components/notepad/Notepad";
 import { ActivityLog } from "./ActivityLog";
 import { IdentityCard } from "./IdentityCard";

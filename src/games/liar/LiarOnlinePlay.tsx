@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Check, CircleCheck, Pause, PenLine } from "lucide-react";
-import { Avatar } from "../../components/avatar/Avatar";
+import { Avatar } from "../../components/avatar/AvatarView";
 import { Notepad } from "../../components/notepad/Notepad";
 import { Prep } from "./LiarGame";
 import { tally } from "./liarEngine";
