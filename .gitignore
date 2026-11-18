@@ -5,3 +5,4 @@ dist
 .claude/delegation/
 *-debug.log
 .env
+*.tsbuildinfo
