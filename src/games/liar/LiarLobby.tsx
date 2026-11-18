@@ -11,7 +11,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import { Avatar, AvatarPicker } from "../../components/avatar/Avatar";
-import { loadAvatar, saveAvatar } from "../../components/avatar/avatar";
+import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";
 import { LIAR_LIMITS, type LiarFile } from "../../game-files/schema/liar";

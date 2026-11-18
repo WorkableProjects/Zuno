@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Play, RotateCcw, Shuffle, UserMinus } from "lucide-react";
 import type { HeadbandsFile, HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
 import { Avatar, AvatarPicker } from "../../components/avatar/Avatar";
-import { loadAvatar, saveAvatar } from "../../components/avatar/avatar";
+import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";
 import type { HeadbandsStart } from "./HeadbandsSetup";

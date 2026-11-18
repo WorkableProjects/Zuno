@@ -11,7 +11,7 @@ import {
   set,
   update,
 } from "firebase/database";
-import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatar";
+import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatarData";
 import { database, makeCode } from "../headbands/lobby";
 import {
   publicTurn,

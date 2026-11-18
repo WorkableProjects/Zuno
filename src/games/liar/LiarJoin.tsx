@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, CircleAlert, LogIn } from "lucide-react";
 import { AvatarPicker } from "../../components/avatar/Avatar";
-import { loadAvatar, saveAvatar } from "../../components/avatar/avatar";
+import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { normalizeCode, playerId } from "../headbands/lobby";
 import { LiarOnlinePlay } from "./LiarOnlinePlay";

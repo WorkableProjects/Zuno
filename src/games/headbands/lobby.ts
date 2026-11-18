@@ -1,6 +1,6 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, onValue, push, ref, remove, runTransaction, serverTimestamp, set, update, type Database } from "firebase/database";
-import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatar";
+import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatarData";
 import type { HeadbandsMode } from "../../game-files/schema/headbands";
 import type { GroupAnswer, GuessOutcome, LogEntry, PendingQuestion, Player, Rules, SessionAction } from "./headbandsEngine";
 

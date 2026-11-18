@@ -5,7 +5,7 @@ import {
   AVATAR_EMOJIS,
   shrinkPhoto,
   type AvatarSpec,
-} from "./avatar";
+} from "./avatarData";
 import "./avatar.css";
 
 export function Avatar({

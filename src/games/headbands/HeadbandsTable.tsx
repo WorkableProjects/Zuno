@@ -2,7 +2,7 @@ import { CircleCheck } from "lucide-react";
 import type { HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
 import { IdentityCard } from "./IdentityCard";
 import { Avatar } from "../../components/avatar/Avatar";
-import type { AvatarSpec } from "../../components/avatar/avatar";
+import type { AvatarSpec } from "../../components/avatar/avatarData";
 
 export interface Seat {
   id: string;

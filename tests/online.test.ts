@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAvatar } from "../src/components/avatar/avatar";
+import { parseAvatar } from "../src/components/avatar/avatarData";
 import { createSessionWith, liarReducer, type LiarState, type Turn } from "../src/games/liar/liarEngine";
 import { liarCodeFromHash, liarMoveToAction, readLiarLobby, toLiarOnline } from "../src/games/liar/liarLobby";
 import { codeFromHash } from "../src/games/headbands/lobby";
