@@ -726,6 +726,31 @@
           ".validate": false
         }
       }
+    },
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "username": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 24 && root.child('usernames').child(newData.val().toLowerCase()).val() === $uid"
+        },
+        "avatar": {
+          ".validate": "newData.isString() && newData.val().length <= 21000"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "usernames": {
+      "$name": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid) && (!newData.exists() || newData.val() === auth.uid)",
+        ".validate": "$name.length >= 2 && $name.length <= 24"
+      }
     }
   }
 }
