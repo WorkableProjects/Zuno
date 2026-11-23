@@ -1,0 +1,36 @@
+FONTLOG for Dutch Display Sans 2.000
+
+Dutch Display Sans is a modified version of Unbounded 1.701
+  https://github.com/googlefonts/unbounded
+  Designers: Luke Prowse, Jean-Baptiste Morizot, Fátima Lázaro, Florian Runge (NaN)
+  Copyright 2022 The Unbounded Project Authors
+DDS modifications (c) 2026 Caden "Dutch".
+
+THE DDS CHEVRON
+Unbounded draws a "<" chevron into the left side of B and E. Dutch Display Sans makes that
+chevron the signature of the whole typeface:
+  - Capitals: the chevron is drawn into the upright left stroke of every capital that has one
+    at mid-height, matched per weight to the original B (depth ~57-60 units, apex at y=385).
+    Stems and round letters (O, C, G, Q, D, U...) take the full chevron; diagonal legs
+    (A, V, W, X, Y, K arms) take a half-depth facet so the stroke reads as cut, not broken.
+    S and Z keep their original form: their left side at mid-height is a diagonal spine, and
+    forcing the chevron there distorts the letter.
+  - Lowercase: the same chevron, scaled to the x-height (72% depth, apex at half x-height),
+    applied to every lowercase letter with an upright left stroke. Ascenders and descenders
+    are left straight, so the signature sits in the x-height band.
+  - Figures and symbols: 0-9 and & ? ! $ # % @ follow the capital rule.
+  - Weight behaviour: on heavy weights the chevron is cut into the outer edge (a notch);
+    on light weights the whole stroke bends into the chevron so it never thins or breaks,
+    as in Unbounded's own light B and E.
+  - Accented letters built from these glyphs inherit the chevron.
+
+OTHER CHANGES
+  - Family renamed to "Dutch Display Sans" in all name records.
+  - Static instances for weights 200-900; no variable font in 2.000.
+  - Generated with build_dds2.py (included).
+
+LICENSE
+SIL Open Font License 1.1 (see OFL.txt). Because this font is derived from Unbounded, the whole
+font, including every DDS modification, is and must remain under the OFL. It may be used,
+embedded, modified and redistributed freely, including for commercial artwork. It may not be
+sold by itself, and redistribution must include OFL.txt and the copyright notices above.
