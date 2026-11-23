@@ -139,3 +139,6 @@
   .st-motion { grid-template-columns: 1fr; }
   .st-themes { grid-template-columns: 1fr 1fr; }
 }
+.st-google { justify-content: center; gap: 10px; }
+.st-or { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--text-3); font-size: 13px; }
+.st-or::before, .st-or::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
