@@ -81,7 +81,7 @@ Rooms live under `/liar/{code}`.
 Lobbies use Firebase Realtime Database. The free Spark plan (100 simultaneous connections, 1 GB stored, 10 GB a month downloaded) is plenty, and no card is needed. Without this setup Zuno still works, and the online buttons are hidden.
 
 1. In the [Firebase console](https://console.firebase.google.com/), create a project, then **Build → Realtime Database → Create database** (start in locked mode).
-2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish. Publish them again whenever that file changes (version 1.0.2 added `game` and `actions`; profile pictures and LIAR online added `avatar` and `/liar`).
+2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish. Publish them again whenever that file changes (version 1.0.2 added `game` and `actions`; profile pictures and LIAR online added `avatar` and `/liar`; Blackjack, Draw It and Survey Feud added `/bj`, `/draw` and `/feud`).
 3. **Project settings → Your apps → Add app → Web**, and note `apiKey`, `databaseURL`, `projectId` and `appId`.
 4. Put them in [`.env.production`](.env.production), which every production build reads, including the GitHub Pages deploy. This repository already has its project's values there. For a different project locally, copy `.env.example` to `.env.local` and fill it in.
 

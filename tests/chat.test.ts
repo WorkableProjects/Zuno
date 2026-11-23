@@ -59,7 +59,7 @@ describe("chat helpers", () => {
 
 describe("chat rules", () => {
   it("exist under every room with the same limits", () => {
-    for (const room of ["hb", "liar", "rpg"] as const) {
+    for (const room of ["hb", "liar", "rpg", "bj", "draw", "feud"] as const) {
       const c = (rules.rules[room].$code as Record<string, any>).chat.$id;
       expect(c[".validate"]).toContain("hasChildren(['n', 't', 'at'])");
       expect(c.n[".validate"]).toContain("<= 24");

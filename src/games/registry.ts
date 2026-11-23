@@ -2,6 +2,7 @@ import type { BackgroundPreset, GameFile, ValidationResult } from "../game-files
 import { HEADBANDS_TYPE, eligibleIdentities, validateHeadbands, type HeadbandsFile } from "../game-files/schema/headbands";
 import { LIAR_TYPE, validateLiar, type LiarFile } from "../game-files/schema/liar";
 import { RPG_TYPE, formatCoins, validateRpg, type RpgFile } from "../game-files/schema/rpg";
+import { BLACKJACK_TYPE, DRAWIT_TYPE, FEUD_TYPE, validateBlackjack, validateDrawIt, validateFeud } from "../game-files/schema/party";
 import { JEOPARDY_TYPE, countClues, validateJeopardy, type JeopardyFile } from "../game-files/schema/jeopardy";
 
 /**
@@ -141,6 +142,57 @@ const engines: GameEngine[] = [
         ["Round timer", `${file.settings.roundSeconds}s`],
       ];
     },
+    listing: () => null,
+  },
+  {
+    gameType: BLACKJACK_TYPE,
+    title: "Blackjack",
+    description: "Everyone plays against the dealer. Bet, hit, stand, double or split, and finish with the most chips.",
+    schemaVersions: [1],
+    hasBuilder: false,
+    appearance: { accentColor: "#16A34A", backgroundPreset: "vegas" },
+    validate: validateBlackjack as GameEngine["validate"],
+    artwork: "cards",
+    onlineOnly: true,
+    sampleFile: "blackjack.zuno.json",
+    fileHolds: "default settings for the lobby",
+    buildTitle: "Build a Blackjack game",
+    summarize: () => "Online only",
+    stats: (f) => Object.entries(f.settings as Record<string, unknown>).filter(([, v]) => typeof v === "number").slice(0, 3).map(([k, v]) => [k, v as number]),
+    listing: () => null,
+  },
+  {
+    gameType: DRAWIT_TYPE,
+    title: "Draw It",
+    description: "One player draws a secret word while everyone watches it appear live and races to guess. Faster guesses score more.",
+    schemaVersions: [1],
+    hasBuilder: false,
+    appearance: { accentColor: "#F59E0B", backgroundPreset: "horizon" },
+    validate: validateDrawIt as GameEngine["validate"],
+    artwork: null,
+    onlineOnly: true,
+    sampleFile: "draw-it.zuno.json",
+    fileHolds: "default settings for the lobby",
+    buildTitle: "Build a Draw It game",
+    summarize: () => "Online only",
+    stats: (f) => Object.entries(f.settings as Record<string, unknown>).filter(([, v]) => typeof v === "number").slice(0, 3).map(([k, v]) => [k, v as number]),
+    listing: () => null,
+  },
+  {
+    gameType: FEUD_TYPE,
+    title: "Survey Feud",
+    description: "Everyone writes a survey with answers and points. Each survey becomes a round, hosted by its author, while everyone else guesses the board.",
+    schemaVersions: [1],
+    hasBuilder: false,
+    appearance: { accentColor: "#2563EB", backgroundPreset: "spotlight" },
+    validate: validateFeud as GameEngine["validate"],
+    artwork: null,
+    onlineOnly: true,
+    sampleFile: "survey-feud.zuno.json",
+    fileHolds: "default settings for the lobby",
+    buildTitle: "Build a Survey Feud game",
+    summarize: () => "Online only",
+    stats: (f) => Object.entries(f.settings as Record<string, unknown>).filter(([, v]) => typeof v === "number").slice(0, 3).map(([k, v]) => [k, v as number]),
     listing: () => null,
   },
 ];

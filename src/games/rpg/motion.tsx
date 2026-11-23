@@ -32,7 +32,7 @@ export function useTween(target: number, ms = 600): number {
 }
 
 /** Coins that count up or down and flash green or red when they change. */
-export function Coins({ value, className = "" }: { value: number; className?: string }) {
+export function Coins({ value, className = "", plain = false }: { value: number; className?: string; plain?: boolean }) {
   const shown = useTween(value);
   const prev = useRef(value);
   const [flash, setFlash] = useState<{ dir: "up" | "down"; n: number } | null>(null);
@@ -43,7 +43,7 @@ export function Coins({ value, className = "" }: { value: number; className?: st
   }, [value]);
   return (
     <span key={flash?.n ?? 0} className={`rpg-coins${flash ? ` is-${flash.dir}` : ""} ${className}`}>
-      {formatCoins(shown)}
+      {plain ? shown.toLocaleString("en-US") : formatCoins(shown)}
     </span>
   );
 }

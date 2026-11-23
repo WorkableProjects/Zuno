@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "gameType": "blackjack",
+  "metadata": {
+    "title": "Friday Night Blackjack",
+    "description": "Default lobby settings.",
+    "author": "Zuno",
+    "coverImage": null
+  },
+  "appearance": {
+    "accentColor": "#16A34A",
+    "backgroundPreset": "aurora"
+  },
+  "content": {},
+  "settings": {
+    "startingChips": 1000,
+    "minBet": 10,
+    "betSeconds": 20,
+    "turnSeconds": 20,
+    "rounds": 10
+  }
+}

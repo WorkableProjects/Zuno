@@ -39,6 +39,12 @@ import { RpgLobby } from "../games/rpg/RpgLobby";
 import { RpgOnlineGame } from "../games/rpg/RpgOnlineGame";
 import { closeRpgLobby, rpgCodeFromHash, rpgLobbyExists } from "../games/rpg/rpgLobby";
 import { ConfirmDialog } from "../components/ui/Dialog";
+import { PartyHost } from "../games/party/PartyHost";
+import { PartyJoin } from "../games/party/PartyJoin";
+import { PartyLobby } from "../games/party/PartyLobby";
+import { partyByKind, partyByType } from "../games/party/partyGames";
+import { closePartyRoom, findPartyRoom, partyCodeFromHash, type PartyKind } from "../games/party/partyRoom";
+import { blankPartyFile } from "../game-files/schema/party";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
@@ -62,6 +68,9 @@ type Screen =
   | { name: "rpgLobby"; file: RpgFile; code: string | null }
   | { name: "rpgOnline"; file: RpgFile; code: string; players: Array<{ id: string; name: string }>; settings: RpgSettings }
   | { name: "rpgJoin"; code: string | null; playerName?: string }
+  | { name: "partyLobby"; kind: PartyKind; code: string | null }
+  | { name: "partyOnline"; kind: PartyKind; code: string; players: Array<{ id: string; name: string }>; settings: unknown }
+  | { name: "partyJoin"; kind: PartyKind; code: string | null; playerName?: string }
   | { name: "builder" }
   | { name: "editor"; gameType: string }
   | { name: "ai"; gameType: string };
@@ -95,7 +104,9 @@ export function App() {
     const code = lobbiesAvailable() ? codeFromHash(window.location.hash) : null;
     const liarCode = lobbiesAvailable() ? liarCodeFromHash(window.location.hash) : null;
     const rpgCode = lobbiesAvailable() ? rpgCodeFromHash(window.location.hash) : null;
-    if (code || liarCode || rpgCode) history.replaceState(null, "", window.location.pathname + window.location.search);
+    const party = lobbiesAvailable() ? partyCodeFromHash(window.location.hash) : null;
+    if (code || liarCode || rpgCode || party) history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (party) return [{ name: "dashboard" }, { name: "partyJoin", kind: party.kind, code: party.code }];
     if (rpgCode) return [{ name: "dashboard" }, { name: "rpgJoin", code: rpgCode }];
     if (liarCode) return [{ name: "dashboard" }, { name: "liarJoin", code: liarCode }];
     return code ? [{ name: "dashboard" }, { name: "hbJoin", code }] : [{ name: "dashboard" }];
@@ -104,6 +115,7 @@ export function App() {
   const hostedLobby = useRef<string | null>(null);
   const hostedLiar = useRef<string | null>(null);
   const hostedRpg = useRef<string | null>(null);
+  const hostedParty = useRef<{ kind: PartyKind; code: string } | null>(null);
   /** A destructive navigation waiting for confirmation. */
   const [pending, setPending] = useState<{ title: string; text: string; label: string; run: () => void } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -128,6 +140,8 @@ export function App() {
     hostedLiar.current = null;
     if (hostedRpg.current) void closeRpgLobby(hostedRpg.current).catch(() => undefined);
     hostedRpg.current = null;
+    if (hostedParty.current) void closePartyRoom(hostedParty.current.kind, hostedParty.current.code).catch(() => undefined);
+    hostedParty.current = null;
     setLoaded(null);
     setStack([{ name: "dashboard" }]);
   }, []);
@@ -242,7 +256,10 @@ export function App() {
   else if (screen.name === "rpgLobby" || screen.name === "rpgOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "liarLobby" || screen.name === "liarOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "hbLobby") backdrop = backdropForGame({ file: screen.base, filename: "lobby", text: "", warnings: [] });
-  else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
+  else if (screen.name === "partyLobby" || screen.name === "partyOnline" || screen.name === "partyJoin") {
+    const def = partyByKind(screen.kind);
+    backdrop = { ...backdropForGame({ file: blankPartyFile(def.gameType, def.title, def.accent, {}), filename: "lobby", text: "", warnings: [] }), preset: getEngine(def.gameType)?.appearance.backgroundPreset ?? "aurora" };
+  } else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
 
   const toBuilder = useCallback(
     (gameType?: string) => {
@@ -275,8 +292,22 @@ export function App() {
           onLoad={(gameType) => push({ name: "import", gameType })}
           onBuild={toBuilder}
           onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
-          onHostOnline={lobbiesAvailable() ? () => push({ name: "rpgLobby", file: blankRpgFile(), code: null }) : undefined}
-          onJoinOnline={lobbiesAvailable() ? () => push({ name: "rpgJoin", code: null }) : undefined}
+          onHostOnline={
+            lobbiesAvailable()
+              ? (gameType) => {
+                  const def = partyByType(gameType);
+                  push(def ? { name: "partyLobby", kind: def.kind, code: null } : { name: "rpgLobby", file: blankRpgFile(), code: null });
+                }
+              : undefined
+          }
+          onJoinOnline={
+            lobbiesAvailable()
+              ? (gameType) => {
+                  const def = partyByType(gameType);
+                  push(def ? { name: "partyJoin", kind: def.kind, code: null } : { name: "rpgJoin", code: null });
+                }
+              : undefined
+          }
           onOpenRecent={openRecent}
           onForgetRecent={forgetRecent}
           onSettings={() => setSettingsOpen(true)}
@@ -343,6 +374,11 @@ export function App() {
               setStack((s) => [...s.slice(0, -1), { name: "rpgJoin", code, playerName }]);
               return true;
             }
+            const kind = await findPartyRoom(code);
+            if (kind) {
+              setStack((s) => [...s.slice(0, -1), { name: "partyJoin", kind, code, playerName }]);
+              return true;
+            }
             return false;
           }}
         />
@@ -365,6 +401,24 @@ export function App() {
         />
       )}
       {screen.name === "rpgOnline" && <RpgOnlineGame key={stack.length} file={screen.file} code={screen.code} players={screen.players} settings={screen.settings} onAgain={pop} onExit={home} />}
+      {screen.name === "partyJoin" && <PartyJoin key={`${screen.kind}-${stack.length}`} def={partyByKind(screen.kind)} code={screen.code} name={screen.playerName} onExit={home} />}
+      {screen.name === "partyLobby" && (
+        <PartyLobby
+          key={`${screen.kind}-${stack.length}`}
+          def={partyByKind(screen.kind)}
+          code={screen.code}
+          onCode={(code) => {
+            hostedParty.current = { kind: screen.kind, code };
+            setStack((s) => s.map((x, i) => (i === s.length - 1 && x.name === "partyLobby" ? { ...x, code } : x)));
+          }}
+          onBack={() => {
+            hostedParty.current = null;
+            pop();
+          }}
+          onStart={(players, settings) => screen.code && push({ name: "partyOnline", kind: screen.kind, code: screen.code, players, settings })}
+        />
+      )}
+      {screen.name === "partyOnline" && <PartyHost key={stack.length} def={partyByKind(screen.kind)} code={screen.code} players={screen.players} settings={screen.settings} onAgain={pop} onExit={home} />}
       {screen.name === "liarJoin" && <LiarJoin code={screen.code} name={screen.playerName} onExit={home} />}
       {screen.name === "liarLobby" && (
         <LiarLobby
