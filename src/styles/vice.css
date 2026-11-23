@@ -1,0 +1,119 @@
+/* ==========================================================================
+   Vice: a neon Miami-night skin. It sits on the dark palette
+   (html[data-theme="dark"][data-skin="vice"]): deep violet dusk, hot pink and
+   electric cyan neon, a striped retro sunset on the horizon.
+   ========================================================================== */
+html[data-skin="vice"] {
+  --bg: #140726;
+  --bg-rgb: 20 7 38;
+  --surface: #1f0b3a;
+  --surface-2: #2b1150;
+  --surface-3: #3a1866;
+  --text: #fff4fb;
+  --text-2: #e0b8e6;
+  --text-3: #b08bc4;
+  --accent: #ff3ea5;
+  --accent-glow: rgba(255, 62, 165, 0.4);
+  --border: rgba(255, 110, 199, 0.28);
+  --hairline: rgba(255, 110, 199, 0.16);
+  --btn-bg: #ff3ea5;
+  --btn-text: #ffffff;
+  --positive: #3dffc4;
+  --negative: #ff5470;
+  --ring: rgba(34, 225, 255, 0.6);
+  --top-light: inset 0 1px 0 rgba(255, 190, 235, 0.14);
+  --shadow-float: 0 16px 44px rgba(10, 0, 30, 0.65), 0 0 30px rgba(255, 62, 165, 0.12);
+  --shadow-tile: 0 14px 30px rgba(10, 0, 30, 0.6);
+  --vice-pink: #ff3ea5;
+  --vice-cyan: #22e1ff;
+  --vice-sun: #ff7a59;
+  --vice-gold: #ffd36e;
+  --sunset-1: #ffd36e;
+  --sunset-2: #ff3ea5;
+  --sunset-3: #22e1ff;
+}
+html[data-skin="vice"] body { background: #140726; }
+
+/* Dusk haze and a striped sun sinking into the horizon, between the 3D field and the pages. */
+html[data-skin="vice"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    /* scanlines */
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.12) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, transparent 0 62%, rgb(255 62 165 / 0.16) 80%, rgb(255 122 89 / 0.28) 100%),
+    radial-gradient(120% 60% at 50% 0%, rgb(34 225 255 / 0.1), transparent 60%);
+  mix-blend-mode: screen;
+}
+html[data-skin="vice"] body::before {
+  content: "";
+  position: fixed;
+  z-index: 1;
+  pointer-events: none;
+  right: 6vw;
+  bottom: -18vmin;
+  width: 46vmin;
+  height: 46vmin;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--vice-gold) 0%, var(--vice-sun) 45%, var(--vice-pink) 85%);
+  -webkit-mask: repeating-linear-gradient(180deg, #000 0 14px, transparent 14px 20px), linear-gradient(#000 0 45%, transparent 45%);
+  -webkit-mask-composite: source-over;
+  mask: linear-gradient(#000 0 45%, transparent 45%), repeating-linear-gradient(180deg, #000 0 12px, transparent 12px 19px);
+  mask-composite: add;
+  opacity: 0.38;
+  filter: blur(0.4px) drop-shadow(0 0 40px rgb(255 62 165 / 0.6));
+  animation: vice-sun 14s ease-in-out infinite;
+}
+@keyframes vice-sun { 50% { transform: translateY(-2vmin); opacity: 0.46; } }
+
+/* Neon display type: pink-to-sunset gradient with a glow. */
+html[data-skin="vice"] :is(.lx-title, .hm-name, .page-title, .hm-feature-title, .lx-rules-title, .setup-title) {
+  background: linear-gradient(100deg, var(--vice-pink) 0%, var(--vice-sun) 55%, var(--vice-gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 14px rgb(255 62 165 / 0.45));
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+html[data-skin="vice"] .lx-big-word { padding-inline-end: 0.12em; }
+html[data-skin="vice"] :is(.lx-title, .hm-name, .page-title, .hm-feature-title) { padding-inline-end: 0.1em; }
+html[data-skin="vice"] .lx-big { text-shadow: 0 0 18px rgb(255 62 165 / 0.6), 0 0 42px rgb(34 225 255 / 0.25); font-style: italic; }
+html[data-skin="vice"] :is(.lx-eyebrow, .hm-kicker) { color: var(--vice-cyan); text-shadow: 0 0 10px rgb(34 225 255 / 0.6); }
+
+/* Buttons: hot pink to sunset, neon glow. */
+html[data-skin="vice"] .btn-primary {
+  background: linear-gradient(100deg, var(--vice-pink), var(--vice-sun));
+  color: #fff;
+  box-shadow: 0 8px 24px rgb(255 62 165 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+html[data-skin="vice"] .btn-primary:hover:not(:disabled) { background: linear-gradient(100deg, #ff5cb4, #ff9270); box-shadow: 0 10px 32px rgb(255 62 165 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.2); }
+html[data-skin="vice"] .btn-secondary { border-color: rgb(34 225 255 / 0.4); box-shadow: inset 0 0 12px rgb(34 225 255 / 0.12); }
+html[data-skin="vice"] .btn-secondary:hover:not(:disabled) { border-color: var(--vice-cyan); box-shadow: 0 0 16px rgb(34 225 255 / 0.4); }
+
+/* Sidebar: glass with a neon edge. */
+html[data-skin="vice"] .lx-side {
+  background: linear-gradient(180deg, rgb(43 17 80 / 0.75), rgb(20 7 38 / 0.8));
+  border-color: rgb(255 62 165 / 0.45);
+  box-shadow: 0 0 0 1px rgb(34 225 255 / 0.12), 0 0 26px rgb(255 62 165 / 0.28), 0 20px 50px rgb(0 0 0 / 0.5);
+}
+html[data-skin="vice"] .lx-nav-pill {
+  background: linear-gradient(140deg, var(--vice-pink), var(--vice-sun));
+  box-shadow: 0 0 22px rgb(255 62 165 / 0.7), 0 0 0 4px rgb(34 225 255 / 0.18);
+}
+html[data-skin="vice"] .lx-nav-pill::after { border-color: var(--vice-cyan); }
+
+/* Panels and tiles get a pink rim; the selected tile glows cyan. */
+html[data-skin="vice"] :is(.st-card, .hm-feature, .hm-action, .hm-cta, .lx-rule, .card, .dialog, .sheet) { border-color: rgb(255 62 165 / 0.32); }
+html[data-skin="vice"] .hm-feature { background: linear-gradient(120deg, rgb(255 62 165 / 0.22), rgb(34 225 255 / 0.08) 60%, rgb(31 11 58 / 0.85)); }
+html[data-skin="vice"] .lib-tile.is-active .lib-art { border-color: var(--vice-cyan); }
+html[data-skin="vice"] .lx-tab.is-on { background: linear-gradient(100deg, var(--vice-pink), var(--vice-sun)); color: #fff; box-shadow: 0 0 16px rgb(255 62 165 / 0.5); }
+html[data-skin="vice"] .lx-search:focus-within { border-color: var(--vice-cyan); box-shadow: 0 0 14px rgb(34 225 255 / 0.35); }
+html[data-skin="vice"] .hm-cta-icon { background: linear-gradient(140deg, var(--vice-pink), var(--vice-sun)); }
+html[data-skin="vice"] ::selection { background: var(--vice-pink); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) { html[data-skin="vice"] body::before { animation: none; } }
+html[data-skin="vice"][data-motion="off"] body::before { animation: none; }

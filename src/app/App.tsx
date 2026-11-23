@@ -102,6 +102,16 @@ function backdropTheme(screen: Screen, tileGameType: string): SoundTheme {
   return "headbands";
 }
 
+/** Vice rides on the dark palette (so every dark-mode rule still applies) plus a skin layer. */
+const paletteOf = (t: Theme) => (t === "light" ? "light" : "dark");
+const skinOf = (t: Theme) => (t === "vice" ? "vice" : "");
+function applyTheme(t: Theme) {
+  const root = document.documentElement;
+  root.dataset.theme = paletteOf(t);
+  if (t === "vice") root.dataset.skin = "vice";
+  else delete root.dataset.skin;
+}
+
 export function App() {
   useSpatialNav();
 
@@ -182,8 +192,8 @@ export function App() {
 
   const changeTheme = useCallback((next: Theme) => {
     const root = document.documentElement;
-    if (root.dataset.theme === next) return;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "light" ? "#F2F4F8" : "#080B12");
+    if (root.dataset.theme === paletteOf(next) && (root.dataset.skin ?? "") === skinOf(next)) return;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "light" ? "#F2F4F8" : next === "vice" ? "#140726" : "#080B12");
     saveTheme(next);
     // A circular wipe from the toggle; the colour cross-fade remains for browsers without view transitions.
     if (!("startViewTransition" in document)) {
@@ -191,13 +201,13 @@ export function App() {
       window.setTimeout(() => root.classList.remove("theme-shift"), 400);
     }
     withScreenTransition("theme", () => {
-      root.dataset.theme = next;
+      applyTheme(next);
       setTheme(next);
     });
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    applyTheme(theme);
   }, [theme]);
 
   // Layout preference: asked once, then remembered. Defaults to a guess so the first paint is sensible.

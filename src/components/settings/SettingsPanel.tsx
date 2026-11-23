@@ -1,5 +1,5 @@
 import { useState, useSyncExternalStore, type ReactNode } from "react";
-import { Info, Monitor, Moon, Palette, Smartphone, Sparkles, Sun, UserRound, Volume2, VolumeX } from "lucide-react";
+import { Info, Monitor, Moon, Palette, Smartphone, Sparkles, Sun, Sunset, UserRound, Volume2, VolumeX } from "lucide-react";
 import { applyMotion, loadMotion, loadSfxOn, saveMotion, saveSfxOn, type Device, type Motion, type Theme } from "../../app/storage";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 import { setSfxEnabled } from "../../lib/sfx";
@@ -89,6 +89,7 @@ export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
                 [
                   ["dark", "Dark", Moon],
                   ["light", "Light", Sun],
+                  ["vice", "Vice", Sunset],
                 ] as const
               ).map(([value, label, Icon]) => (
                 <button key={value} type="button" role="radio" aria-checked={theme === value} className={`st-theme st-theme-${value}${theme === value ? " is-on" : ""}`} onClick={() => onTheme(value)}>

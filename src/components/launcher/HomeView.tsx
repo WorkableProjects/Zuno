@@ -1,4 +1,4 @@
-import { useMemo, type RefObject } from "react";
+import { useMemo, useState, type RefObject } from "react";
 import { ArrowRight, Clock, LayoutGrid, LogIn, Play, Plus, Shuffle, Smartphone, Tv, Users, X } from "lucide-react";
 import { useProfile } from "../../lib/profile";
 import { Avatar } from "../avatar/AvatarView";
@@ -22,6 +22,8 @@ interface Props {
   gridRef: RefObject<HTMLDivElement | null>;
 }
 
+const CTA_KEY = "zuno.accountPromptDismissed";
+
 function greeting(): string {
   const h = new Date().getHours();
   if (h < 5) return "Up late";
@@ -42,6 +44,14 @@ function dailyIndex(n: number): number {
  */
 export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, onJoin, onForget, onSection, gridRef }: Props) {
   const profile = useProfile();
+  const [ctaGone, setCtaGone] = useState(() => {
+    try {
+      return localStorage.getItem(CTA_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [ctaLeaving, setCtaLeaving] = useState(false);
   const featured = engines[dailyIndex(engines.length)];
   const feat = featured ? GAME_INFO[featured.gameType] : undefined;
 
@@ -69,7 +79,7 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
             <h1 className="hm-name">{profile ? profile.username : "Welcome to Zuno"}</h1>
           </div>
         </div>
-        {profile === null && (
+        {profile === null && ctaGone && (
           <button type="button" className="hm-signin" onClick={() => onSection("settings")} data-nav-row="0">
             <Users size={16} strokeWidth={2} />
             Make a profile
@@ -77,6 +87,37 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
           </button>
         )}
       </header>
+
+      {profile === null && !ctaGone && (
+        <section className={`hm-cta${ctaLeaving ? " is-leaving" : ""}`} aria-label="Make an account" onAnimationEnd={(e) => e.animationName === "hm-cta-out" && setCtaGone(true)}>
+          <span className="hm-cta-icon" aria-hidden="true">
+            <Users size={22} strokeWidth={2} />
+          </span>
+          <div className="hm-cta-text">
+            <h2 className="hm-cta-title">Want to make an account?</h2>
+            <p className="hm-cta-sub">Keep your name and picture across games and devices.</p>
+          </div>
+          <div className="hm-cta-actions">
+            <button type="button" className="btn btn-primary" onClick={() => onSection("settings")}>
+              Yes, set it up
+            </button>
+            <button
+              type="button"
+              className="btn btn-quiet"
+              onClick={() => {
+                try {
+                  localStorage.setItem(CTA_KEY, "1");
+                } catch {
+                  /* private mode: hide for this visit only */
+                }
+                setCtaLeaving(true);
+              }}
+            >
+              No thanks
+            </button>
+          </div>
+        </section>
+      )}
 
       {featured && (
         <section className="hm-feature" style={{ "--game": featured.backdrop.accent } as React.CSSProperties} aria-label="Tonight's pick">
