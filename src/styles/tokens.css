@@ -92,6 +92,8 @@
   --shadow-float: 0 16px 40px rgba(0, 0, 0, 0.5);
   --shadow-tile: 0 14px 28px rgba(0, 0, 0, 0.55);
   --field-opacity: 0.5;
+  --mark-a: #ff8a66;
+  --mark-b: #a893ff;
 }
 
 [data-theme="light"] {
@@ -119,6 +121,8 @@
   --shadow-float: 0 8px 24px rgba(17, 24, 39, 0.1);
   --shadow-tile: 0 10px 22px rgba(17, 24, 39, 0.2);
   --field-opacity: 0.42;
+  --mark-a: #f2542d;
+  --mark-b: #6a45e0;
 }
 
 /* Ink made from the game accent. Declared where --game is set, so it follows that game. */

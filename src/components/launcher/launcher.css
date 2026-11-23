@@ -43,12 +43,12 @@
   border-radius: 50%;
   background: none;
   cursor: pointer;
-  filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--sunset-2) 40%, transparent));
+  filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--mark-a) 40%, transparent));
   transition: transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
 }
 .lx-mark svg { transition: transform 700ms var(--ease-pop); }
-.lx-mark:hover svg { transform: rotate(90deg); }
-.lx-mark:hover { transform: scale(1.06); filter: drop-shadow(0 8px 22px color-mix(in oklab, var(--sunset-2) 55%, transparent)); }
+.lx-mark:hover svg { transform: rotate(180deg); }
+.lx-mark:hover { transform: scale(1.06); filter: drop-shadow(0 8px 22px color-mix(in oklab, var(--mark-a) 55%, transparent)); }
 .lx-mark:active { transform: scale(0.96); transition-duration: var(--t-press); }
 .lx-mark:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
 .lx-nav { position: relative; display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }

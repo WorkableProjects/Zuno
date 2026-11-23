@@ -1,15 +1,22 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="public/zuno-logo-white.svg">
-    <img src="public/zuno-logo-dark.svg" alt="Zuno" width="260">
+    <source media="(prefers-color-scheme: dark)" srcset="public/ZunoLogosv2/zuno-lockup-dark.svg">
+    <img src="public/ZunoLogosv2/zuno-lockup-horizontal.svg" alt="Zuno" width="160">
   </picture>
 </p>
 
 <p align="center"><em>Pick. Build. Play.</em></p>
 
-Zuno is a browser-based, console-style game launcher and game builder. It ships three game engines: Jeopardy, Headbands and LIAR. Everything runs in the browser; the optional online lobbies for Headbands and LIAR use a free Firebase Realtime Database. Every session runs from a game file (`.zuno.json`) that you load, build in the visual editor, or have an AI assistant write for you. There are no accounts and no server of its own.
+Zuno is a browser-based party game launcher and builder. Pick a game, play it on one screen or with everyone on their phones, or build your own game file. It runs entirely in the browser; online rooms and profiles use an optional free Firebase project.
 
-The full product specification is in [Zuno_SPEC.md](docs/Zuno_SPEC.md). Headbands is specified in [HeadbandsSPEC.md](docs/HeadbandsSPEC.md).
+**Version 3.0.0**
+
+## Highlights
+
+- **Games**: Jeopardy, Headbands, LIAR, Rock Paper Gamble, Blackjack, Draw It and Survey Feud, played on one shared screen, online with phones, or both.
+- **Builder**: a visual editor and an AI prompt guide that produce a `.zuno.json` game file. Files are validated before hosting and never executed.
+- **Online rooms**: room codes, QR join links, profile pictures and per-player notepads.
+- **Interface**: console-style launcher with animated transitions, keyboard and controller-style navigation, Dark, Light and Vice themes, synthesized sound, and reduced-motion support.
 
 ## Run it
 
@@ -21,133 +28,49 @@ npm install
 npm run dev
 ```
 
-Other scripts:
-
 | Command | What it does |
 | --- | --- |
 | `npm run build` | Type-checks and builds the static site into `dist/` |
-| `npm run preview` | Serves the production build locally |
-| `npm test` | Runs the file validator and game engine tests |
-| `npm run logo:export` | Re-renders the PNG app icons from the SVG logo (needs Playwright) |
+| `npm run preview` | Serves the production build |
+| `npm test` | Runs the validator and engine tests |
+| `npm run logo:export` | Re-renders the PNG app icons from `public/ZunoLogosv2` (needs Playwright) |
 
-The build is fully static, so any static host works.
+The build is fully static, so any static host works. Sample games are in `public/samples/`.
 
-## What is in Zuno
+## Online play (optional)
 
-- **Dashboard** with a horizontal game rail, a full-screen background that follows the focused game, and a hero area with its actions
-- **Tile effects**: a border beam that travels around the selected tile and a separate diagonal sheen across its artwork, both with reduced-motion fallbacks
-- **Keyboard navigation** with arrow keys, WASD, Enter, Escape and Tab on every screen
-- **Game files** in readable JSON, validated before anything can be hosted, never executed
-- **Jeopardy**: session setup with team names, board, clue and answer reveal, scoring, optional final round, standings
-- **Headbands**: everyone holds a secret identity they can't see and asks the group yes-or-no questions. Text Mode or Image Mode (a picture with its answer underneath), shuffled or hand-picked deals, a privacy cover between turns, guess checking, host overrides, pause, skip, reorder and a recap
-- **Builder**: a visual editor that exports a `.zuno.json` file, and an AI Builder with a Copy Guide prompt for ChatGPT, Gemini or another assistant
-- **Settings**: Dark Mode (default) and Light Mode, saved on the device
+Online rooms use Firebase Realtime Database on the free Spark plan. Without it, Zuno still works and the online buttons are hidden.
 
-Sample games live in `public/samples/` (`science-review.zuno.json` for Jeopardy, `everyday-things.zuno.json` for Headbands) and can be loaded from each import screen.
+1. Create a Firebase project and a Realtime Database.
+2. Publish the rules in [`database.rules.json`](database.rules.json) (republish when that file changes).
+3. Add a Web app and put its `apiKey`, `databaseURL`, `projectId` and `appId` in `.env.production`, or in `.env.local` for local work (see `.env.example`).
 
-## Headbands online lobby (v1.0.1)
+To test without a project, run `npx firebase-tools emulators:start --only database --project demo-zuno` and build with `VITE_FIREBASE_EMULATOR=127.0.0.1:9000`.
 
-Players can join the host from their own phones and write each other's identities, instead of using a deck from a file. In a lobby:
+## Adding a game
 
-- The host screen shows a room code, a QR code and a join link. Players scan it, or open Zuno, pick Headbands, choose **Join a game** and type the code.
-- Players sit in a circle the host can reorder or shuffle. Each player writes for the next one, and the last writes for the first. The circle is also the turn order.
-- The host picks **Text, any topic** (players type any word, name or phrase) or **A picture with its answer** (players upload or take a photo and write the answer shown under it).
-- Each phone only shows who it is writing for. Nobody sees what was written for them, and the host screen only shows who has finished.
-- When everyone has written, the host starts the game. Each phone then shows whose turn it is, every other player's card (never your own), the answers each player has received, and an activity log such as "Maya guessed “Owl”, not it" or "Ben skipped their turn".
-- On your turn you ask, guess or skip from your phone. Typing the question is optional: tap **I asked out loud** and the group answers Yes, No or Not sure on their own phones. The host's screen follows along and keeps its overrides (pause, mark solved, skip, remove).
-- **Play again** goes back to the lobby for a fresh round of writing.
-
-Start a lobby from the Headbands load screen (**Host an online lobby**, no file needed) or from session setup (**Let players write them on their phones instead**, which keeps the loaded game's title and colors).
-
-## LIAR online
-
-LIAR can also be played with everyone on their own device. Start it from the LIAR load screen (**Host an online lobby**, no file needed) or from session setup (**Play online instead**). Players join from the QR code, the link, or **Join a game** with the room code.
-
-- The host plays too. Players take turns as storyteller in the order they joined.
-- The storyteller writes two truths and a lie privately on their own phone. The lie stays on the host's device until the reveal.
-- Everyone else votes from their own device and can change their vote until voting closes. The host starts voting, reveals, moves on, pauses, skips or removes players.
-- The reveal shows who voted for which statement. Scores, if on, update for everyone.
-
-Rooms live under `/liar/{code}`.
-
-## Profiles, notepads and sound
-
-- **Profile pictures**: in any online lobby, players pick a colour, an emoji, their initial, or a photo (cropped and shrunk to 96 px). The choice is remembered on the device.
-- **Notepad**: Headbands and LIAR have a notepad with a page per player. Online, notes stay on your own device; on a shared screen, they last for that game.
-- **Sound effects**: menus (hover, press, back, switches, dialogs, screen changes) and game events in all three games. They are synthesized in the browser, so there are no files to load, and follow the mute button and volume.
-
-### Setting up Firebase (free)
-
-Lobbies use Firebase Realtime Database. The free Spark plan (100 simultaneous connections, 1 GB stored, 10 GB a month downloaded) is plenty, and no card is needed. Without this setup Zuno still works, and the online buttons are hidden.
-
-1. In the [Firebase console](https://console.firebase.google.com/), create a project, then **Build → Realtime Database → Create database** (start in locked mode).
-2. In the database's **Rules** tab, paste the contents of [`database.rules.json`](database.rules.json) and publish. Publish them again whenever that file changes (version 1.0.2 added `game` and `actions`; profile pictures and LIAR online added `avatar` and `/liar`; Blackjack, Draw It and Survey Feud added `/bj`, `/draw` and `/feud`).
-3. **Project settings → Your apps → Add app → Web**, and note `apiKey`, `databaseURL`, `projectId` and `appId`.
-4. Put them in [`.env.production`](.env.production), which every production build reads, including the GitHub Pages deploy. This repository already has its project's values there. For a different project locally, copy `.env.example` to `.env.local` and fill it in.
-
-These web config values are public by design; the rules limit what can be written. Lobbies live under `/hb/{code}` and are removed when the host leaves or closes the tab.
-
-To try it without a project: `npx firebase-tools emulators:start --only database --project demo-zuno`, then build with `VITE_FIREBASE_EMULATOR=127.0.0.1:9000` and the other variables set to any placeholder (for example `VITE_FIREBASE_PROJECT_ID=demo-zuno`).
-
-## Keyboard
-
-| Key | Action |
-| --- | --- |
-| Arrow keys, `W` `A` `S` `D` | Move between tiles, actions, board cells and buttons |
-| `Enter`, `Space` | Activate the focused control |
-| `Escape` | Close the panel or go back |
-| `Tab`, `Shift+Tab` | Standard focus order, used inside forms |
-
-WASD is ignored while you type in a field.
-
-## Project layout
-
-```text
-src/
-  app/                  App shell, screen stack, local storage
-  components/
-    brand/              Logo
-    dashboard/          Rail, tiles, hero, ambient background
-    navigation/         Directional (arrow/WASD) focus navigation
-    import/             File picker, validation summary, preview
-    builder/            Builder entry, visual editor, AI guide
-    settings/           Theme panel
-    ui/                 Dialog and small helpers
-  game-files/schema/    Shared file shape, Jeopardy and Headbands schemas, validator
-  games/
-    registry.ts         Game engine registry
-    jeopardy/           Setup, runtime screens and the session engine
-    headbands/          Setup, play screen, identity card and the session engine
-  styles/               Tokens, base styles, motion
-public/                 Logo family, app icons, sample game
-tests/                  Validator and engine tests
-```
-
-Adding a game type means registering an engine in `src/games/registry.ts` with its validator and mapping its host and builder screens in `src/app/App.tsx`. The dashboard, importer and file validation are shared.
+Register an engine in `src/games/registry.ts` with its validator, then map its host and builder screens in `src/app/App.tsx`. The launcher, importer and file validation are shared. Product specs are in [`docs/`](docs).
 
 ## Logo files
 
+All current brand assets are in `public/ZunoLogosv2/`. The previous set is kept in `public/ZunoLogosv1/`.
+
 | File | Use |
 | --- | --- |
-| `public/zuno-logo.svg` | Horizontal lockup, light text for dark backgrounds |
-| `public/zuno-logo-dark.svg` | Horizontal lockup for light backgrounds |
-| `public/zuno-logo-flat-white.svg`, `zuno-logo-flat-dark.svg` | Single-color lockups |
-| `public/zuno-mark.svg`, `zuno-mark-white.svg`, `zuno-mark-dark.svg` | Standalone mark |
-| `public/zuno-wordmark.svg`, `zuno-wordmark-dark.svg` | Wordmark only |
-| `public/favicon.svg` | Simplified mark for small sizes |
-| `public/zuno-icon-512.png`, `-192.png`, `-64.png` | App icons |
+| `zuno-lockup-horizontal.svg` | Mark and wordmark for light backgrounds |
+| `zuno-lockup-dark.svg` | Lockup on a dark background |
+| `zuno-lockup-mono.svg` | One-color lockup (inherits text color) |
+| `zuno-mark.svg`, `zuno-mark-dark.svg` | Standalone mark |
+| `zuno-mark-mono.svg`, `zuno-mark-black.svg` | One-color mark |
+| `zuno-app-icon.svg` | App icon and favicon |
+| `zuno-icon-512.png`, `-192.png`, `-64.png` | PNG app icons |
+
+## Deploying to GitHub Pages
+
+In **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**, then push to `main`. Deploying straight from the branch serves unbuilt source and fails.
 
 ## Credits
 
 Zuno is a Workable Projects product with Dutch & Friends.
 
 The interface was designed with the unslop method by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), CC BY 4.0.
-
-## Deploying to GitHub Pages
-
-The site must be built before it can be served, so Pages has to deploy from the workflow, not straight from the branch:
-
-1. Go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
-2. Push to `main` (or run **Deploy to GitHub Pages** from the Actions tab).
-
-If Source is left on "Deploy from a branch", Pages serves the raw source and the browser shows 404 errors for `main.tsx` and `favicon.svg`.
