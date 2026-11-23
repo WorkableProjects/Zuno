@@ -6,9 +6,10 @@ import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";
-import { RPG_LIMITS, formatCoins, type RpgFile, type RpgSettings } from "../../game-files/schema/rpg";
+import { ITEM_COST_LIMITS, ITEM_IDS, RPG_LIMITS, formatCoins, itemInfo, type ItemId, type RpgFile, type RpgSettings } from "../../game-files/schema/rpg";
 import { playerId } from "../headbands/lobby";
 import { useJoinSound } from "../../lib/useGameSounds";
+import { ItemInfoTip } from "./ItemInfo";
 import { RpgTitle } from "./RpgTitle";
 import {
   canStart,
@@ -60,6 +61,8 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
   const [copied, setCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [money, setMoney] = useState(file.settings.startingMoney);
+  const [itemsOn, setItemsOn] = useState(file.settings.items);
+  const [costs, setCosts] = useState<Record<ItemId, number>>({ ...file.settings.itemCosts });
   const created = useRef(false);
   const cleared = useRef(false);
   useEscape(() => setConfirmLeave(true), !confirmLeave);
@@ -78,7 +81,7 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
 
   useEffect(() => {
     if (!code) return;
-    void setRpgLobby(code, { phase: "lobby", game: null, actions: null, startingMoney: file.settings.startingMoney });
+    void setRpgLobby(code, { phase: "lobby", game: null, actions: null, private: null, startingMoney: file.settings.startingMoney });
     return watchRpgLobby(code, setLobby, setProblem);
   }, [code, file.settings.startingMoney]);
 
@@ -125,7 +128,8 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
   const maxPlayers = file.settings.maxPlayers;
   const names = list.map((p) => p.name.trim().toLowerCase());
   const dupes = new Set(names).size !== names.length;
-  const ready = !!code && validMoney && !dupes && canStart(list, me, RPG_LIMITS.minPlayers, maxPlayers);
+  const validCosts = ITEM_IDS.every((id) => Number.isInteger(costs[id]) && costs[id] >= ITEM_COST_LIMITS[id].min && costs[id] <= ITEM_COST_LIMITS[id].max);
+  const ready = !!code && validMoney && (!itemsOn || validCosts) && !dupes && canStart(list, me, RPG_LIMITS.minPlayers, maxPlayers);
   const notReady = list.filter((p) => p.id !== me && !p.ready).length;
 
   const reorder = (id: string, by: -1 | 1) => {
@@ -155,7 +159,7 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
     }
     onStart(
       list.map((p) => ({ id: p.id, name: p.name })),
-      { ...file.settings, startingMoney: money },
+      { ...file.settings, startingMoney: money, items: itemsOn, itemCosts: validCosts ? costs : file.settings.itemCosts },
     );
   };
 
@@ -272,6 +276,42 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
               <p className="field-hint rpg-problem">
                 Choose {formatCoins(RPG_LIMITS.minMoney)} to {formatCoins(RPG_LIMITS.maxMoney)}.
               </p>
+            )}
+          </div>
+          <div className="setup-field rpg-items-setup">
+            <label className="rpg-switch">
+              <input type="checkbox" checked={itemsOn} onChange={(e) => setItemsOn(e.target.checked)} />
+              <span className="setup-label">Items</span>
+            </label>
+            <p className="meta">Players can buy bombs, nukes, landmines and interceptors between duels.</p>
+            {itemsOn && (
+              <ul className="rpg-item-costs">
+                {ITEM_IDS.map((id) => {
+                  const { min, max } = ITEM_COST_LIMITS[id];
+                  const bad = !(Number.isInteger(costs[id]) && costs[id] >= min && costs[id] <= max);
+                  return (
+                    <li key={id}>
+                      <span className="rpg-grow">
+                        <strong>{itemInfo(id, costs).name}</strong> <ItemInfoTip id={id} costs={costs} />
+                        <span className="meta rpg-status">{itemInfo(id, costs).short}</span>
+                      </span>
+                      <input
+                        className="input rpg-cost-input"
+                        inputMode="numeric"
+                        aria-label={`${itemInfo(id, costs).name} cost`}
+                        aria-invalid={bad}
+                        value={Number.isFinite(costs[id]) ? String(costs[id]) : ""}
+                        onChange={(e) => setCosts({ ...costs, [id]: Number(e.target.value.replace(/[^0-9]/g, "")) })}
+                      />
+                      {bad && (
+                        <span className="field-hint rpg-problem">
+                          {formatCoins(min)} to {formatCoins(max)}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
           <dl className="rpg-config meta">

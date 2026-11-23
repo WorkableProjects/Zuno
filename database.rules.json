@@ -249,12 +249,17 @@
         "game": {
           ".validate": "newData.isString() && newData.val().length <= 200000"
         },
+        "private": {
+          "$player": {
+            ".validate": "newData.isString() && newData.val().length <= 600"
+          }
+        },
         "actions": {
           "$player": {
             "$move": {
               ".validate": "newData.hasChildren(['type']) && root.child('rpg').child($code).child('players').child($player).exists()",
               "type": {
-                ".validate": "newData.isString() && newData.val().matches(/^(challenge|bet|pick|gift)$/)"
+                ".validate": "newData.isString() && newData.val().matches(/^(challenge|bet|pick|gift|buy|bomb|nuke|mine|intercept|wire|vote)$/)"
               },
               "target": {
                 ".validate": "newData.isString() && newData.val().length <= 40"
@@ -264,6 +269,15 @@
               },
               "wager": {
                 ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000000"
+              },
+              "item": {
+                ".validate": "newData.isString() && newData.val().matches(/^(bomb|nuke|landmine|interceptor)$/)"
+              },
+              "wire": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 2"
+              },
+              "vote": {
+                ".validate": "newData.isString() && newData.val().matches(/^(allow|block)$/)"
               },
               "choice": {
                 ".validate": "newData.isString() && newData.val().matches(/^(rock|paper|scissors)$/)"

@@ -160,3 +160,51 @@
   .rpg-overlay-bar { animation-duration: 0.01s; }
   .rpg-weapon { transition: none; }
 }
+
+/* ---------- Items ---------- */
+.rpg-items { display: grid; gap: 10px; padding: 12px; }
+.rpg-shop { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rpg-shop li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rpg-trap { display: grid; gap: 6px; }
+.rpg-btn-danger { background: var(--rpg-red); color: #fff; border-color: transparent; }
+.rpg-items-setup { display: grid; gap: 8px; }
+.rpg-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.rpg-item-costs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rpg-item-costs li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rpg-cost-input { width: 120px; }
+
+.rpg-tipwrap { position: relative; display: inline-flex; vertical-align: middle; }
+.rpg-tip { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; width: min(320px, calc(100vw - 32px)); display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--surface); color: var(--text); border: 1px solid var(--hairline); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); font-size: 14px; line-height: 1.4; text-align: left; font-weight: 400; }
+.rpg-tip ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.rpg-tip-name { font-size: 15px; }
+
+.rpg-wires { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rpg-wire { min-height: 96px; border-radius: 16px; border: 2px solid var(--hairline); color: #fff; font: 700 16px / 1 var(--font-ui); cursor: pointer; }
+.rpg-wire.is-w0 { background: var(--rpg-red); }
+.rpg-wire.is-w1 { background: #3b82f6; }
+.rpg-wire.is-w2 { background: var(--rpg-green); }
+.rpg-wire:disabled { opacity: 0.55; cursor: default; }
+
+.rpg-fx { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
+.rpg-fx-bomb { background: radial-gradient(circle, transparent 35%, color-mix(in oklab, var(--rpg-red) 55%, transparent)); animation: rpg-red-pulse 0.9s ease-in-out infinite; }
+.rpg-fx-nuke { background: color-mix(in oklab, var(--rpg-cyan) 30%, transparent); animation: rpg-flicker 0.7s steps(2, end) infinite; }
+@keyframes rpg-red-pulse { 50% { opacity: 0.25; } }
+@keyframes rpg-flicker { 0%, 100% { opacity: 0.05; } 20% { opacity: 0.55; } 45% { opacity: 0.1; } 70% { opacity: 0.4; } }
+
+.rpg-banner { position: fixed; z-index: 40; top: 72px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100vw - 32px)); display: grid; justify-items: center; gap: 6px; padding: 16px 20px; border-radius: 16px; text-align: center; background: var(--surface); border: 2px solid var(--rpg-amber); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); animation: rpg-banner-in 0.4s var(--ease) both; }
+.rpg-banner.is-bomb.is-bad { border-color: var(--rpg-red); }
+.rpg-banner.is-nuke { border-color: var(--rpg-cyan); }
+.rpg-banner.is-good { border-color: var(--rpg-green); }
+.rpg-banner-title { font: 800 clamp(26px, 6vw, 44px) / 1 var(--font-display); letter-spacing: 0.02em; }
+.rpg-banner.is-rumble { animation: rpg-banner-in 0.4s var(--ease) both, rpg-rumble 0.12s linear 8; }
+.rpg-stamp { padding: 4px 14px; border: 3px solid var(--rpg-cyan); color: var(--rpg-cyan-ink); font: 800 28px / 1 var(--font-display); transform: rotate(-6deg); animation: rpg-stamp 0.4s var(--ease) both; }
+.rpg-boom { font-size: 56px; animation: rpg-pop 0.5s var(--ease) both; }
+@keyframes rpg-banner-in { from { opacity: 0; transform: translateX(-50%) translateY(-16px) scale(0.96); } to { opacity: 1; transform: translateX(-50%); } }
+@keyframes rpg-rumble { 0%, 100% { margin-left: 0; } 25% { margin-left: -5px; } 75% { margin-left: 5px; } }
+@keyframes rpg-stamp { from { transform: rotate(-6deg) scale(2.2); opacity: 0; } to { transform: rotate(-6deg) scale(1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rpg-fx-bomb, .rpg-fx-nuke, .rpg-banner, .rpg-banner.is-rumble, .rpg-stamp, .rpg-boom { animation: none; }
+  .rpg-fx-bomb { opacity: 0.35; }
+  .rpg-fx-nuke { opacity: 0.2; }
+}

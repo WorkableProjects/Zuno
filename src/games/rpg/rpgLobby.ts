@@ -11,12 +11,17 @@ import {
   set,
   update,
 } from "firebase/database";
+import { ITEM_IDS, type ItemId } from "../../game-files/schema/rpg";
 import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatarData";
 import { database, makeCode } from "../headbands/lobby";
 import {
+  WIRES,
   isChoice,
+  itemsOf,
   poolOf,
   type Choice,
+  type GameEvent,
+  type NukeVote,
   type Phase,
   type RoundOutcome,
   type RpgAction,
@@ -64,7 +69,29 @@ export interface RpgOnlineDuel {
   last: RoundOutcome | null;
   overlay: number;
   doubleMisses: number;
+  /** How many hidden Landmines and Interceptors are in play. Never which. */
+  traps: number;
 }
+
+/** The nuke as everyone may see it: who voted, never how. */
+export interface RpgOnlineNuke {
+  by: string;
+  stage: "vote" | "duel";
+  voted: string[];
+  target: string | null;
+  picked: string[];
+  ties: number;
+  last: RoundOutcome | null;
+}
+
+/** What only one player may see: what they hold and what they hid. */
+export interface RpgPrivate {
+  items: ItemId[];
+  mine: Choice | null;
+  intercept: string | null;
+}
+
+export const EMPTY_PRIVATE: RpgPrivate = { items: [], mine: null, intercept: null };
 
 /** What every device sees. */
 export interface RpgOnline {
@@ -78,6 +105,14 @@ export interface RpgOnline {
   result: Settlement | null;
   log: string[];
   endedEarly: boolean;
+  itemsOn: boolean;
+  itemCosts: Record<ItemId, number>;
+  /** How many items each player holds. Which ones stay private. */
+  itemCounts: Record<string, number>;
+  /** The defusing wire is never here. */
+  bomb: { by: string; target: string } | null;
+  nuke: RpgOnlineNuke | null;
+  event: GameEvent | null;
   /** State revision; phones ignore updates older than what they hold. */
   revision: number;
 }
@@ -91,7 +126,14 @@ export type RpgMove =
   | { type: "challenge"; target: string; wager?: number }
   | { type: "bet"; target: string; amount: number }
   | { type: "pick"; choice: Choice }
-  | { type: "gift"; target: string; amount: number };
+  | { type: "gift"; target: string; amount: number }
+  | { type: "buy"; item: ItemId }
+  | { type: "bomb"; target: string }
+  | { type: "nuke" }
+  | { type: "mine"; choice: Choice }
+  | { type: "intercept"; target: string }
+  | { type: "wire"; wire: number }
+  | { type: "vote"; vote: NukeVote };
 
 export function toRpgOnline(s: RpgState): RpgOnline {
   const d = s.duel;
@@ -115,13 +157,44 @@ export function toRpgOnline(s: RpgState): RpgOnline {
           last: d.last,
           overlay: d.overlay,
           doubleMisses: d.doubleMisses,
+          traps: d.mines.length + d.intercepts.length,
         }
       : null,
     result: s.result,
     log: s.log,
     endedEarly: s.endedEarly,
+    itemsOn: s.settings.items,
+    itemCosts: s.settings.itemCosts,
+    itemCounts: Object.fromEntries(s.players.map((p) => [p.id, itemsOf(s, p.id).length])),
+    bomb: s.bomb ? { by: s.bomb.by, target: s.bomb.target } : null,
+    nuke: s.nuke ? { by: s.nuke.by, stage: s.nuke.stage, voted: Object.keys(s.nuke.votes), target: s.nuke.target, picked: Object.keys(s.nuke.picks), ties: s.nuke.ties, last: s.nuke.last } : null,
+    event: s.event,
     revision: s.revision,
   };
+}
+
+/** What one player may know that the table may not. */
+export function rpgPrivate(s: RpgState, id: string): RpgPrivate {
+  const d = s.duel;
+  return {
+    items: itemsOf(s, id),
+    mine: d?.mines.find((m) => m.by === id)?.symbol ?? null,
+    intercept: d?.intercepts.find((i) => i.by === id)?.winner ?? null,
+  };
+}
+
+export function readRpgPrivate(raw: unknown): RpgPrivate {
+  if (typeof raw !== "string") return EMPTY_PRIVATE;
+  try {
+    const p = JSON.parse(raw) as Partial<RpgPrivate>;
+    return {
+      items: Array.isArray(p.items) ? p.items.filter((i): i is ItemId => ITEM_IDS.includes(i as ItemId)) : [],
+      mine: isChoice(p.mine) ? p.mine : null,
+      intercept: typeof p.intercept === "string" ? p.intercept : null,
+    };
+  } catch {
+    return EMPTY_PRIVATE;
+  }
 }
 
 /**
@@ -143,6 +216,21 @@ export function rpgMoveToAction(move: unknown, from: string): RpgAction | null {
       return target ? { type: "gift", by: from, target, amount: Number(m.amount) } : null;
     case "pick":
       return isChoice(m.choice) ? { type: "pick", by: from, choice: m.choice } : null;
+    case "buy":
+      return ITEM_IDS.includes(m.item as ItemId) ? { type: "buy", by: from, item: m.item as ItemId } : null;
+    case "bomb":
+      // The defusing wire is rolled here on the host, never taken from the phone.
+      return target ? { type: "useBomb", by: from, target, wire: Math.floor(Math.random() * WIRES) } : null;
+    case "nuke":
+      return { type: "useNuke", by: from };
+    case "mine":
+      return isChoice(m.choice) ? { type: "useMine", by: from, symbol: m.choice } : null;
+    case "intercept":
+      return target ? { type: "useIntercept", by: from, winner: target } : null;
+    case "wire":
+      return typeof m.wire === "number" ? { type: "cutWire", by: from, wire: m.wire } : null;
+    case "vote":
+      return m.vote === "allow" || m.vote === "block" ? { type: "vote", by: from, vote: m.vote } : null;
     default:
       return null;
   }
@@ -287,7 +375,7 @@ export function setRpgReady(code: string, id: string, ready: boolean): Promise<v
 
 export function setRpgLobby(
   code: string,
-  change: { phase?: "lobby" | "playing"; game?: null; actions?: null; startingMoney?: number; order?: string },
+  change: { phase?: "lobby" | "playing"; game?: null; actions?: null; private?: null; startingMoney?: number; order?: string },
 ): Promise<void> {
   return update(ref(database(), path(code)), change);
 }
@@ -305,6 +393,15 @@ export function clearRpgReady(code: string, ids: string[]): Promise<void> {
 
 export function publishRpgGame(code: string, game: RpgOnline): Promise<void> {
   return set(ref(database(), path(code, "game")), JSON.stringify(game));
+}
+
+/** Each player's own view: what they hold and what they hid. Written by the host, read by that player. */
+export function publishRpgPrivate(code: string, id: string, view: RpgPrivate): Promise<void> {
+  return set(ref(database(), path(code, "private", id)), JSON.stringify(view));
+}
+
+export function watchRpgPrivate(code: string, id: string, onChange: (p: RpgPrivate) => void): () => void {
+  return onValue(ref(database(), path(code, "private", id)), (snap) => onChange(readRpgPrivate(snap.val())), () => undefined);
 }
 
 export async function sendRpgMove(code: string, by: string, move: RpgMove): Promise<void> {

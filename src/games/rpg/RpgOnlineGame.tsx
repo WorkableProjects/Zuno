@@ -6,7 +6,7 @@ import { ConfirmDialog } from "../../components/ui/Dialog";
 import { playerId } from "../headbands/lobby";
 import { RpgOnlinePlay } from "./RpgOnlinePlay";
 import { createSession, rpgReducer } from "./rpgEngine";
-import { leaveRpgLobby, publishRpgGame, rpgMoveToAction, toRpgOnline, watchRpgLobby, watchRpgMoves, type RpgLobbyState, type RpgMove } from "./rpgLobby";
+import { leaveRpgLobby, publishRpgGame, publishRpgPrivate, rpgMoveToAction, rpgPrivate, toRpgOnline, watchRpgLobby, watchRpgMoves, type RpgLobbyState, type RpgMove } from "./rpgLobby";
 import "./rpg.css";
 
 interface Props {
@@ -66,6 +66,19 @@ export function RpgOnlineGame({ file, code, players, settings, onAgain, onExit }
   useEffect(() => {
     void publishRpgGame(code, JSON.parse(published)).catch(() => undefined);
   }, [code, published]);
+
+  // Each player's own inventory and hidden picks, under their own key.
+  const sentPrivate = useRef<Record<string, string>>({});
+  useEffect(() => {
+    for (const p of state.players) {
+      if (p.id === me) continue;
+      const json = JSON.stringify(rpgPrivate(state, p.id));
+      if (sentPrivate.current[p.id] === json) continue;
+      sentPrivate.current[p.id] = json;
+      void publishRpgPrivate(code, p.id, JSON.parse(json)).catch(() => undefined);
+    }
+  }, [state, code, me]);
+  const myPrivate = useMemo(() => rpgPrivate(state, me), [state, me]);
 
   const done = state.phase === "over";
   const hostControls = (
@@ -127,7 +140,7 @@ export function RpgOnlineGame({ file, code, players, settings, onAgain, onExit }
         </span>
       </header>
       {lobby ? (
-        <RpgOnlinePlay code={code} me={me} lobby={lobby} game={online} onMove={(m: RpgMove) => apply(me, m)} host={hostControls} />
+        <RpgOnlinePlay code={code} me={me} lobby={lobby} game={online} onMove={(m: RpgMove) => apply(me, m)} priv={myPrivate} host={hostControls} />
       ) : (
         <p className="meta" role="status">
           Connecting…

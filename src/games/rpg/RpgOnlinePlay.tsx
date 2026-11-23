@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Check, Gift, Minus, Plus, Swords, Trophy } from "lucide-react";
 import { Avatar } from "../../components/avatar/AvatarView";
 import { formatCoins } from "../../game-files/schema/rpg";
 import { CHOICES, WINS_NEEDED, type Choice } from "./rpgEngine";
-import { sendRpgMove, type RpgLobbyState, type RpgMove, type RpgOnline, type RpgOnlineDuel } from "./rpgLobby";
+import { BombPhase, ItemFx, ItemShop, ItemTraps, NukeDuelPhase, NukeVotePhase } from "./RpgItems";
+import { EMPTY_PRIVATE, sendRpgMove, watchRpgPrivate, type RpgPrivate, type RpgLobbyState, type RpgMove, type RpgOnline, type RpgOnlineDuel } from "./rpgLobby";
 import { useRpgSounds } from "./useRpgSounds";
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
   onMove?: (move: RpgMove) => void;
   /** Host-only controls, shown above the players. */
   host?: ReactNode;
+  /** The host's own inventory and hidden picks. Phones read theirs from the room. */
+  priv?: RpgPrivate;
 }
 
 const EMOJI: Record<Choice, string> = { rock: "🪨", paper: "📄", scissors: "✂️" };
@@ -23,7 +26,10 @@ const LABEL: Record<Choice, string> = { rock: "Rock", paper: "Paper", scissors: 
 type Send = (move: RpgMove) => Promise<void>;
 
 /** Every device during an online Rock Paper Gamble game: the table on the left, standings on the right. */
-export function RpgOnlinePlay({ code, me, lobby, game, onMove, host }: Props) {
+export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostPriv }: Props) {
+  const [remote, setRemote] = useState<RpgPrivate>(EMPTY_PRIVATE);
+  useEffect(() => (onMove ? undefined : watchRpgPrivate(code, me, setRemote)), [onMove, code, me]);
+  const priv = onMove ? (hostPriv ?? EMPTY_PRIVATE) : remote;
   useRpgSounds(game, me);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -56,6 +62,7 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host }: Props) {
 
   return (
     <div className="rpg-online">
+      <ItemFx game={game} />
       <section className="card rpg-main" aria-live="polite">
         <p className="meta rpg-meta">
           <span>Match {Math.max(game.match, 1)}</span>
@@ -67,9 +74,20 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host }: Props) {
         </p>
         {game.phase === "countdown" && <Countdown n={game.timeLeft} />}
         {game.phase === "select" && (
-          <Select game={game} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={sending} giftTo={giftTo} setGiftTo={setGiftTo} />
+          <>
+            <Select game={game} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={sending} giftTo={giftTo} setGiftTo={setGiftTo} />
+            <ItemShop game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />
+          </>
         )}
-        {game.phase === "betting" && duel && <Betting game={game} duel={duel} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={sending} />}
+        {game.phase === "betting" && duel && (
+          <>
+            <Betting game={game} duel={duel} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={sending} />
+            <ItemTraps game={game} duel={duel} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />
+          </>
+        )}
+        {game.phase === "bomb" && <BombPhase game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />}
+        {game.phase === "nukeVote" && <NukeVotePhase game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />}
+        {game.phase === "nukeDuel" && <NukeDuelPhase game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />}
         {game.phase === "duel" && duel && (
           <Duel
             game={game}
@@ -107,7 +125,10 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host }: Props) {
                   <span className="rpg-grow">
                     {p.name}
                     {p.id === me && <span className="meta"> · you</span>}
-                    <span className="meta rpg-status">{p.removed ? "Left" : p.coins <= 0 ? "Broke" : role}</span>
+                    <span className="meta rpg-status">
+                      {p.removed ? "Left" : p.coins <= 0 ? "Broke" : role}
+                      {game.itemsOn && !p.removed && (game.itemCounts[p.id] ?? 0) > 0 ? `${role ? " · " : ""}${game.itemCounts[p.id]} item${game.itemCounts[p.id] === 1 ? "" : "s"}` : ""}
+                    </span>
                   </span>
                   <strong className="rpg-money">{formatCoins(p.coins)}</strong>
                 </li>

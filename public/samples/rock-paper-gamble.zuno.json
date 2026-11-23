@@ -15,6 +15,8 @@
     "selectSeconds": 15,
     "bettingSeconds": 20,
     "roundSeconds": 12,
-    "resultsSeconds": 8
+    "resultsSeconds": 8,
+    "items": true,
+    "itemCosts": { "bomb": 3000, "nuke": 8000, "landmine": 500, "interceptor": 1500 }
   }
 }

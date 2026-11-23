@@ -16,15 +16,27 @@ function fingerprint(g: RpgOnline, me: string): string {
     winner,
     g.result?.void ? "void" : "-",
     me,
+    g.event ? `${g.event.id}:${g.event.kind}:${g.event.tone}` : "-",
   ].join("|");
 }
 
 /** Sounds for a Rock Paper Gamble table: countdown, turns, bets, reveals and payouts. */
 export function useRpgSounds(game: RpgOnline, me: string): void {
   useSoundOnChange(fingerprint(game, me), (prev, next) => {
-    const [p0, c0, t0, a0, b0, k0, o0, w0] = prev.split("|");
-    const [p1, c1, t1, a1, b1, k1, o1, w1, v1] = next.split("|");
+    const [p0, c0, t0, a0, b0, k0, o0, w0, , , e0] = prev.split("|");
+    const [p1, c1, t1, a1, b1, k1, o1, w1, v1, , e1] = next.split("|");
+    // Item moments first: they often change the phase too.
+    if (e1 !== e0 && e1 !== "-") {
+      const [, kind, tone] = e1.split(":");
+      if (kind === "bomb") return tone === "good" ? "correct" : "airhorn";
+      if (kind === "nuke") return tone === "good" ? "wrong" : "airhorn";
+      if (kind === "mine") return "boing";
+      return tone === "good" ? "rimshot" : "sadTrombone";
+    }
     if (p1 !== p0) {
+      if (p1 === "bomb") return "drumroll";
+      if (p1 === "nukeVote") return "open";
+      if (p1 === "nukeDuel") return "turn";
       if (p1 === "betting") return "open";
       if (p1 === "duel") return "turn";
       if (p1 === "over") return "win";
