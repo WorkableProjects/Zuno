@@ -5,13 +5,28 @@
  * muted toggle simply means silence. Nothing here can throw into the app.
  */
 
-export type SoundTheme = "jeopardy" | "headbands" | "liar";
+export type SoundTheme = "jeopardy" | "headbands" | "liar" | "rpg" | "blackjack" | "drawit" | "feud";
 
-const TRACKS: Record<SoundTheme, string> = {
-  jeopardy: "ZunoApody (Jpdy).mp3",
-  headbands: "LoungeAble (Headbands).mp3",
-  liar: "Liar's Little Clue.mp3",
+/**
+ * Each game's track, in order of preference. A game without its own file yet
+ * falls back to the next one, so dropping "Blackjack.mp3" into public/music is
+ * all it takes to give Blackjack its own music.
+ */
+const TRACKS: Record<SoundTheme, string[]> = {
+  jeopardy: ["ZunoApody (Jpdy).mp3"],
+  headbands: ["LoungeAble (Headbands).mp3"],
+  liar: ["Liar's Little Clue.mp3"],
+  rpg: ["Rock Paper Gamble.mp3", "LoungeAble (Headbands).mp3"],
+  blackjack: ["Blackjack.mp3", "LoungeAble (Headbands).mp3"],
+  drawit: ["Draw It.mp3", "LoungeAble (Headbands).mp3"],
+  feud: ["Survey Feud.mp3", "ZunoApody (Jpdy).mp3"],
 };
+
+export const SOUND_THEMES = Object.keys(TRACKS) as SoundTheme[];
+export const isSoundTheme = (t: string): t is SoundTheme => t in TRACKS;
+
+/** On a game's page its music keeps playing, softer than on the tiles. */
+const HOLD_LEVEL = 0.45;
 
 const MUTE_KEY = "zuno.muted";
 const VOLUME_KEY = "zuno.level";
@@ -35,6 +50,10 @@ let hoverTimer: number | undefined;
 /** Set when the browser refused to play; the next click or key press retries. */
 let blocked = false;
 let hoveringTile = false;
+/** Set while a game page holds its music: hovering elsewhere cannot stop it. */
+let held = false;
+let level = 1;
+const gain = () => volume * GAIN_AT_FULL * level;
 const players = new Map<SoundTheme, HTMLAudioElement | null>();
 const listeners = new Set<() => void>();
 
@@ -66,7 +85,7 @@ export function setVolume(next: number) {
   } catch {
     /* storage unavailable: the level lasts for this visit */
   }
-  if (playing) fadeTo(playing, volume * GAIN_AT_FULL, 120);
+  if (playing) fadeTo(playing, gain(), 120);
   // Dragging the level up from zero turns sound back on.
   if (muted && volume > 0) setMuted(false);
   else listeners.forEach((l) => l());
@@ -79,7 +98,7 @@ export function setMuted(next: boolean) {
   } catch {
     /* storage unavailable: the choice lasts for this visit */
   }
-  if (next) stopMusic();
+  if (next) stopMusic(FADE_OUT_MS, true);
   listeners.forEach((l) => l());
 }
 
@@ -92,16 +111,47 @@ export function setSoundTheme(next: SoundTheme) {
   theme = next;
 }
 
-function player(t: SoundTheme): HTMLAudioElement | null {
+/** A game's page: play its music softly and keep it going until released. */
+export function holdMusic(t: SoundTheme) {
+  held = true;
+  level = HOLD_LEVEL;
+  if (theme !== t || !playing) {
+    theme = t;
+    startMusic(CROSSFADE_MS);
+  } else fadeTo(playing, gain(), CROSSFADE_MS);
+}
+
+/** Leaving a game's page: fade its music out and hand control back to hovering. */
+export function releaseMusic() {
+  held = false;
+  level = 1;
+  stopMusic(CROSSFADE_MS, true);
+}
+
+function player(t: SoundTheme, choice = 0): HTMLAudioElement | null {
   if (players.has(t)) return players.get(t) ?? null;
+  const file = TRACKS[t][choice];
+  if (!file) {
+    players.set(t, null);
+    return null;
+  }
   let audio: HTMLAudioElement | null = null;
   try {
-    audio = new Audio(`${import.meta.env.BASE_URL}music/${encodeURIComponent(TRACKS[t])}`);
+    audio = new Audio(`${import.meta.env.BASE_URL}music/${encodeURIComponent(file)}`);
     // Load ahead so the music starts the moment the hover delay ends.
     audio.preload = "auto";
     audio.loop = true;
     audio.volume = 0;
-    audio.addEventListener("error", () => players.set(t, null)); // Missing file: stay silent from now on.
+    audio.addEventListener("error", () => {
+      // Missing file: try the game's fallback track, or stay silent.
+      if (players.get(t) !== audio) return;
+      players.delete(t);
+      const next = player(t, choice + 1);
+      if (playing === audio) {
+        playing = null;
+        if (next && theme === t) startMusic(CROSSFADE_MS);
+      }
+    });
   } catch {
     audio = null;
   }
@@ -136,7 +186,7 @@ export function startMusic(fadeMs = FADE_IN_MS) {
   const audio = player(theme);
   if (!audio) return;
   if (playing === audio && !audio.paused) return;
-  if (playing) stopMusic(CROSSFADE_MS);
+  if (playing) stopMusic(CROSSFADE_MS, true);
   try {
     audio.volume = 0;
     audio.currentTime = 0;
@@ -146,15 +196,17 @@ export function startMusic(fadeMs = FADE_IN_MS) {
       if (playing === audio) playing = null;
       blocked = true;
     });
-    fadeTo(audio, volume * GAIN_AT_FULL, fadeMs);
+    fadeTo(audio, gain(), fadeMs);
   } catch {
     /* ignore */
   }
 }
 
 /** Fade out whatever is playing. */
-export function stopMusic(fadeMs = FADE_OUT_MS) {
+export function stopMusic(fadeMs = FADE_OUT_MS, force = false) {
   window.clearTimeout(hoverTimer);
+  // A game page's music only stops when the page lets go of it.
+  if (held && !force) return;
   const audio = playing;
   playing = null;
   if (!audio) return;
@@ -170,7 +222,7 @@ export function stopMusic(fadeMs = FADE_OUT_MS) {
  */
 export function unlockAudio() {
   blocked = false;
-  (Object.keys(TRACKS) as SoundTheme[]).forEach((t) => {
+  SOUND_THEMES.forEach((t) => {
     const a = player(t);
     if (!a || a === playing) return;
     try {
@@ -192,7 +244,7 @@ export function unlockAudio() {
 
 /** Warm up every track so none has to load when the music starts. */
 function preloadAll() {
-  (Object.keys(TRACKS) as SoundTheme[]).forEach((t) => {
+  SOUND_THEMES.forEach((t) => {
     const a = player(t);
     try {
       a?.load();
@@ -202,7 +254,7 @@ function preloadAll() {
   });
 }
 
-const TILE_SELECTOR = ".tile";
+const TILE_SELECTOR = ".tile, .lib-tile";
 
 /** One delegated listener for the whole app. Mouse only; touch gets no music. */
 export function installHoverSounds(): () => void {
@@ -210,7 +262,7 @@ export function installHoverSounds(): () => void {
   let current: Element | null = null;
   let leaveTimer: number | undefined;
   const onOver = (e: PointerEvent) => {
-    if (e.pointerType !== "mouse") return;
+    if (e.pointerType !== "mouse" || held) return;
     const target = e.target as Element | null;
     // Adjusting the volume keeps the music going so the level can be heard.
     if (target?.closest?.(".corner")) {
@@ -235,12 +287,13 @@ export function installHoverSounds(): () => void {
   const onGesture = () => {
     if (!blocked) return;
     blocked = false;
-    if (hoveringTile) startMusic();
+    if (hoveringTile || held) startMusic();
   };
   document.addEventListener("pointerdown", onGesture, true);
   document.addEventListener("keydown", onGesture, true);
   const onLeave = () => {
     window.clearTimeout(leaveTimer);
+    if (held) return;
     hoveringTile = false;
     current = null;
     stopMusic();

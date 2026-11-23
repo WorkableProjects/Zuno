@@ -132,6 +132,7 @@ export type RpgMove =
   | { type: "nuke" }
   | { type: "mine"; choice: Choice }
   | { type: "intercept"; target: string }
+  | { type: "pickpocket"; target: string }
   | { type: "wire"; wire: number }
   | { type: "vote"; vote: NukeVote };
 
@@ -227,6 +228,8 @@ export function rpgMoveToAction(move: unknown, from: string): RpgAction | null {
       return isChoice(m.choice) ? { type: "useMine", by: from, symbol: m.choice } : null;
     case "intercept":
       return target ? { type: "useIntercept", by: from, winner: target } : null;
+    case "pickpocket":
+      return target ? { type: "usePickpocket", by: from, target } : null;
     case "wire":
       return typeof m.wire === "number" ? { type: "cutWire", by: from, wire: m.wire } : null;
     case "vote":

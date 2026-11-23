@@ -18,35 +18,54 @@ export function ItemInfoBody({ id, costs }: { id: ItemId; costs: Record<ItemId, 
   );
 }
 
+const OPEN_DELAY = 120;
+const CLOSE_MS = 140;
+
 /**
  * An (i) button with a popover. Hover and keyboard focus show it on desktop;
- * a tap toggles it on touch. Escape or a tap outside closes it.
+ * a tap or click pins it. Escape or a tap outside closes it. A hover-only
+ * popover ignores the pointer so it never covers the controls under it.
  */
 export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, number> }) {
   const tipId = useId();
   const root = useRef<HTMLSpanElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  const hoverTimer = useRef<number | undefined>(undefined);
   const [hover, setHover] = useState(false);
   const [focus, setFocus] = useState(false);
   const [pinned, setPinned] = useState(false);
-  const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null);
   const open = hover || focus || pinned;
+  // Stays mounted briefly after closing so it can animate out.
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number; width: number; above: boolean } | null>(null);
+
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   useEffect(() => {
-    if (!pinned && !open) return;
+    if (open) {
+      setMounted(true);
+      return;
+    }
+    const t = window.setTimeout(() => setMounted(false), CLOSE_MS);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => {
+      window.clearTimeout(hoverTimer.current);
+      setPinned(false);
+      setHover(false);
+      setFocus(false);
+    };
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setPinned(false);
-        setHover(false);
-        setFocus(false);
-      }
+      if (e.key === "Escape") close();
     };
     const away = (e: PointerEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) {
-        setPinned(false);
-        setHover(false);
-        setFocus(false);
-      }
+      const t = e.target as Node;
+      if (root.current?.contains(t) || tipRef.current?.contains(t)) return;
+      close();
     };
     document.addEventListener("keydown", key);
     document.addEventListener("pointerdown", away);
@@ -54,12 +73,12 @@ export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, n
       document.removeEventListener("keydown", key);
       document.removeEventListener("pointerdown", away);
     };
-  }, [pinned, open]);
+  }, [open]);
 
-  // Fixed under the button, kept inside the screen with a 16px gutter. Fixed so the
-  // scrolling panels around it cannot clip it. Recomputed when the viewport changes.
+  // Fixed beside the button, kept inside the screen with a 16px gutter, flipped
+  // above when there is no room below. Fixed so scrolling panels cannot clip it.
   useLayoutEffect(() => {
-    if (!open) {
+    if (!mounted) {
       setPos(null);
       return;
     }
@@ -68,27 +87,44 @@ export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, n
       if (!btn) return;
       const r = btn.getBoundingClientRect();
       const width = Math.min(320, window.innerWidth - 32);
-      const left = Math.max(16, Math.min(r.left, window.innerWidth - 16 - width));
-      setPos({ left, top: r.bottom, width });
+      const left = Math.max(16, Math.min(r.left + r.width / 2 - 24, window.innerWidth - 16 - width));
+      const h = tipRef.current?.offsetHeight ?? 220;
+      const above = r.bottom + 8 + h > window.innerHeight - 16 && r.top - 8 - h >= 16;
+      setPos({ left, top: above ? r.top - 8 : r.bottom + 8, width, above });
     };
     place();
+    // Measure again once the popover has its real height.
+    const raf = requestAnimationFrame(place);
     window.addEventListener("resize", place);
-    window.addEventListener("orientationchange", place);
     window.addEventListener("scroll", place, true);
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener("resize", place);
-      window.removeEventListener("orientationchange", place);
       window.removeEventListener("scroll", place, true);
     };
-  }, [open]);
+  }, [mounted]);
 
+  const name = itemInfo(id, costs).name;
   return (
-    <span ref={root} className="rpg-tipwrap" onPointerEnter={(e) => e.pointerType === "mouse" && setHover(true)} onPointerLeave={(e) => e.pointerType === "mouse" && setHover(false)}>
+    <span
+      ref={root}
+      className="rpg-tipwrap"
+      onPointerEnter={(e) => {
+        if (e.pointerType !== "mouse") return;
+        window.clearTimeout(hoverTimer.current);
+        hoverTimer.current = window.setTimeout(() => setHover(true), OPEN_DELAY);
+      }}
+      onPointerLeave={(e) => {
+        if (e.pointerType !== "mouse") return;
+        window.clearTimeout(hoverTimer.current);
+        setHover(false);
+      }}
+    >
       <button
         ref={btnRef}
         type="button"
-        className="icon-btn icon-btn-sm rpg-tipbtn"
-        aria-label={`About ${itemInfo(id, costs).name}`}
+        className={`icon-btn icon-btn-sm rpg-tipbtn${open ? " is-open" : ""}`}
+        aria-label={`About ${name}`}
         aria-describedby={open ? tipId : undefined}
         aria-expanded={pinned}
         onFocus={(e) => {
@@ -102,13 +138,19 @@ export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, n
           if (kb) setFocus(true);
         }}
         onBlur={() => setFocus(false)}
-        onClick={() => setPinned((v) => !v)}
+        onClick={() => {
+          window.clearTimeout(hoverTimer.current);
+          setPinned((v) => !v);
+        }}
       >
         <Info size={16} strokeWidth={1.5} />
       </button>
-      {open && pos && (
-        <div className="rpg-tip-pos" style={{ left: pos.left, top: pos.top, width: pos.width }}>
-          <div id={tipId} role="tooltip" className="rpg-tip">
+      {mounted && (
+        <div
+          className={`rpg-tip-pos${pinned ? " is-pinned" : ""}${pos?.above ? " is-above" : ""}${open && pos ? " is-open" : ""}`}
+          style={pos ? { left: pos.left, top: pos.top, width: pos.width } : { left: -9999, top: 0, width: 320 }}
+        >
+          <div ref={tipRef} id={tipId} role="tooltip" className="rpg-tip">
             <ItemInfoBody id={id} costs={costs} />
           </div>
         </div>

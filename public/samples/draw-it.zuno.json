@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "gameType": "drawit",
+  "metadata": {
+    "title": "Draw It Classic",
+    "description": "Default lobby settings.",
+    "author": "Zuno",
+    "coverImage": null
+  },
+  "appearance": {
+    "accentColor": "#F59E0B",
+    "backgroundPreset": "aurora"
+  },
+  "content": {},
+  "settings": {
+    "rounds": 3,
+    "drawSeconds": 80,
+    "customWords": "",
+    "onlyCustom": false,
+    "hints": true
+  }
+}

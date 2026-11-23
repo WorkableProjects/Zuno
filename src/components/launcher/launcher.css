@@ -1,0 +1,289 @@
+/* ==========================================================================
+   Zuno Launcher 3.0: a round UI. Pill buttons, circular icon buttons, soft
+   24px panels, and a floating rounded sidebar on the left.
+   ========================================================================== */
+.launcher {
+  --r-round: 24px;
+  --side-w: 84px;
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  animation: fade-in var(--t-slow) var(--ease) both;
+}
+.launcher .btn { border-radius: 999px; padding-inline: 22px; min-height: 46px; }
+.launcher .btn-secondary, .launcher .btn-quiet { backdrop-filter: blur(10px); }
+
+/* ---------- Sidebar ---------- */
+.lx-side {
+  position: fixed;
+  z-index: 40;
+  top: 16px;
+  bottom: 16px;
+  left: 16px;
+  width: var(--side-w);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding: 18px 0 16px;
+  border-radius: 28px;
+  background: color-mix(in oklab, var(--surface) 72%, transparent);
+  border: 1px solid var(--hairline);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: var(--top-light), 0 20px 50px rgb(0 0 0 / 0.35);
+}
+.lx-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  font: 800 24px / 1 var(--font-display);
+  color: #fff;
+  background: linear-gradient(135deg, var(--sunset-1), var(--sunset-2) 55%, var(--sunset-3));
+  box-shadow: 0 8px 22px color-mix(in oklab, var(--sunset-2) 45%, transparent);
+}
+.lx-nav { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
+.lx-nav-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.lx-nav-btn:hover { background: color-mix(in oklab, var(--text) 8%, transparent); color: var(--text); }
+.lx-nav-btn:active { transform: scale(0.94); }
+.lx-nav-btn.is-on { background: var(--game); color: #fff; box-shadow: 0 8px 24px color-mix(in oklab, var(--game) 50%, transparent); }
+.lx-nav-btn:focus-visible { outline: 2px solid var(--game); outline-offset: 3px; }
+/* A label slides out on hover, like a tooltip pill. */
+.lx-nav-label {
+  position: absolute;
+  left: calc(100% + 14px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  color: var(--text);
+  font: 600 13px / 1 var(--font-ui);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.lx-nav-btn:hover .lx-nav-label, .lx-nav-btn:focus-visible .lx-nav-label { opacity: 1; transform: none; }
+.lx-dock { width: 52px; height: 52px; flex: none; }
+
+/* The multi-action button docks in the sidebar on launcher pages and opens to the right. */
+.corner.is-docked {
+  left: calc(16px + (var(--side-w, 84px) - 48px) / 2);
+  right: auto;
+  bottom: 34px;
+}
+.corner.is-docked .corner-panel { right: auto; left: calc(100% + 14px); }
+.corner.is-docked .corner-main { border-radius: 50%; }
+
+/* ---------- Page area ---------- */
+.lx-main { padding-left: calc(var(--side-w) + 32px); }
+.lx-page { padding: 34px var(--page-x) 80px 0; max-width: 1500px; animation: lx-page-in 380ms var(--ease) both; }
+.lx-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; margin-bottom: 18px; }
+.lx-eyebrow { margin: 0 0 2px; color: var(--text-3); font: 600 13px / 1 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; }
+.lx-title { margin: 0; font: 700 clamp(38px, 5vw, 64px) / 1 var(--font-display); letter-spacing: -0.02em; }
+.lx-section { margin: 26px 0 14px; font: 600 20px / 1.2 var(--font-display); color: var(--text-2); }
+.lx-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(360px, 100%);
+  padding: 0 18px;
+  height: 48px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--surface-2) 80%, transparent);
+  border: 1px solid var(--hairline);
+  color: var(--text-3);
+  transition: border-color var(--t-fast) var(--ease);
+}
+.lx-search:focus-within { border-color: var(--game); }
+.lx-search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text); font: 400 16px var(--font-ui); }
+.lx-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.lx-tab {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  color: var(--text-2);
+  font: 600 15px / 1 var(--font-ui);
+  cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.lx-tab:hover { color: var(--text); }
+.lx-tab.is-on { background: var(--text); color: var(--bg); border-color: transparent; }
+.lx-empty { padding: 40px 0; }
+
+/* ---------- Library tiles: big, name only ---------- */
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 15vw, 210px), 1fr)); gap: 22px 18px; }
+.lib-tile {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  animation: lx-item-in 380ms var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+.lib-art {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-round);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 30% 10%, color-mix(in oklab, var(--game) 55%, transparent), transparent 65%),
+    linear-gradient(160deg, color-mix(in oklab, var(--game) 30%, var(--surface-2)), var(--surface) 80%);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-tile);
+  transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow var(--t-med) var(--ease), border-color var(--t-med) var(--ease);
+}
+.lib-art .tile-img { position: absolute; inset: 14% 10%; width: 80%; height: 72%; transition: transform 400ms var(--ease); }
+.lib-art .cover-bg { fill: transparent; }
+.lib-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lib-build { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-2); }
+.lib-tile.is-build .lib-art { background: color-mix(in oklab, var(--surface) 60%, transparent); border: 2px dashed var(--border); box-shadow: none; }
+.lib-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.22) 50%, transparent 65%);
+  background-size: 250% 100%;
+  background-position: 120% 0;
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease);
+}
+.lib-name { padding: 0 4px; font: 600 16px / 1.25 var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color var(--t-fast) var(--ease); }
+.lib-tile:hover .lib-art, .lib-tile:focus-visible .lib-art, .lib-tile.is-active .lib-art {
+  transform: translateY(-6px) scale(1.02);
+  border-color: color-mix(in oklab, var(--game) 70%, transparent);
+  box-shadow: 0 22px 44px rgb(0 0 0 / 0.5), 0 0 0 3px color-mix(in oklab, var(--game) 45%, transparent);
+}
+.lib-tile:hover .tile-img, .lib-tile.is-active .tile-img { transform: scale(1.06) rotate(-1.5deg); }
+.lib-tile:hover .lib-glow, .lib-tile.is-active .lib-glow { opacity: 1; animation: lib-sheen 1.6s var(--ease) 1; }
+@keyframes lib-sheen { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+.lib-tile:active .lib-art { transform: scale(0.97); transition-duration: 90ms; }
+.launcher .lib-tile:focus, .launcher .lib-tile:focus-visible { outline: none; box-shadow: none; }
+.launcher .lib-tile:focus-visible .lib-name { color: color-mix(in oklab, var(--game) 60%, var(--text)); }
+
+/* ---------- Game page ---------- */
+.lx-detail { padding-right: var(--page-x); }
+.lx-hero { position: relative; min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; padding: 30px 0 28px; }
+.lx-back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface) 55%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--text);
+  font: 700 13px / 1 var(--font-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.lx-back:hover { background: color-mix(in oklab, var(--surface-2) 80%, transparent); transform: translateX(-2px); }
+.lx-hero-body { align-self: center; display: grid; gap: 18px; max-width: 760px; }
+.lx-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; animation: lx-item-in 400ms var(--ease) 60ms backwards; }
+.lx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--surface) 60%, transparent);
+  border: 1px solid var(--hairline);
+  backdrop-filter: blur(8px);
+  font: 600 13px / 1 var(--font-ui);
+  color: var(--text-2);
+}
+.lx-big { display: flex; flex-wrap: wrap; gap: 0 0.22em; margin: 0; font: 800 clamp(56px, 10vw, 150px) / 0.92 var(--font-display); letter-spacing: -0.035em; text-transform: uppercase; text-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
+.lx-big-word { display: inline-block; animation: lx-rise 700ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
+.lx-big-word:last-child:not(:first-child) { color: color-mix(in oklab, var(--game) 70%, #fff); }
+@keyframes lx-rise { from { opacity: 0; transform: translateY(40%) scale(0.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.lx-desc { margin: 0; max-width: 56ch; color: var(--text-2); font: 400 clamp(16px, 1.4vw, 19px) / 1.5 var(--font-ui); animation: lx-item-in 450ms var(--ease) 260ms backwards; }
+.lx-actions { display: flex; flex-wrap: wrap; gap: 12px; animation: lx-item-in 450ms var(--ease) 340ms backwards; }
+.lx-play { min-width: 160px; font-size: 17px; background: var(--game); color: #fff; border-color: transparent; box-shadow: 0 12px 30px color-mix(in oklab, var(--game) 45%, transparent); }
+.lx-play:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+.lx-note { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
+.lx-scroll {
+  justify-self: center;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font: 600 13px / 1 var(--font-ui);
+  cursor: pointer;
+  animation: lx-bob 2.2s ease-in-out infinite;
+}
+.lx-scroll:hover { color: var(--text); }
+@keyframes lx-bob { 50% { transform: translateY(5px); } }
+
+.lx-rules { padding: 40px 0 120px; scroll-margin-top: 24px; }
+.lx-rules-title { margin: 0 0 22px; font: 700 clamp(28px, 3.4vw, 44px) / 1.05 var(--font-display); }
+.lx-rule-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.lx-rule {
+  position: relative;
+  padding: 22px 22px 20px;
+  border-radius: var(--r-round);
+  background: color-mix(in oklab, var(--surface) 78%, transparent);
+  border: 1px solid var(--hairline);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--top-light);
+}
+.lx-rule h3 { margin: 6px 0 10px; font: 700 20px / 1.2 var(--font-display); }
+.lx-rule ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: var(--text-2); line-height: 1.5; }
+.lx-rule-num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--game); color: #fff; font: 800 15px / 1 var(--font-display); }
+.lx-actions-end { margin-top: 26px; }
+
+/* ---------- Phones: the sidebar becomes a round bottom bar ---------- */
+@media (max-width: 760px) {
+  .lx-side { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; height: 68px; flex-direction: row; padding: 0 12px; gap: 10px; border-radius: 999px; }
+  .lx-mark { width: 40px; height: 40px; font-size: 20px; }
+  .lx-nav { flex-direction: row; justify-content: center; }
+  .lx-nav-label { display: none; }
+  .lx-main { padding-left: var(--page-x); padding-bottom: 96px; }
+  .lx-page { padding-top: 22px; }
+  .lib-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+  .corner.is-docked { left: auto; right: 22px; bottom: 22px; }
+  .corner.is-docked .corner-panel { left: auto; right: calc(100% + 10px); }
+  .lx-hero { min-height: calc(100dvh - 90px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lx-scroll { animation: none; }
+}
+
+@keyframes lx-page-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes lx-item-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.lib-slot { position: relative; display: grid; }
+.lib-forget {
+  position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid var(--hairline); background: color-mix(in oklab, var(--surface) 80%, transparent); color: var(--text-2);
+  cursor: pointer; opacity: 0; transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.lib-slot:hover .lib-forget, .lib-forget:focus-visible { opacity: 1; }
+.lib-forget:hover { color: var(--negative); }
+@media (hover: none) { .lib-forget { opacity: 1; } }

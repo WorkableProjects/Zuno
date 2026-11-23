@@ -326,6 +326,406 @@
           ".validate": false
         }
       }
+    },
+    "bj": {
+      "$code": {
+        ".read": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".write": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".validate": "!newData.exists() || newData.hasChildren(['phase'])",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().matches(/^(lobby|playing)$/)"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "order": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        },
+        "players": {
+          "$player": {
+            ".validate": "newData.hasChildren(['name']) && $player.length <= 40",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "ready": {
+              ".validate": "newData.isBoolean()"
+            },
+            "avatar": {
+              ".validate": "newData.isString() && newData.val().length <= 21000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "game": {
+          ".validate": "newData.isString() && newData.val().length <= 200000"
+        },
+        "private": {
+          "$player": {
+            ".validate": "newData.isString() && newData.val().length <= 4000"
+          }
+        },
+        "actions": {
+          "$player": {
+            "$move": {
+              ".validate": "newData.hasChildren(['type']) && root.child('bj').child($code).child('players').child($player).exists()",
+              "type": {
+                ".validate": "newData.isString() && newData.val().matches(/^(bet|hit|stand|double|split)$/)"
+              },
+              "amount": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000000"
+              },
+              "index": {
+                ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 20"
+              },
+              "text": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "prompt": {
+                ".validate": "newData.isString() && newData.val().length <= 140"
+              },
+              "answers": {
+                "$i": {
+                  ".validate": "newData.hasChildren(['text', 'points']) && $i.matches(/^[0-9]$/)",
+                  "text": {
+                    ".validate": "newData.isString() && newData.val().length <= 60"
+                  },
+                  "points": {
+                    ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "board": {
+          "$id": {
+            ".validate": "newData.hasChildren(['s', 'at'])",
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^(airhorn|drumroll|sadTrombone|applause|boing|rimshot|win|wrong)$/)"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "by": {
+              ".validate": "newData.isString() && newData.val().length <= 24"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "chat": {
+          "$id": {
+            ".validate": "newData.hasChildren(['n', 't', 'at'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24"
+            },
+            "t": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "note": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "draw": {
+      "$code": {
+        ".read": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".write": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".validate": "!newData.exists() || newData.hasChildren(['phase'])",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().matches(/^(lobby|playing)$/)"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "order": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        },
+        "players": {
+          "$player": {
+            ".validate": "newData.hasChildren(['name']) && $player.length <= 40",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "ready": {
+              ".validate": "newData.isBoolean()"
+            },
+            "avatar": {
+              ".validate": "newData.isString() && newData.val().length <= 21000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "game": {
+          ".validate": "newData.isString() && newData.val().length <= 200000"
+        },
+        "private": {
+          "$player": {
+            ".validate": "newData.isString() && newData.val().length <= 4000"
+          }
+        },
+        "actions": {
+          "$player": {
+            "$move": {
+              ".validate": "newData.hasChildren(['type']) && root.child('draw').child($code).child('players').child($player).exists()",
+              "type": {
+                ".validate": "newData.isString() && newData.val().matches(/^(pick|guess)$/)"
+              },
+              "amount": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000000"
+              },
+              "index": {
+                ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 20"
+              },
+              "text": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "prompt": {
+                ".validate": "newData.isString() && newData.val().length <= 140"
+              },
+              "answers": {
+                "$i": {
+                  ".validate": "newData.hasChildren(['text', 'points']) && $i.matches(/^[0-9]$/)",
+                  "text": {
+                    ".validate": "newData.isString() && newData.val().length <= 60"
+                  },
+                  "points": {
+                    ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "board": {
+          "$id": {
+            ".validate": "newData.hasChildren(['s', 'at'])",
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^(airhorn|drumroll|sadTrombone|applause|boing|rimshot|win|wrong)$/)"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "by": {
+              ".validate": "newData.isString() && newData.val().length <= 24"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "chat": {
+          "$id": {
+            ".validate": "newData.hasChildren(['n', 't', 'at'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24"
+            },
+            "t": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "note": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "canvas": {
+          "$turn": {
+            ".validate": "$turn.matches(/^[0-9]{1,6}$/)",
+            "tool": {
+              ".validate": "newData.isString() && newData.val().length <= 200"
+            },
+            "s": {
+              "$stroke": {
+                ".validate": "newData.hasChildren(['t', 'c', 'w', 'p'])",
+                "t": {
+                  ".validate": "newData.isString() && newData.val().matches(/^(pen|eraser|fill)$/)"
+                },
+                "c": {
+                  ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)"
+                },
+                "w": {
+                  ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 80"
+                },
+                "p": {
+                  ".validate": "newData.isString() && newData.val().length <= 12000"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "feud": {
+      "$code": {
+        ".read": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".write": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
+        ".validate": "!newData.exists() || newData.hasChildren(['phase'])",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().matches(/^(lobby|playing)$/)"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "order": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        },
+        "players": {
+          "$player": {
+            ".validate": "newData.hasChildren(['name']) && $player.length <= 40",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "ready": {
+              ".validate": "newData.isBoolean()"
+            },
+            "avatar": {
+              ".validate": "newData.isString() && newData.val().length <= 21000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "game": {
+          ".validate": "newData.isString() && newData.val().length <= 200000"
+        },
+        "private": {
+          "$player": {
+            ".validate": "newData.isString() && newData.val().length <= 4000"
+          }
+        },
+        "actions": {
+          "$player": {
+            "$move": {
+              ".validate": "newData.hasChildren(['type']) && root.child('feud').child($code).child('players').child($player).exists()",
+              "type": {
+                ".validate": "newData.isString() && newData.val().matches(/^(survey|guess|judge)$/)"
+              },
+              "amount": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000000"
+              },
+              "index": {
+                ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 20"
+              },
+              "text": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "prompt": {
+                ".validate": "newData.isString() && newData.val().length <= 140"
+              },
+              "answers": {
+                "$i": {
+                  ".validate": "newData.hasChildren(['text', 'points']) && $i.matches(/^[0-9]$/)",
+                  "text": {
+                    ".validate": "newData.isString() && newData.val().length <= 60"
+                  },
+                  "points": {
+                    ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "board": {
+          "$id": {
+            ".validate": "newData.hasChildren(['s', 'at'])",
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^(airhorn|drumroll|sadTrombone|applause|boing|rimshot|win|wrong)$/)"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "by": {
+              ".validate": "newData.isString() && newData.val().length <= 24"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "chat": {
+          "$id": {
+            ".validate": "newData.hasChildren(['n', 't', 'at'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24"
+            },
+            "t": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "note": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

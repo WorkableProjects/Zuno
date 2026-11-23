@@ -119,7 +119,7 @@ export interface Nuke {
 /** A big moment for the table banner and sounds. `id` changes with every new one. */
 export interface GameEvent {
   id: number;
-  kind: "bomb" | "nuke" | "mine" | "intercept";
+  kind: "bomb" | "nuke" | "mine" | "intercept" | "shield" | "pickpocket" | "insurance";
   tone: "good" | "bad";
   title: string;
   text: string;
@@ -172,6 +172,7 @@ export type RpgAction =
   | { type: "useNuke"; by: string }
   | { type: "useMine"; by: string; symbol: Choice }
   | { type: "useIntercept"; by: string; winner: string }
+  | { type: "usePickpocket"; by: string; target: string }
   | { type: "cutWire"; by: string; wire: number }
   | { type: "vote"; by: string; vote: NukeVote }
   | { type: "removePlayer"; id: string }
@@ -487,9 +488,21 @@ function finishDuel(s: RpgState, duel: Duel, winner: string): RpgState {
       ev = { id: s.revision + 1, kind: "intercept", tone: "bad", title: "WRONG CALL", text: line };
     }
   }
+  // Insurance pays the loser back part of their wager from the bank.
+  let inventory = s.inventory;
+  if (duel.wager > 0 && (inventory[loser] ?? []).includes("insurance")) {
+    const back = pct(duel.wager, ITEM_RULES.insuranceRefund);
+    players = credit(players, loser, back);
+    delta[loser] = (delta[loser] ?? 0) + back;
+    inventory = { ...inventory, [loser]: inventory[loser].filter((x) => x !== "insurance") };
+    const line = `Insurance paid ${nameOf(s, loser)} ${money(back)}.`;
+    lines.unshift(line);
+    ev = { id: s.revision + 1, kind: "insurance", tone: "good", title: "INSURED", text: line };
+  }
   return {
     ...s,
     players,
+    inventory,
     phase: "results",
     timeLeft: s.settings.resultsSeconds,
     duel: { ...duel, overlay: 0 },
@@ -679,6 +692,8 @@ function step(s: RpgState, action: RpgAction): RpgState {
       return useMine(s, action);
     case "useIntercept":
       return useIntercept(s, action);
+    case "usePickpocket":
+      return usePickpocket(s, action);
     case "cutWire":
       return cutWire(s, action);
     case "vote":
@@ -788,14 +803,17 @@ function detonate(s: RpgState, timedOut: boolean): RpgState {
     if (p.id === bomb.by || !eligible(p)) continue;
     rates.set(p.id, p.id === bomb.target ? ITEM_RULES.bombTarget : p.id === nextId ? ITEM_RULES.bombNext : ITEM_RULES.bombOthers);
   }
+  const shielded = shieldHolders(s, [...rates.keys()]);
+  s = breakShields(s, shielded);
   let players = s.players;
   let total = 0;
   for (const [id, rate] of rates) {
+    if (shielded.includes(id)) continue;
     const r = transfer(players, id, bomb.by, pct(playerById(s, id)?.coins ?? 0, rate));
     players = r.players;
     total += r.moved;
   }
-  const line = `${timedOut ? `${nameOf(s, bomb.target)} ran out of time. ` : `${nameOf(s, bomb.target)} cut the wrong wire. `}DETONATED! ${nameOf(s, bomb.by)} took ${money(total)}.`;
+  const line = `${timedOut ? `${nameOf(s, bomb.target)} ran out of time. ` : `${nameOf(s, bomb.target)} cut the wrong wire. `}DETONATED! ${nameOf(s, bomb.by)} took ${money(total)}.${shieldNote(s, shielded)}`;
   return resumeSelect({ ...s, players, event: event(s, "bomb", "bad", "DETONATED", line), log: log(s, line) });
 }
 
@@ -889,15 +907,17 @@ function resolveNukeRound(s: RpgState): RpgState {
 /** The user wins the duel and takes 25% from every other player. */
 function nukeImpact(s: RpgState): RpgState {
   const nuke = s.nuke as Nuke;
+  const shielded = shieldHolders(s, s.players.filter((p) => p.id !== nuke.by && eligible(p)).map((p) => p.id));
+  s = breakShields(s, shielded);
   let players = s.players;
   let total = 0;
   for (const p of s.players) {
-    if (p.id === nuke.by || !eligible(p)) continue;
+    if (p.id === nuke.by || !eligible(p) || shielded.includes(p.id)) continue;
     const r = transfer(players, p.id, nuke.by, pct(p.coins, ITEM_RULES.nukeImpact));
     players = r.players;
     total += r.moved;
   }
-  const line = `IMPACT! ${nameOf(s, nuke.by)} won the nuke duel and took ${money(total)} from everyone.`;
+  const line = `IMPACT! ${nameOf(s, nuke.by)} won the nuke duel and took ${money(total)} from everyone.${shieldNote(s, shielded)}`;
   return resumeSelect({ ...s, players, event: event(s, "nuke", "bad", "IMPACT", line), log: log(s, line) });
 }
 
@@ -937,6 +957,35 @@ function useIntercept(s: RpgState, a: Extract<RpgAction, { type: "useIntercept" 
   if (!spent) return s;
   const ic: Intercept = { by: me.id, winner: a.winner, cost: itemCost(s, "interceptor") };
   return { ...spent, duel: { ...duel, intercepts: [...duel.intercepts, ic] }, log: log(s, "An Interceptor locked onto the duel.") };
+}
+
+function shieldHolders(s: RpgState, ids: string[]): string[] {
+  return ids.filter((id) => itemsOf(s, id).includes("shield"));
+}
+
+function breakShields(s: RpgState, ids: string[]): RpgState {
+  return ids.reduce((acc, id) => setItems(acc, id, itemsOf(acc, id).filter((x) => x !== "shield")), s);
+}
+
+function shieldNote(s: RpgState, ids: string[]): string {
+  if (ids.length === 0) return "";
+  return ` ${ids.map((id) => nameOf(s, id)).join(", ")} ${ids.length === 1 ? "was" : "were"} saved by a Shield.`;
+}
+
+function usePickpocket(s: RpgState, a: Extract<RpgAction, { type: "usePickpocket" }>): RpgState {
+  if (s.phase !== "select" || !s.settings.items) return s;
+  const me = actor(s, a.by);
+  const target = actor(s, a.target);
+  if (!me || !target || me.id === target.id) return s;
+  const spent = spend(s, me.id, "pickpocket");
+  if (!spent) return s;
+  if (itemsOf(spent, target.id).includes("shield")) {
+    const line = `${target.name}'s Shield stopped ${me.name}'s Pickpocket.`;
+    return { ...breakShields(spent, [target.id]), event: event(s, "shield", "good", "BLOCKED", line), log: log(s, line) };
+  }
+  const r = transfer(spent.players, target.id, me.id, pct(target.coins, ITEM_RULES.pickpocketSteal));
+  const line = `${me.name} pickpocketed ${money(r.moved)} from ${target.name}!`;
+  return { ...spent, players: r.players, event: event(s, "pickpocket", "bad", "PICKPOCKETED", line), log: log(s, line) };
 }
 
 export { ITEM_NAMES, ITEM_IDS };

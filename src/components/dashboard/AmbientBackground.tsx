@@ -11,7 +11,7 @@ export interface BackdropSpec {
   accent: string;
   preset: BackgroundPreset;
   /** Optional engine artwork drawn into the generated scene. */
-  artwork: "board" | "cards" | "statements" | "hands" | null;
+  artwork: "board" | "cards" | "statements" | "hands" | "deck" | "sketch" | "survey" | null;
 }
 
 /** Generated scene: the 3D gradient field, with engine parts layered on top. */

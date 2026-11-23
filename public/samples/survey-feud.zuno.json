@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "gameType": "feud",
+  "metadata": {
+    "title": "Survey Feud",
+    "description": "Default lobby settings.",
+    "author": "Zuno",
+    "coverImage": null
+  },
+  "appearance": {
+    "accentColor": "#2563EB",
+    "backgroundPreset": "aurora"
+  },
+  "content": {},
+  "settings": {
+    "maxAnswers": 6,
+    "writeSeconds": 240,
+    "guessSeconds": 25,
+    "strikes": 3
+  }
+}

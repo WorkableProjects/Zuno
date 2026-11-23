@@ -3,7 +3,7 @@ import { Annoyed, Bell, Drum, LayoutGrid, Megaphone, MessageCircle, Music2, Part
 import { preloadBoardClips, sendBoardSound, useSoundboardListener, type BoardId } from "../../lib/soundboard";
 import { useRoom } from "../../lib/room";
 import { CHAT_MAX, useChat } from "../../lib/chat";
-import { isSfxEnabled, subscribeSfx } from "../../lib/sfx";
+import { isSfxEnabled, playSfx, subscribeSfx } from "../../lib/sfx";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 
 const BOARD: { id: BoardId; label: string; Icon: LucideIcon }[] = [
@@ -24,7 +24,7 @@ type Panel = "volume" | "board" | "chat";
  * into volume, soundboard and chat buttons, each with its own popover. Recent
  * chat messages also surface in a small feed in the bottom-left.
  */
-export function CornerControls() {
+export function CornerControls({ docked = false }: { docked?: boolean }) {
   const muted = useSyncExternalStore(subscribeMuted, isMuted, () => false);
   const volume = useSyncExternalStore(subscribeMuted, getVolume, () => 0.7);
   const percent = Math.round(volume * 100);
@@ -47,6 +47,13 @@ export function CornerControls() {
   const root = useRef<HTMLDivElement>(null);
   const buttons = useRef<Partial<Record<Panel, HTMLButtonElement | null>>>({});
   const showBadge = !!room && !chatOpen && unread > 0;
+  // A new message pops up on screen with a soft chime.
+  const lastFeed = useRef<string | null>(null);
+  useEffect(() => {
+    const top = feed[feed.length - 1]?.key ?? null;
+    if (top && top !== lastFeed.current) playSfx("open");
+    lastFeed.current = top;
+  }, [feed]);
 
   useEffect(() => {
     if (active === "board") void preloadBoardClips();
@@ -99,7 +106,7 @@ export function CornerControls() {
 
   return (
     <>
-      <div className="corner" ref={root} data-open={open}>
+      <div className={`corner${docked ? " is-docked" : ""}`} ref={root} data-open={open}>
         <button
           type="button"
           className="icon-btn corner-main"
@@ -198,12 +205,23 @@ export function CornerControls() {
               <button
                 type="button"
                 className="chat-feed-btn"
+                aria-label={`${m.n} says: ${m.t}. Open chat`}
                 onClick={() => {
                   dismiss(m.key);
                   setPanel("chat");
                 }}
               >
-                <strong className="chat-name">{m.n}</strong> <span className="chat-text">{m.t}</span>
+                <span className="chat-feed-avatar" aria-hidden="true">
+                  {m.n.trim().charAt(0).toUpperCase() || "?"}
+                </span>
+                <span className="chat-feed-body">
+                  <strong className="chat-name">{m.n}</strong>
+                  <span className="chat-text">{m.t}</span>
+                </span>
+                <span className="chat-feed-hint" aria-hidden="true">
+                  <MessageCircle size={14} strokeWidth={2} />
+                </span>
+                <span className="chat-feed-timer" aria-hidden="true" />
               </button>
             </li>
           ))}

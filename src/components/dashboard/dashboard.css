@@ -506,3 +506,7 @@
     flex: 1 1 auto;
   }
 }
+
+.cover-stroke { stroke: var(--game, var(--accent)); }
+.cover-x { fill: #ef4444; }
+.cover-x-mark { stroke: #fff; }

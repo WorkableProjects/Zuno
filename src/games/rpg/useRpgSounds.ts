@@ -31,6 +31,8 @@ export function useRpgSounds(game: RpgOnline, me: string): void {
       if (kind === "bomb") return tone === "good" ? "correct" : "airhorn";
       if (kind === "nuke") return tone === "good" ? "wrong" : "airhorn";
       if (kind === "mine") return "boing";
+      if (kind === "shield" || kind === "insurance") return "correct";
+      if (kind === "pickpocket") return "wrong";
       return tone === "good" ? "rimshot" : "sadTrombone";
     }
     if (p1 !== p0) {

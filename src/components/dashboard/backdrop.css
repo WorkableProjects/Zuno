@@ -109,7 +109,7 @@
 .backdrop-dim {
   position: absolute;
   inset: 0;
-  background: rgb(var(--bg-rgb) / 0.82);
+  background: rgb(var(--bg-rgb) / 0.66);
   opacity: 0;
   transition: opacity var(--t-slow) var(--ease);
 }
@@ -122,10 +122,15 @@
 .art-statements {
   transition: opacity var(--t-slow) var(--ease);
 }
+/* Behind game screens the artwork stays alive but steps back, so every game keeps a moving backdrop. */
+.art-hands {
+  transition: opacity var(--t-slow) var(--ease);
+}
 .backdrop.is-dim .art-board,
 .backdrop.is-dim .art-cards,
-.backdrop.is-dim .art-statements {
-  opacity: 0;
+.backdrop.is-dim .art-statements,
+.backdrop.is-dim .art-hands {
+  opacity: 0.42;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Bomb, Check, Rocket, ShoppingCart, Zap } from "lucide-react";
+import { Bomb, Check, Hand, Rocket, ShoppingCart, Zap } from "lucide-react";
 import { ITEM_IDS, formatCoins, itemInfo, type ItemId } from "../../game-files/schema/rpg";
 import { CHOICES, TRAP_ITEMS, TRAP_MIN_PLAYERS, WIRES, type Choice } from "./rpgEngine";
 import { ItemInfoBody, ItemInfoTip } from "./ItemInfo";
+import { useLinger } from "./motion";
 import type { RpgOnline, RpgOnlineDuel, RpgMove, RpgPrivate } from "./rpgLobby";
 
 type Send = (move: RpgMove) => Promise<void>;
@@ -21,7 +22,7 @@ const LABEL: Record<Choice, string> = { rock: "Rock", paper: "Paper", scissors: 
 /** Shop and inventory, shown while players are choosing an opponent. */
 export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
   const [open, setOpen] = useState(false);
-  const [aiming, setAiming] = useState(false);
+  const [aiming, setAiming] = useState<"bomb" | "pickpocket" | null>(null);
   const [confirmNuke, setConfirmNuke] = useState(false);
   const mine = game.players.find((p) => p.id === me);
   if (!game.itemsOn || !mine || mine.removed) return null;
@@ -64,12 +65,13 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
               <span className="rpg-grow">
                 <strong>{itemInfo(id, game.itemCosts).name}</strong> <ItemInfoTip id={id} costs={game.itemCosts} />
               </span>
-              {id === "bomb" && (
-                <button type="button" className="btn btn-quiet btn-sm" aria-expanded={aiming} disabled={sending || targets.length === 0} onClick={() => setAiming((v) => !v)}>
-                  <Bomb size={16} strokeWidth={1.5} />
+              {(id === "bomb" || id === "pickpocket") && (
+                <button type="button" className="btn btn-quiet btn-sm" aria-expanded={aiming === id} disabled={sending || targets.length === 0} onClick={() => setAiming((v) => (v === id ? null : id))}>
+                  {id === "bomb" ? <Bomb size={16} strokeWidth={1.5} /> : <Hand size={16} strokeWidth={1.5} />}
                   Use
                 </button>
               )}
+              {(id === "shield" || id === "insurance") && <span className="meta">Active</span>}
               {id === "nuke" &&
                 (confirmNuke ? (
                   <span className="rpg-row" role="group" aria-label="Confirm nuke launch">
@@ -100,8 +102,8 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
           ))}
         </ul>
       )}
-      {aiming && priv.items.includes("bomb") && (
-        <div className="rpg-row" role="group" aria-label="Choose a bomb target">
+      {aiming && priv.items.includes(aiming) && (
+        <div className="rpg-row" role="group" aria-label={aiming === "bomb" ? "Choose a bomb target" : "Choose who to pickpocket"}>
           {targets.map((p) => (
             <button
               key={p.id}
@@ -109,11 +111,11 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
               className="btn rpg-btn-danger btn-sm"
               disabled={sending}
               onClick={() => {
-                setAiming(false);
-                void send({ type: "bomb", target: p.id });
+                setAiming(null);
+                void send({ type: aiming, target: p.id });
               }}
             >
-              Bomb {nameOf(p.id)}
+              {aiming === "bomb" ? "Bomb" : "Rob"} {nameOf(p.id)}
             </button>
           ))}
         </div>
@@ -184,7 +186,9 @@ function PhaseHead({ title, text, seconds }: { title: string; text: string; seco
         <p className="meta">{text}</p>
       </div>
       <span className={`rpg-timer${seconds <= 5 ? " is-low" : ""}`} role="timer" aria-label={`${seconds} seconds left`}>
-        {seconds}s
+        <span key={seconds <= 5 ? seconds : "n"} className="rpg-timer-n">
+          {seconds}s
+        </span>
       </span>
     </div>
   );
@@ -273,7 +277,9 @@ export function NukeDuelPhase({ game, me, nameOf, send, sending }: Common) {
 /** A big banner for each item event, plus the full-screen effects. Everything still reads with reduced motion. */
 export function ItemFx({ game }: { game: RpgOnline }) {
   const ev = game.event;
-  const [shown, setShown] = useState<RpgOnline["event"]>(null);
+  const [current, setShown] = useState<RpgOnline["event"]>(null);
+  const linger = useLinger(current, 260);
+  const shown = linger.value;
   const seen = useRef<number | null>(ev?.id ?? null);
   useEffect(() => {
     if (!ev || ev.id === seen.current) return;
@@ -291,7 +297,7 @@ export function ItemFx({ game }: { game: RpgOnline }) {
       {bombing && <div className="rpg-fx rpg-fx-bomb" aria-hidden="true" />}
       {nuking && <div className="rpg-fx rpg-fx-nuke" aria-hidden="true" />}
       {shown && (
-        <div className={`rpg-banner is-${shown.kind} is-${shown.tone}${shown.kind === "bomb" && shown.tone === "bad" ? " is-rumble" : ""}`} role="status">
+        <div className={`rpg-banner is-${shown.kind} is-${shown.tone}${shown.kind === "bomb" && shown.tone === "bad" ? " is-rumble" : ""}${linger.leaving ? " is-leaving" : ""}`} role="status">
           <strong className="rpg-banner-title">{shown.title}</strong>
           <span>{shown.text}</span>
           {shown.kind === "intercept" && shown.tone === "good" && <span className="rpg-stamp">INTERCEPTED</span>}
@@ -303,7 +309,7 @@ export function ItemFx({ game }: { game: RpgOnline }) {
   );
 }
 
-function ItemBannerTip({ kind, costs }: { kind: "bomb" | "nuke" | "mine" | "intercept"; costs: Record<ItemId, number> }) {
+function ItemBannerTip({ kind, costs }: { kind: NonNullable<RpgOnline["event"]>["kind"]; costs: Record<ItemId, number> }) {
   const id: ItemId = kind === "mine" ? "landmine" : kind === "intercept" ? "interceptor" : kind;
   return <ItemInfoTip id={id} costs={costs} />;
 }

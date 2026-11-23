@@ -421,3 +421,64 @@
 @media (prefers-reduced-motion: reduce) {
   .art-float { animation: none; }
 }
+
+/* ---------- Engine artwork: Blackjack cards ---------- */
+.art-pcard { aspect-ratio: 5 / 7; height: auto !important; }
+.art-pcard-face {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: 10px;
+  background: #fbfbf8; color: #111827; border: 1px solid rgb(0 0 0 / 0.2); box-shadow: 0 16px 30px rgb(0 0 0 / 0.35);
+}
+.art-pcard.is-red .art-pcard-face { color: #c81e1e; }
+.art-pcard-face b { position: absolute; top: 8%; left: 12%; font: 700 clamp(12px, 1.4vw, 20px) / 1 var(--font-display, sans-serif); }
+.art-pcard-face i { font-style: normal; font-size: clamp(26px, 3vw, 46px); }
+.art-deck .art-pcard { animation-name: card-tumble; animation-duration: 18s; }
+@keyframes card-tumble {
+  from { transform: translate3d(-6px, 12px, var(--z, 0px)) rotateY(calc(var(--i) * 25deg - 30deg)) rotateZ(calc(var(--i) * 11deg - 18deg)); }
+  to { transform: translate3d(14px, -20px, var(--z, 0px)) rotateY(calc(var(--i) * 25deg + 20deg)) rotateZ(calc(var(--i) * 11deg + 6deg)); }
+}
+
+/* ---------- Engine artwork: Draw It doodles and pencils ---------- */
+.art-doodle path {
+  fill: none; stroke: var(--tone); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1; animation: doodle-draw 9s ease-in-out infinite; animation-delay: var(--d, 0s);
+}
+@keyframes doodle-draw {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  8% { opacity: 1; }
+  45%, 75% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+.art-pencil .pencil-body { fill: color-mix(in oklab, var(--tone) 80%, #fff); stroke: rgb(0 0 0 / 0.25); stroke-width: 1.5; }
+.art-pencil .pencil-tip { fill: #f3d9a4; stroke: rgb(0 0 0 / 0.25); stroke-width: 1.5; }
+.art-pencil .pencil-cap { fill: #f472b6; stroke: rgb(0 0 0 / 0.25); stroke-width: 1.5; }
+.art-sketch .art-float.tone-1 { --tone: #f59e0b; }
+.art-sketch .art-float.tone-2 { --tone: #3b82f6; }
+.art-sketch .art-float.tone-3 { --tone: #ec4899; }
+
+/* ---------- Engine artwork: Survey Feud tiles and strikes ---------- */
+.art-tile { height: auto !important; aspect-ratio: 2.4; perspective: 600px; }
+.art-tile-flip { position: absolute; inset: 0; transform-style: preserve-3d; animation: tile-flip 10s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.art-tile-front, .art-tile-back {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: 10px; backface-visibility: hidden;
+  font: 800 clamp(18px, 2vw, 30px) / 1 var(--font-display, sans-serif); box-shadow: 0 14px 28px rgb(0 0 0 / 0.35);
+}
+.art-tile-front { background: linear-gradient(180deg, #2563eb, #1d4ed8); color: #fff; border: 2px solid #93c5fd; }
+.art-tile-back { background: linear-gradient(180deg, #fef9c3, #fde68a); color: #172554; border: 2px solid #facc15; transform: rotateX(180deg); }
+@keyframes tile-flip {
+  0%, 35% { transform: rotateX(0); }
+  45%, 85% { transform: rotateX(180deg); }
+  95%, 100% { transform: rotateX(360deg); }
+}
+.art-strike rect { fill: #ef4444; stroke: rgb(255 255 255 / 0.7); stroke-width: 3; }
+.art-strike path { stroke: #fff; stroke-width: 7; stroke-linecap: round; }
+.art-strike { animation-name: strike-pulse; animation-duration: 6s; }
+@keyframes strike-pulse {
+  0%, 60%, 100% { transform: translate3d(0, 0, var(--z, 0px)) scale(1) rotate(-6deg); }
+  70% { transform: translate3d(0, 0, var(--z, 0px)) scale(1.25) rotate(4deg); }
+  80% { transform: translate3d(0, 0, var(--z, 0px)) scale(1) rotate(-6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art-doodle path { animation: none; stroke-dashoffset: 0; }
+  .art-tile-flip, .art-strike { animation: none; }
+}
