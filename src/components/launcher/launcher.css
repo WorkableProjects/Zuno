@@ -46,10 +46,34 @@
   filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--sunset-2) 40%, transparent));
   transition: transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
 }
+.lx-mark svg { transition: transform 700ms var(--ease-pop); }
+.lx-mark:hover svg { transform: rotate(90deg); }
 .lx-mark:hover { transform: scale(1.06); filter: drop-shadow(0 8px 22px color-mix(in oklab, var(--sunset-2) 55%, transparent)); }
 .lx-mark:active { transform: scale(0.96); transition-duration: var(--t-press); }
 .lx-mark:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
-.lx-nav { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
+.lx-nav { position: relative; display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
+/* One pill that springs between sections, so the highlight travels instead of blinking. */
+.lx-nav-pill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 52px;
+  height: 52px;
+  margin-top: calc(-52px * 1.5 - 10px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--game) 70%, #fff), var(--game) 70%);
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--game) 55%, transparent), 0 0 0 4px color-mix(in oklab, var(--game) 18%, transparent);
+  transform: translateY(calc(var(--idx, 0) * 62px));
+  transition: transform 560ms var(--ease-pop), opacity var(--t-fast) var(--ease), background-color var(--t-slow) var(--ease);
+  pointer-events: none;
+}
+.lx-nav-pill.is-hidden { opacity: 0; transform: translateY(calc(var(--idx, 0) * 62px)) scale(0.4); }
+.lx-nav-pill::after {
+  content: ""; position: absolute; inset: -6px; border-radius: inherit;
+  border: 2px solid color-mix(in oklab, var(--game) 60%, transparent);
+  opacity: 0; animation: lx-pill-ring 2.8s var(--ease) infinite;
+}
+@keyframes lx-pill-ring { 0% { opacity: 0.7; transform: scale(0.85); } 60%, 100% { opacity: 0; transform: scale(1.25); } }
 .lx-nav-btn {
   position: relative;
   display: grid;
@@ -65,7 +89,12 @@
 }
 .lx-nav-btn:hover { background: color-mix(in oklab, var(--text) 8%, transparent); color: var(--text); }
 .lx-nav-btn:active { transform: scale(0.94); }
-.lx-nav-btn.is-on { background: var(--game); color: #fff; box-shadow: 0 8px 24px color-mix(in oklab, var(--game) 50%, transparent); }
+.lx-nav-btn.is-on { color: #fff; }
+.lx-nav-btn.is-on:hover { background: transparent; }
+.lx-nav-btn svg { transition: transform 420ms var(--ease-pop); }
+.lx-nav-btn:hover svg { transform: scale(1.12) rotate(-6deg); }
+.lx-nav-btn.is-on svg { animation: lx-icon-pop 520ms var(--ease-pop); }
+@keyframes lx-icon-pop { 0% { transform: scale(0.6) rotate(-20deg); } 60% { transform: scale(1.18) rotate(4deg); } }
 .lx-nav-btn:focus-visible { outline: 2px solid var(--game); outline-offset: 3px; }
 /* A label slides out on hover, like a tooltip pill. */
 .lx-nav-label {
@@ -166,8 +195,23 @@
 .lib-tile.is-build .lib-art { background: color-mix(in oklab, var(--surface) 60%, transparent); border: 2px dashed var(--border); box-shadow: none; }
 .lib-name { padding: 0 4px; font: 600 16px / 1.25 var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color var(--t-fast) var(--ease); }
 /* Selected: a gentle 1.02 lift and a concentric rounded accent halo. */
+.lib-tile { perspective: 900px; }
+.lib-art { transform-style: preserve-3d; will-change: auto; }
+.lib-art::after {
+  /* Specular sheen that follows the pointer. */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+  background:
+    radial-gradient(60% 45% at var(--mx, 50%) var(--my, 0%), rgb(255 255 255 / 0.28), transparent 70%),
+    linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.16) 48%, transparent 60%);
+  background-size: 100% 100%, 250% 100%;
+  background-position: 0 0, 120% 0;
+  opacity: 0; mix-blend-mode: soft-light;
+  transition: opacity var(--t-med) var(--ease), background-position 0s;
+}
+.lib-tile:hover .lib-art::after { opacity: 1; background-position: 0 0, -40% 0; transition: opacity var(--t-med) var(--ease), background-position 900ms var(--ease-out-expo); }
+.lib-tile:hover .lib-art { transition: transform 140ms linear, box-shadow var(--t-med) var(--ease), border-color var(--t-fast) var(--ease); }
 .lib-tile:hover .lib-art, .lib-tile:focus-visible .lib-art, .lib-tile.is-active .lib-art {
-  transform: translateY(-3px) scale(1.02);
+  transform: translateY(-6px) scale(1.035) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   border-color: color-mix(in oklab, var(--game) 80%, var(--text));
   box-shadow:
     0 18px 36px rgb(0 0 0 / 0.45),
@@ -176,7 +220,23 @@
     0 0 28px 4px color-mix(in oklab, var(--game) 32%, transparent);
 }
 .lib-tile:hover .tile-img, .lib-tile.is-active .tile-img { transform: scale(1.04); }
-.lib-tile:active .lib-art { transform: scale(0.98); transition-duration: var(--t-press); }
+.lib-tile:active .lib-art { transform: translateY(-2px) scale(0.97) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition-duration: var(--t-press); }
+.lib-tile:hover .tile-img { transform: scale(1.08) translateZ(30px); }
+.lib-name { transition: color var(--t-fast) var(--ease), transform var(--t-med) var(--ease-pop); }
+.lib-tile:hover .lib-name, .lib-tile.is-active .lib-name { transform: translateX(4px); }
+/* Selected tile: the accent halo breathes slowly. */
+.lib-tile.is-active .lib-art { animation: lx-halo 2.8s ease-in-out infinite; }
+@keyframes lx-halo {
+  50% {
+    box-shadow:
+      0 22px 44px rgb(0 0 0 / 0.5),
+      0 0 0 3px rgb(var(--bg-rgb) / 0.85),
+      0 0 0 6px color-mix(in oklab, var(--game) 90%, transparent),
+      0 0 44px 10px color-mix(in oklab, var(--game) 45%, transparent);
+  }
+}
+.lib-tile { animation: lx-tile-in 560ms var(--ease-out-expo) backwards; animation-delay: calc(var(--i, 0) * var(--t-stagger) + 60ms); }
+@keyframes lx-tile-in { from { opacity: 0; transform: translateY(26px) scale(0.92) rotateX(14deg); filter: blur(4px); } }
 .launcher .lib-tile:focus-visible .lib-art { outline: 2px solid var(--text); outline-offset: 8px; }
 .launcher .lib-tile:focus, .launcher .lib-tile:focus-visible { outline: none; box-shadow: none; }
 .launcher .lib-tile:focus-visible .lib-name { color: color-mix(in oklab, var(--game) 60%, var(--text)); }
@@ -223,11 +283,31 @@
   max-width: min(100%, 50vw); text-transform: uppercase; text-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
 .lx-big-word { display: inline-block; padding-block: 0.06em; /* room for Dutch Display Sans ascenders during the blur rise */ animation: lx-rise 700ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
 .lx-big-word:last-child:not(:first-child) { color: color-mix(in oklab, var(--game) 70%, #fff); }
+.lx-big-word:last-child:not(:first-child), .lx-big-word:only-child {
+  background: linear-gradient(100deg, currentColor 40%, #fff 50%, currentColor 60%) 100% 0 / 300% 100% no-repeat text;
+  -webkit-background-clip: text; background-clip: text;
+  animation: lx-rise 700ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards, lx-shimmer 1.4s var(--ease) both;
+  animation-delay: calc(var(--i) * 90ms + 80ms), calc(var(--i) * 90ms + 760ms);
+}
+.lx-big-word:last-child:not(:first-child), .lx-big-word:only-child { text-shadow: none; filter: drop-shadow(0 10px 30px rgb(0 0 0 / 0.35)); }
+.lx-big-word:only-child { -webkit-text-fill-color: transparent; color: var(--text); }
+.lx-big-word:last-child:not(:first-child) { -webkit-text-fill-color: transparent; }
+@keyframes lx-shimmer { from { background-position: 100% 0; } to { background-position: 0% 0; } }
 @keyframes lx-rise { from { opacity: 0; transform: translateY(40%) scale(0.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 .lx-desc { margin: 0; max-width: 56ch; color: var(--text-2); font: 400 clamp(16px, 1.4vw, 19px) / 1.5 var(--font-ui); animation: lx-item-in 450ms var(--ease) 260ms backwards; }
 .lx-actions { display: flex; flex-wrap: wrap; gap: 12px; animation: lx-item-in 450ms var(--ease) 340ms backwards; }
 .lx-play { min-width: 160px; font-size: 17px; background: var(--game); color: #fff; border-color: transparent; box-shadow: 0 12px 30px color-mix(in oklab, var(--game) 45%, transparent); }
-.lx-play:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+.lx-play { position: relative; overflow: hidden; isolation: isolate; animation: lx-play-breathe 3.2s ease-in-out 1.2s infinite; }
+.lx-play:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-2px) scale(1.03); }
+.lx-play::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%);
+  transform: translateX(-120%); animation: lx-play-shine 3.2s var(--ease) 1.6s infinite;
+}
+.lx-play svg { transition: transform 420ms var(--ease-pop); }
+.lx-play:hover svg { transform: scale(1.2) translateX(2px); }
+@keyframes lx-play-breathe { 50% { box-shadow: 0 12px 40px color-mix(in oklab, var(--game) 70%, transparent), 0 0 0 6px color-mix(in oklab, var(--game) 16%, transparent); } }
+@keyframes lx-play-shine { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
 .lx-note { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
 .lx-scroll {
   justify-self: center;
@@ -268,6 +348,8 @@
   .lx-mark { width: 40px; height: 40px; }
   .lx-mark svg { width: 34px; height: 34px; }
   .lx-nav { flex-direction: row; justify-content: center; }
+  .lx-nav-pill { top: 50%; left: 50%; margin-top: -26px; margin-left: calc(-52px * 1.5 - 10px); transform: translateX(calc(var(--idx, 0) * 62px)); }
+  .lx-nav-pill.is-hidden { transform: translateX(calc(var(--idx, 0) * 62px)) scale(0.4); }
   .lx-nav-label { display: none; }
   .lx-main { padding-left: var(--page-x); padding-bottom: 96px; }
   .lx-page { padding-top: 22px; }
@@ -277,8 +359,9 @@
   .lx-hero { min-height: calc(100dvh - 90px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lx-scroll { animation: none; }
+  .lx-scroll, .lx-play, .lx-play::before, .lx-nav-pill::after, .lib-tile.is-active .lib-art { animation: none; }
 }
+[data-motion="off"] :is(.lx-scroll, .lx-play, .lx-play::before, .lx-nav-pill::after, .lib-tile.is-active .lib-art) { animation: none !important; }
 
 @keyframes lx-page-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes lx-item-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
