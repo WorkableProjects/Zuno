@@ -680,3 +680,43 @@ describe("items", () => {
     expect(r.ok && r.file.settings.itemCosts.nuke).toBe(8000);
   });
 });
+
+describe("new items", () => {
+  const rich = (n = 4) => atSelect(n, 10000);
+  const give = (s: RpgState, id: string, items: RpgState["inventory"][string]): RpgState => ({ ...s, inventory: { ...s.inventory, [id]: items } });
+
+  it("Pickpocket steals 15% of the target", () => {
+    const s = run(give(rich(), "b", ["pickpocket"]), { type: "usePickpocket", by: "b", target: "c" });
+    expect(coins(s, "c")).toBe(8500);
+    expect(coins(s, "b")).toBe(11500);
+    expect(s.inventory.b).toEqual([]);
+    expect(s.event?.kind).toBe("pickpocket");
+  });
+  it("Shield blocks a Pickpocket and both are spent", () => {
+    const s = run(give(give(rich(), "b", ["pickpocket"]), "c", ["shield"]), { type: "usePickpocket", by: "b", target: "c" });
+    expect(coins(s, "c")).toBe(10000);
+    expect(s.inventory.b).toEqual([]);
+    expect(s.inventory.c).toEqual([]);
+  });
+  it("Shield blocks a bomb detonation", () => {
+    let s = run(give(give(rich(), "a", ["bomb"]), "b", ["shield"]), { type: "useBomb", by: "a", target: "b", wire: 0 });
+    s = run(s, { type: "cutWire", by: "b", wire: 1 });
+    expect(coins(s, "b")).toBe(10000);
+    expect(coins(s, "c")).toBe(7000);
+    expect(s.inventory.b).toEqual([]);
+  });
+  it("Insurance refunds half the wager to the loser", () => {
+    let s = give(rich(), "b", ["insurance"]);
+    s = ticks(toBetting(s, "b", 1000), 20);
+    for (let r = 0; r < 3; r++) {
+      s = run(s, { type: "pick", by: "a", choice: "rock" }, { type: "pick", by: "b", choice: "scissors" });
+      s = ticks(s, 3);
+    }
+    expect(s.phase).toBe("results");
+    expect(coins(s, "b")).toBe(9500);
+    expect(s.inventory.b).toEqual([]);
+  });
+  it("maps the pickpocket move", () => {
+    expect(rpgMoveToAction({ type: "pickpocket", target: "c" }, "me")).toEqual({ type: "usePickpocket", by: "me", target: "c" });
+  });
+});

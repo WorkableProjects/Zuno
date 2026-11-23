@@ -174,7 +174,13 @@
 .rpg-cost-input { width: 120px; }
 
 .rpg-tipwrap { position: relative; display: inline-flex; vertical-align: middle; }
-.rpg-tip-pos { position: fixed; z-index: 30; padding-top: 6px; }
+.rpg-tip-pos { position: fixed; z-index: 30; pointer-events: none; opacity: 0; transform: translateY(-4px) scale(0.97); transform-origin: 24px top; transition: opacity 140ms var(--ease), transform 140ms var(--ease); }
+.rpg-tip-pos.is-above { transform: translateY(calc(-100% + 4px)) scale(0.97); transform-origin: 24px bottom; }
+.rpg-tip-pos.is-open { opacity: 1; transform: none; }
+.rpg-tip-pos.is-above.is-open { transform: translateY(-100%); }
+.rpg-tip-pos.is-pinned.is-open { pointer-events: auto; }
+.rpg-tipbtn { transition: color 140ms var(--ease), background-color 140ms var(--ease); }
+.rpg-tipbtn.is-open { color: var(--text); }
 .rpg-tip { display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--surface); color: var(--text); border: 1px solid var(--hairline); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); font-size: 14px; line-height: 1.4; text-align: left; font-weight: 400; }
 .rpg-tip ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .rpg-tip-name { font-size: 15px; }
@@ -205,6 +211,7 @@
 @keyframes rpg-stamp { from { transform: rotate(-6deg) scale(2.2); opacity: 0; } to { transform: rotate(-6deg) scale(1); opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
+  .rpg-tip-pos, .rpg-tipbtn { transition: none; }
   .rpg-fx-bomb, .rpg-fx-nuke, .rpg-banner, .rpg-banner.is-rumble, .rpg-stamp, .rpg-boom { animation: none; }
   .rpg-fx-bomb { opacity: 0.35; }
   .rpg-fx-nuke { opacity: 0.2; }

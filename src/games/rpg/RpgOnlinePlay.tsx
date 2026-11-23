@@ -142,8 +142,9 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostP
             <p className="meta">Waiting for events…</p>
           ) : (
             <ol className="rpg-feed">
-              {game.log.slice(0, 12).map((line, i) => (
-                <li key={`${game.revision}-${i}`}>{line}</li>
+              {feedKeys(game.log).slice(0, 12).map((key, i) => (
+                // Stable keys: existing lines stay mounted, only new ones animate in.
+                <li key={key}>{game.log[i]}</li>
               ))}
             </ol>
           )}
@@ -539,4 +540,16 @@ function Over({ game, me, avatarOf }: { game: RpgOnline; me: string; avatarOf: (
       </ol>
     </div>
   );
+}
+
+/** Keys that survive new lines arriving: the text plus how many identical lines sit below it. */
+function feedKeys(log: string[]): string[] {
+  const seen = new Map<string, number>();
+  const keys: string[] = new Array(log.length);
+  for (let i = log.length - 1; i >= 0; i--) {
+    const n = seen.get(log[i]) ?? 0;
+    seen.set(log[i], n + 1);
+    keys[i] = `${n}:${log[i]}`;
+  }
+  return keys;
 }

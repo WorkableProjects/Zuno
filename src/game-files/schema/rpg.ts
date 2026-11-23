@@ -12,16 +12,27 @@ export const RPG_LIMITS = {
   maxSeconds: 120,
 };
 
-export type ItemId = "bomb" | "nuke" | "landmine" | "interceptor";
-export const ITEM_IDS: readonly ItemId[] = ["bomb", "nuke", "landmine", "interceptor"];
-export const ITEM_NAMES: Record<ItemId, string> = { bomb: "Atomic Bomb", nuke: "Nuke", landmine: "Landmine", interceptor: "Interceptor" };
-export const DEFAULT_ITEM_COSTS: Record<ItemId, number> = { bomb: 3000, nuke: 8000, landmine: 500, interceptor: 1500 };
+export type ItemId = "bomb" | "nuke" | "landmine" | "interceptor" | "shield" | "pickpocket" | "insurance";
+export const ITEM_IDS: readonly ItemId[] = ["bomb", "nuke", "landmine", "interceptor", "shield", "pickpocket", "insurance"];
+export const ITEM_NAMES: Record<ItemId, string> = {
+  bomb: "Atomic Bomb",
+  nuke: "Nuke",
+  landmine: "Landmine",
+  interceptor: "Interceptor",
+  shield: "Shield",
+  pickpocket: "Pickpocket",
+  insurance: "Insurance",
+};
+export const DEFAULT_ITEM_COSTS: Record<ItemId, number> = { bomb: 3000, nuke: 8000, landmine: 500, interceptor: 1500, shield: 2000, pickpocket: 1000, insurance: 1200 };
 /** Sane bounds for the host's per-item cost overrides. */
 export const ITEM_COST_LIMITS: Record<ItemId, { min: number; max: number }> = {
   bomb: { min: 500, max: 50_000 },
   nuke: { min: 1000, max: 100_000 },
   landmine: { min: 50, max: 10_000 },
   interceptor: { min: 100, max: 20_000 },
+  shield: { min: 100, max: 30_000 },
+  pickpocket: { min: 100, max: 20_000 },
+  insurance: { min: 100, max: 20_000 },
 };
 
 /** Rock Paper Gamble has no prepared content. Everything lives in the settings. */
@@ -143,6 +154,8 @@ export const ITEM_RULES = {
   interceptMultiplier: 2,
   interceptMin: 200,
   interceptPenalty: 200,
+  pickpocketSteal: 15,
+  insuranceRefund: 50,
 } as const;
 
 export interface ItemInfo {
@@ -209,6 +222,39 @@ export function itemInfo(id: ItemId, costs: Record<ItemId, number> = DEFAULT_ITE
           `Correct: you steal ${r.interceptMultiplier}x the duel wager from the loser, at least ${c(r.interceptMin)} (at most what the loser has).`,
           `Wrong: you pay ${c(r.interceptPenalty)} to the winner (at most what you have).`,
           "One Interceptor per duel per player. A void duel refunds it.",
+        ],
+      };
+    case "shield":
+      return {
+        name: ITEM_NAMES.shield,
+        short: "Blocks the next Bomb, Nuke or Pickpocket that would take your coins.",
+        when: "Works automatically while you hold it.",
+        lines: [
+          `Costs ${c(costs.shield)}.`,
+          "The next time a Bomb detonation, Nuke Impact or Pickpocket would take your coins, you lose nothing.",
+          "The Shield breaks after blocking once.",
+        ],
+      };
+    case "pickpocket":
+      return {
+        name: ITEM_NAMES.pickpocket,
+        short: `Quietly steal ${r.pickpocketSteal}% of another player's coins.`,
+        when: "Use while players are choosing an opponent, on any other player with coins.",
+        lines: [
+          `Costs ${c(costs.pickpocket)}.`,
+          `Takes ${r.pickpocketSteal}% of the target's coins straight away.`,
+          "A Shield on the target blocks it, and both the Shield and Pickpocket are spent.",
+        ],
+      };
+    case "insurance":
+      return {
+        name: ITEM_NAMES.insurance,
+        short: `Lose a duel and get ${r.insuranceRefund}% of your wager back.`,
+        when: "Works automatically the next time you lose a duel with a wager.",
+        lines: [
+          `Costs ${c(costs.insurance)}.`,
+          `When you lose a duel you wagered on, the bank pays you back ${r.insuranceRefund}% of your wager.`,
+          "Spent after paying out once. Duels with no wager leave it untouched.",
         ],
       };
   }

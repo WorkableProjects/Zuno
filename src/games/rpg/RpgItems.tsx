@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bomb, Check, Rocket, ShoppingCart, Zap } from "lucide-react";
+import { Bomb, Check, Hand, Rocket, ShoppingCart, Zap } from "lucide-react";
 import { ITEM_IDS, formatCoins, itemInfo, type ItemId } from "../../game-files/schema/rpg";
 import { CHOICES, TRAP_ITEMS, TRAP_MIN_PLAYERS, WIRES, type Choice } from "./rpgEngine";
 import { ItemInfoBody, ItemInfoTip } from "./ItemInfo";
@@ -21,7 +21,7 @@ const LABEL: Record<Choice, string> = { rock: "Rock", paper: "Paper", scissors: 
 /** Shop and inventory, shown while players are choosing an opponent. */
 export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
   const [open, setOpen] = useState(false);
-  const [aiming, setAiming] = useState(false);
+  const [aiming, setAiming] = useState<"bomb" | "pickpocket" | null>(null);
   const [confirmNuke, setConfirmNuke] = useState(false);
   const mine = game.players.find((p) => p.id === me);
   if (!game.itemsOn || !mine || mine.removed) return null;
@@ -64,12 +64,13 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
               <span className="rpg-grow">
                 <strong>{itemInfo(id, game.itemCosts).name}</strong> <ItemInfoTip id={id} costs={game.itemCosts} />
               </span>
-              {id === "bomb" && (
-                <button type="button" className="btn btn-quiet btn-sm" aria-expanded={aiming} disabled={sending || targets.length === 0} onClick={() => setAiming((v) => !v)}>
-                  <Bomb size={16} strokeWidth={1.5} />
+              {(id === "bomb" || id === "pickpocket") && (
+                <button type="button" className="btn btn-quiet btn-sm" aria-expanded={aiming === id} disabled={sending || targets.length === 0} onClick={() => setAiming((v) => (v === id ? null : id))}>
+                  {id === "bomb" ? <Bomb size={16} strokeWidth={1.5} /> : <Hand size={16} strokeWidth={1.5} />}
                   Use
                 </button>
               )}
+              {(id === "shield" || id === "insurance") && <span className="meta">Active</span>}
               {id === "nuke" &&
                 (confirmNuke ? (
                   <span className="rpg-row" role="group" aria-label="Confirm nuke launch">
@@ -100,8 +101,8 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
           ))}
         </ul>
       )}
-      {aiming && priv.items.includes("bomb") && (
-        <div className="rpg-row" role="group" aria-label="Choose a bomb target">
+      {aiming && priv.items.includes(aiming) && (
+        <div className="rpg-row" role="group" aria-label={aiming === "bomb" ? "Choose a bomb target" : "Choose who to pickpocket"}>
           {targets.map((p) => (
             <button
               key={p.id}
@@ -109,11 +110,11 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
               className="btn rpg-btn-danger btn-sm"
               disabled={sending}
               onClick={() => {
-                setAiming(false);
-                void send({ type: "bomb", target: p.id });
+                setAiming(null);
+                void send({ type: aiming, target: p.id });
               }}
             >
-              Bomb {nameOf(p.id)}
+              {aiming === "bomb" ? "Bomb" : "Rob"} {nameOf(p.id)}
             </button>
           ))}
         </div>
@@ -303,7 +304,7 @@ export function ItemFx({ game }: { game: RpgOnline }) {
   );
 }
 
-function ItemBannerTip({ kind, costs }: { kind: "bomb" | "nuke" | "mine" | "intercept"; costs: Record<ItemId, number> }) {
+function ItemBannerTip({ kind, costs }: { kind: NonNullable<RpgOnline["event"]>["kind"]; costs: Record<ItemId, number> }) {
   const id: ItemId = kind === "mine" ? "landmine" : kind === "intercept" ? "interceptor" : kind;
   return <ItemInfoTip id={id} costs={costs} />;
 }
