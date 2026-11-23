@@ -165,6 +165,50 @@ html.intro-playing .dash * { animation-play-state: paused; }
   background: var(--text);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
 }
+.sound-board-btn {
+  width: 32px;
+  height: 32px;
+  color: var(--text-2);
+}
+.sound-board-btn[aria-expanded="true"] {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+/* The soundboard opens to the left of the meter, anchored to the same bottom edge. */
+.sound-board {
+  position: absolute;
+  right: calc(100% + 10px);
+  bottom: 0;
+  width: 168px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--surface) 96%, transparent);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.3);
+}
+.sound-board-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.sound-board-sound {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  background: var(--surface-2);
+  color: var(--text);
+}
+.sound-board-sound:hover:not(:disabled),
+.sound-board-sound:focus-visible {
+  background: var(--surface-3);
+  color: var(--accent);
+}
+.sound-board-hint {
+  margin: 8px 0 0;
+  color: var(--text-3);
+  font: 500 11px/1.3 var(--font-body, inherit);
+  text-align: center;
+}
 .sound-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useRegisterSoundboard } from "../../lib/soundboard";
 import { ArrowLeft, Check, CircleAlert, LogIn } from "lucide-react";
 import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
@@ -43,6 +44,7 @@ export function RpgJoin({ code: linkCode, name: givenName, onExit }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEscape(onExit);
+  useRegisterSoundboard(joined ? `rpg/${joined}` : null);
 
   useEffect(() => {
     if (!joined) return;

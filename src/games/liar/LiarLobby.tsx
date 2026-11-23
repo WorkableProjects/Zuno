@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useRegisterSoundboard } from "../../lib/soundboard";
 import QRCode from "qrcode";
 import {
   ArrowLeft,
@@ -77,6 +78,7 @@ export function LiarLobby({
   const [streak, setStreak] = useState(!!defaults?.streakBonus);;
   const created = useRef(false);
   useEscape(() => setConfirmLeave(true), !confirmLeave);
+  useRegisterSoundboard(code ? `liar/${code}` : null);
 
   useEffect(() => {
     if (code || created.current) return;

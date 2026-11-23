@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRegisterSoundboard } from "../../lib/soundboard";
 import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Play, RotateCcw, Shuffle, UserMinus } from "lucide-react";
 import type { HeadbandsFile, HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
@@ -70,6 +71,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
   const [rules, setRules] = useState<Rules>({ continueAfterYes: base.settings.continueAfterYes, unlimitedGuesses: base.settings.unlimitedGuesses });
   const created = useRef(false);
   useEscape(() => setConfirmLeave(true), !confirmLeave);
+  useRegisterSoundboard(code ? `hb/${code}` : null);
 
   // Open a lobby once, or reuse the one we came back to.
   useEffect(() => {

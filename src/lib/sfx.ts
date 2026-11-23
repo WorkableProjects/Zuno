@@ -26,7 +26,13 @@ export type Sfx =
   | "timeUp"
   | "win"
   | "pause"
-  | "skip";
+  | "skip"
+  | "airhorn"
+  | "drumroll"
+  | "sadTrombone"
+  | "applause"
+  | "boing"
+  | "rimshot";
 
 interface Bus {
   ac: AudioContext;
@@ -263,6 +269,46 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
   },
   skip: (c) => {
     air(c, 0, 0.18, 3500, 600, 0.2, 1.2, 0.02);
+  },
+  airhorn: (c) => {
+    [N(-14), N(-10), N(-7)].forEach((f) => {
+      pluck(c, f, 0, 0.9, 0.22, "sawtooth");
+      pluck(c, f * 2, 0.01, 0.9, 0.1, "square");
+    });
+    air(c, 0, 0.12, 1500, 900, 0.2, 0.8, 0.01);
+    thump(c, 160, 90, 0, 0.3, 0.3);
+  },
+  drumroll: (c) => {
+    for (let i = 0; i < 18; i++) {
+      const at = i * 0.055 - i * i * 0.0007;
+      air(c, at, 0.05, 2200, 1400, 0.12 + i * 0.01, 2);
+      thump(c, 200, 110, at, 0.05, 0.12);
+    }
+    thump(c, 110, 50, 0.95, 0.4, 0.5);
+    air(c, 0.95, 0.9, 7000, 5000, 0.12, 0.6, 0.01);
+  },
+  sadTrombone: (c) => {
+    [[-14, 0, 0.4], [-15, 0.45, 0.4], [-16, 0.9, 0.4], [-17, 1.35, 1.1]].forEach(([semi, at, len]) => {
+      pluck(c, N(semi), at, len, 0.3, "sawtooth");
+      pluck(c, N(semi) * 2, at, len, 0.08, "triangle");
+    });
+  },
+  applause: (c) => {
+    air(c, 0, 1.8, 2500, 3500, 0.14, 0.5, 0.3);
+    for (let i = 0; i < 40; i++) air(c, Math.random() * 1.7, 0.03 + Math.random() * 0.03, 1800 + Math.random() * 3500, 1500 + Math.random() * 2500, 0.1 + Math.random() * 0.1, 1.5);
+  },
+  boing: (c) => {
+    thump(c, 140, 520, 0, 0.14, 0.45);
+    thump(c, 520, 160, 0.14, 0.45, 0.4);
+    bell(c, 330, 0.02, 0.5, 0.15, 2.5);
+  },
+  rimshot: (c) => {
+    air(c, 0, 0.1, 3000, 2000, 0.3, 1.5);
+    thump(c, 220, 110, 0, 0.12, 0.45);
+    air(c, 0.16, 0.1, 3000, 2000, 0.3, 1.5);
+    thump(c, 140, 70, 0.16, 0.14, 0.45);
+    air(c, 0.4, 0.9, 7500, 5500, 0.18, 0.6, 0.005);
+    thump(c, 90, 45, 0.4, 0.3, 0.4);
   },
 };
 

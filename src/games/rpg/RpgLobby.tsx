@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useRegisterSoundboard } from "../../lib/soundboard";
 import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Crown, Play, UserMinus } from "lucide-react";
 import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
@@ -62,6 +63,7 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
   const created = useRef(false);
   const cleared = useRef(false);
   useEscape(() => setConfirmLeave(true), !confirmLeave);
+  useRegisterSoundboard(code ? `rpg/${code}` : null);
 
   useEffect(() => {
     if (code || created.current) return;

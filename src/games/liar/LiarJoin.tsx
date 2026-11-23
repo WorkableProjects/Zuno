@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRegisterSoundboard } from "../../lib/soundboard";
 import { ArrowLeft, CircleAlert, LogIn } from "lucide-react";
 import { AvatarPicker } from "../../components/avatar/AvatarView";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
@@ -50,6 +51,7 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEscape(onExit);
+  useRegisterSoundboard(joined ? `liar/${joined}` : null);
 
   useEffect(() => {
     if (!joined) return;

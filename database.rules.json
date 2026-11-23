@@ -80,6 +80,23 @@
             }
           }
         },
+        "board": {
+          "$id": {
+            ".validate": "newData.hasChildren(['s', 'at'])",
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^(airhorn|drumroll|sadTrombone|applause|boing|rimshot|win|wrong)$/)"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "by": {
+              ".validate": "newData.isString() && newData.val().length <= 24"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
         "$other": {
           ".validate": false
         }
@@ -130,6 +147,23 @@
             },
             "vote": {
               ".validate": "newData.isString() && newData.val().matches(/^([0-2]|abstain)$/)"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "board": {
+          "$id": {
+            ".validate": "newData.hasChildren(['s', 'at'])",
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^(airhorn|drumroll|sadTrombone|applause|boing|rimshot|win|wrong)$/)"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "by": {
+              ".validate": "newData.isString() && newData.val().length <= 24"
             },
             "$other": {
               ".validate": false
@@ -203,6 +237,23 @@
               "$other": {
                 ".validate": false
               }
+            }
+          }
+        },
+        "board": {
+          "$id": {
+            ".validate": "newData.hasChildren(['s', 'at'])",
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^(airhorn|drumroll|sadTrombone|applause|boing|rimshot|win|wrong)$/)"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "by": {
+              ".validate": "newData.isString() && newData.val().length <= 24"
+            },
+            "$other": {
+              ".validate": false
             }
           }
         },
