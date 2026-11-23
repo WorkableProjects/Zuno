@@ -19,7 +19,7 @@ export interface GameEngine {
   appearance: { accentColor: string; backgroundPreset: BackgroundPreset };
   validate: (raw: Record<string, unknown>) => ValidationResult<GameFile>;
   /** Decorative scene drawn behind the dashboard for this engine. */
-  artwork: "board" | "cards" | "statements" | "hands" | null;
+  artwork: "board" | "cards" | "statements" | "hands" | "deck" | "sketch" | "survey" | null;
   /** Runs only in online lobbies. The dashboard offers Host lobby and Join instead of Load. */
   onlineOnly?: boolean;
   /** A sample in public/samples that the importer can load. */
@@ -152,7 +152,7 @@ const engines: GameEngine[] = [
     hasBuilder: false,
     appearance: { accentColor: "#16A34A", backgroundPreset: "vegas" },
     validate: validateBlackjack as GameEngine["validate"],
-    artwork: "cards",
+    artwork: "deck",
     onlineOnly: true,
     sampleFile: "blackjack.zuno.json",
     fileHolds: "default settings for the lobby",
@@ -169,7 +169,7 @@ const engines: GameEngine[] = [
     hasBuilder: false,
     appearance: { accentColor: "#F59E0B", backgroundPreset: "horizon" },
     validate: validateDrawIt as GameEngine["validate"],
-    artwork: null,
+    artwork: "sketch",
     onlineOnly: true,
     sampleFile: "draw-it.zuno.json",
     fileHolds: "default settings for the lobby",
@@ -186,7 +186,7 @@ const engines: GameEngine[] = [
     hasBuilder: false,
     appearance: { accentColor: "#2563EB", backgroundPreset: "spotlight" },
     validate: validateFeud as GameEngine["validate"],
-    artwork: null,
+    artwork: "survey",
     onlineOnly: true,
     sampleFile: "survey-feud.zuno.json",
     fileHolds: "default settings for the lobby",

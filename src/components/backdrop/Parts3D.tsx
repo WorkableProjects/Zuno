@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import "./parts3d.css";
 
-export type PartsKind = "board" | "cards" | "statements" | "hands";
+export type PartsKind = "board" | "cards" | "statements" | "hands" | "deck" | "sketch" | "survey";
 const BOARD_VALUES = [100, 200, 300, 400, 500];
 /** Cells the host "picks" in turn, as [row, column]. One lights up every few seconds. */
 const BOARD_PICKS: Array<[number, number]> = [
@@ -149,6 +149,109 @@ function HandsArt() {
   );
 }
 
+/** [left %, top %, size px, depth px, delay s] — shared floater positions for the newer artwork. */
+const SPOTS: Array<[number, number, number, number, number]> = [
+  [66, 10, 118, 60, 0],
+  [80, 52, 140, -40, -6],
+  [58, 68, 104, 90, -11],
+  [72, 26, 70, 120, -3],
+  [88, 26, 56, -60, -9],
+  [54, 40, 64, 30, -14],
+  [86, 78, 78, 70, -5],
+  [66, 86, 52, -20, -17],
+];
+const spot = (i: number) => {
+  const [x, y, size, z, d] = SPOTS[i % SPOTS.length];
+  return { left: `${x}%`, top: `${y}%`, width: size, height: size, "--z": `${z}px`, "--d": `${d}s`, "--i": i } as CSSProperties;
+};
+
+const SUITS = ["♠", "♥", "♦", "♣"];
+const RANKS = ["A", "K", "Q", "J", "10", "7"];
+/** Playing cards and chips tumbling slowly, for Blackjack. */
+function DeckArt() {
+  return (
+    <div className="art-hands art-deck" aria-hidden="true">
+      {SPOTS.map((_, i) =>
+        i % 3 === 2 ? (
+          <span key={i} className={`art-float is-chip tone-${(i % 3) + 1}`} style={spot(i)}>
+            <svg viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="29" className="chip-body" />
+              <circle cx="32" cy="32" r="29" className="chip-edge" />
+              <circle cx="32" cy="32" r="17" className="chip-inner" />
+              <text x="32" y="38" textAnchor="middle" className="chip-mark">21</text>
+            </svg>
+          </span>
+        ) : (
+          <span key={i} className={`art-float art-pcard${i % 2 ? " is-red" : ""}`} style={spot(i)}>
+            <span className="art-pcard-face">
+              <b>{RANKS[i % RANKS.length]}</b>
+              <i>{SUITS[i % 4 === 1 || i % 4 === 2 ? (i % 2 ? 1 : 2) : i % 2 ? 1 : 0]}</i>
+            </span>
+          </span>
+        ),
+      )}
+    </div>
+  );
+}
+
+const DOODLES = [
+  "M10 50 C 20 10, 40 10, 50 40 S 80 70, 90 30",
+  "M50 10 L61 38 L91 38 L67 56 L76 86 L50 68 L24 86 L33 56 L9 38 L39 38 Z",
+  "M50 85 C 10 60, 10 25, 32 20 C 44 17, 50 30, 50 30 C 50 30, 56 17, 68 20 C 90 25, 90 60, 50 85 Z",
+  "M15 70 L50 20 L85 70 Z M30 70 L30 90 L70 90 L70 70",
+  "M50 50 m -35 0 a 35 35 0 1 0 70 0 a 35 35 0 1 0 -70 0 M38 42 l0 4 M62 42 l0 4 M35 60 Q50 75 65 60",
+];
+/** Doodles that draw themselves, plus drifting pencils, for Draw It. */
+function SketchArt() {
+  return (
+    <div className="art-hands art-sketch" aria-hidden="true">
+      {SPOTS.map((_, i) =>
+        i % 3 === 1 ? (
+          <span key={i} className={`art-float art-pencil tone-${(i % 3) + 1}`} style={spot(i)}>
+            <svg viewBox="0 0 100 100">
+              <path className="pencil-body" d="M20 80 L70 30 L82 42 L32 92 Z" />
+              <path className="pencil-tip" d="M20 80 L32 92 L12 98 Z" />
+              <path className="pencil-cap" d="M70 30 L78 22 L90 34 L82 42 Z" />
+            </svg>
+          </span>
+        ) : (
+          <span key={i} className={`art-float art-doodle tone-${(i % 3) + 1}`} style={spot(i)}>
+            <svg viewBox="0 0 100 100">
+              <path pathLength={1} d={DOODLES[i % DOODLES.length]} />
+            </svg>
+          </span>
+        ),
+      )}
+    </div>
+  );
+}
+
+const TILE_POINTS = [42, 27, 15, 9, 5, 2];
+/** Survey board tiles flipping to show points, and a strike now and then, for Survey Feud. */
+function SurveyArt() {
+  return (
+    <div className="art-hands art-survey" aria-hidden="true">
+      {SPOTS.map((_, i) =>
+        i % 4 === 3 ? (
+          <span key={i} className="art-float art-strike" style={spot(i)}>
+            <svg viewBox="0 0 64 64">
+              <rect x="4" y="4" width="56" height="56" rx="10" />
+              <path d="M20 20 L44 44 M44 20 L20 44" />
+            </svg>
+          </span>
+        ) : (
+          <span key={i} className="art-float art-tile" style={spot(i)}>
+            <span className="art-tile-flip">
+              <span className="art-tile-front">{(i % 6) + 1}</span>
+              <span className="art-tile-back">{TILE_POINTS[i % TILE_POINTS.length]}</span>
+            </span>
+          </span>
+        ),
+      )}
+    </div>
+  );
+}
+
 /**
  * 3D parts system: engine artwork (board, headband cards, statements) on a
  * stage that fills the right side of the screen and slowly orbits in 3D.
@@ -161,6 +264,9 @@ export function Parts3D({ kind, palette }: { kind: PartsKind; palette: CSSProper
         {kind === "cards" && <CardsArt />}
         {kind === "statements" && <StatementsArt />}
         {kind === "hands" && <HandsArt />}
+        {kind === "deck" && <DeckArt />}
+        {kind === "sketch" && <SketchArt />}
+        {kind === "survey" && <SurveyArt />}
       </div>
     </div>
   );
