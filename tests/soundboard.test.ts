@@ -23,3 +23,14 @@ describe("soundboard", () => {
     }
   });
 });
+
+describe("soundboard clips", () => {
+  it("only maps whitelisted ids to files that exist", async () => {
+    const { BOARD_CLIPS } = await import("../src/lib/soundboard");
+    const { existsSync } = await import("node:fs");
+    for (const [id, file] of Object.entries(BOARD_CLIPS)) {
+      expect(isBoardId(id)).toBe(true);
+      expect(existsSync(`public/sounds/board/${file}`)).toBe(true);
+    }
+  });
+});

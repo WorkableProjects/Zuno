@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { playSfx, type Sfx } from "./sfx";
+import { getSfxContext, playSfx, playSfxBuffer, type Sfx } from "./sfx";
 
 /**
  * A tiny soundboard. Pressing a sound plays it on this device and, when an
@@ -10,6 +10,43 @@ export const BOARD_IDS = ["airhorn", "drumroll", "sadTrombone", "applause", "boi
 export type BoardId = (typeof BOARD_IDS)[number];
 
 export const isBoardId = (v: unknown): v is BoardId => typeof v === "string" && (BOARD_IDS as readonly string[]).includes(v);
+
+/** Recorded CC0 clips in public/sounds/board (see CREDITS.md). Others use the synthesized sound. */
+export const BOARD_CLIPS: Partial<Record<BoardId, string>> = {
+  applause: "applause.mp3",
+  boing: "boing.mp3",
+  rimshot: "rimshot.mp3",
+  win: "win.mp3",
+};
+
+const clips = new Map<BoardId, AudioBuffer>();
+let loading: Promise<void> | null = null;
+
+/** Fetches and decodes the recorded clips once. Safe to call repeatedly; failures leave the synth fallback. */
+export function preloadBoardClips(): Promise<void> {
+  if (loading) return loading;
+  const ac = getSfxContext();
+  if (!ac || typeof fetch === "undefined") return Promise.resolve();
+  loading = Promise.all(
+    (Object.entries(BOARD_CLIPS) as [BoardId, string][]).map(async ([id, file]) => {
+      try {
+        const res = await fetch(`${import.meta.env.BASE_URL}sounds/board/${file}`);
+        if (!res.ok) return;
+        clips.set(id, await ac.decodeAudioData(await res.arrayBuffer()));
+      } catch {
+        /* falls back to the synthesized sound */
+      }
+    }),
+  ).then(() => undefined);
+  return loading;
+}
+
+/** Plays the recorded clip when loaded, otherwise the synthesized sound. */
+export function playBoardSound(id: BoardId): void {
+  const buf = clips.get(id);
+  if (buf && playSfxBuffer(buf)) return;
+  playSfx(id);
+}
 
 export const BOARD_COOLDOWN_MS = 1500;
 /** Pure cooldown check: true when enough time has passed since the last press. */
@@ -70,7 +107,7 @@ function listen(path: string): () => void {
         // The first batch is whatever was already there: skip it.
         if (!ready) return;
         const id = (snap.val() as { s?: unknown } | null)?.s;
-        if (isBoardId(id)) playSfx(id);
+        if (isBoardId(id)) playBoardSound(id);
       }, () => undefined);
       // Child events for the existing data arrive before this value event.
       const unValue = onValue(q, () => void (ready = true), () => undefined, { onlyOnce: true });
@@ -94,13 +131,13 @@ export function sendBoardSound(id: BoardId, by?: string): boolean {
   lastSent = now;
   const path = room;
   if (!path) {
-    playSfx(id);
+    playBoardSound(id);
     return true;
   }
   void backend()
     .then((b) => {
       if (!b) {
-        playSfx(id);
+        playBoardSound(id);
         return;
       }
       const { ref, push, remove, serverTimestamp } = b.db;
@@ -108,8 +145,8 @@ export function sendBoardSound(id: BoardId, by?: string): boolean {
       // The room's own listener plays it, here included, so every device hears it together.
       const item = push(ref(b.d, `${path}/board`), { s: id, at: serverTimestamp(), ...(name ? { by: name } : {}) });
       window.setTimeout(() => void remove(item).catch(() => undefined), KEEP_MS);
-      item.catch(() => playSfx(id));
+      item.catch(() => playBoardSound(id));
     })
-    .catch(() => playSfx(id));
+    .catch(() => playBoardSound(id));
   return true;
 }

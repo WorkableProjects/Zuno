@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Annoyed, Bell, Drum, Megaphone, Music2, PartyPopper, ThumbsDown, Trophy, Volume, Volume1, Volume2, VolumeX, type LucideIcon } from "lucide-react";
-import { sendBoardSound, useSoundboardRoom, type BoardId } from "../../lib/soundboard";
+import { preloadBoardClips, sendBoardSound, useSoundboardRoom, type BoardId } from "../../lib/soundboard";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 
 const BOARD: { id: BoardId; label: string; Icon: LucideIcon }[] = [
@@ -30,6 +30,7 @@ export function SoundToggle() {
   const boardBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!boardOpen) return;
+    void preloadBoardClips();
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       // Keep the screen underneath from also reacting to this Escape.

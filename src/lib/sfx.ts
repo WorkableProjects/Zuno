@@ -348,6 +348,31 @@ export function playSfx(name: Sfx): void {
   }
 }
 
+/** The shared audio context, for decoding recorded clips that play through the same bus. */
+export function getSfxContext(): AudioContext | null {
+  return getBus()?.ac ?? null;
+}
+
+/** Plays a decoded recorded clip through the sfx bus, honoring mute and volume. */
+export function playSfxBuffer(buf: AudioBuffer): boolean {
+  if (!sfxOn || isMuted() || getVolume() <= 0) return true;
+  const b = getBus();
+  if (!b) return false;
+  try {
+    const out = b.ac.createGain();
+    out.gain.value = 0.9 * getVolume();
+    out.connect(b.input);
+    const src = b.ac.createBufferSource();
+    src.buffer = buf;
+    src.connect(out);
+    src.onended = () => out.disconnect();
+    src.start();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const INTERACTIVE = "button, [role=button], [role=tab], [role=radio], a[href], .tile, summary";
 const isBack = (el: Element) => /^(back|exit|leave|close|cancel)/i.test(el.getAttribute("aria-label") ?? (el as HTMLElement).innerText ?? "");
 
