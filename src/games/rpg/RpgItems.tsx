@@ -3,6 +3,7 @@ import { Bomb, Check, Hand, Rocket, ShoppingCart, Zap } from "lucide-react";
 import { ITEM_IDS, formatCoins, itemInfo, type ItemId } from "../../game-files/schema/rpg";
 import { CHOICES, TRAP_ITEMS, TRAP_MIN_PLAYERS, WIRES, type Choice } from "./rpgEngine";
 import { ItemInfoBody, ItemInfoTip } from "./ItemInfo";
+import { useLinger } from "./motion";
 import type { RpgOnline, RpgOnlineDuel, RpgMove, RpgPrivate } from "./rpgLobby";
 
 type Send = (move: RpgMove) => Promise<void>;
@@ -185,7 +186,9 @@ function PhaseHead({ title, text, seconds }: { title: string; text: string; seco
         <p className="meta">{text}</p>
       </div>
       <span className={`rpg-timer${seconds <= 5 ? " is-low" : ""}`} role="timer" aria-label={`${seconds} seconds left`}>
-        {seconds}s
+        <span key={seconds <= 5 ? seconds : "n"} className="rpg-timer-n">
+          {seconds}s
+        </span>
       </span>
     </div>
   );
@@ -274,7 +277,9 @@ export function NukeDuelPhase({ game, me, nameOf, send, sending }: Common) {
 /** A big banner for each item event, plus the full-screen effects. Everything still reads with reduced motion. */
 export function ItemFx({ game }: { game: RpgOnline }) {
   const ev = game.event;
-  const [shown, setShown] = useState<RpgOnline["event"]>(null);
+  const [current, setShown] = useState<RpgOnline["event"]>(null);
+  const linger = useLinger(current, 260);
+  const shown = linger.value;
   const seen = useRef<number | null>(ev?.id ?? null);
   useEffect(() => {
     if (!ev || ev.id === seen.current) return;
@@ -292,7 +297,7 @@ export function ItemFx({ game }: { game: RpgOnline }) {
       {bombing && <div className="rpg-fx rpg-fx-bomb" aria-hidden="true" />}
       {nuking && <div className="rpg-fx rpg-fx-nuke" aria-hidden="true" />}
       {shown && (
-        <div className={`rpg-banner is-${shown.kind} is-${shown.tone}${shown.kind === "bomb" && shown.tone === "bad" ? " is-rumble" : ""}`} role="status">
+        <div className={`rpg-banner is-${shown.kind} is-${shown.tone}${shown.kind === "bomb" && shown.tone === "bad" ? " is-rumble" : ""}${linger.leaving ? " is-leaving" : ""}`} role="status">
           <strong className="rpg-banner-title">{shown.title}</strong>
           <span>{shown.text}</span>
           {shown.kind === "intercept" && shown.tone === "good" && <span className="rpg-stamp">INTERCEPTED</span>}

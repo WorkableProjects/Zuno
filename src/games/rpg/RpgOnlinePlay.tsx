@@ -6,6 +6,7 @@ import { CHOICES, WINS_NEEDED, type Choice } from "./rpgEngine";
 import { BombPhase, ItemFx, ItemShop, ItemTraps, NukeDuelPhase, NukeVotePhase } from "./RpgItems";
 import { EMPTY_PRIVATE, sendRpgMove, watchRpgPrivate, type RpgPrivate, type RpgLobbyState, type RpgMove, type RpgOnline, type RpgOnlineDuel } from "./rpgLobby";
 import { useRpgSounds } from "./useRpgSounds";
+import { Coins, useDelayed, useLinger } from "./motion";
 
 interface Props {
   code: string;
@@ -32,6 +33,8 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostP
   const priv = onMove ? (hostPriv ?? EMPTY_PRIVATE) : remote;
   useRpgSounds(game, me);
   const [sending, setSending] = useState(false);
+  // Buttons only look busy when a move is slow, so quick moves don't flash every control.
+  const busy = useDelayed(sending);
   const [problem, setProblem] = useState<string | null>(null);
   const [picked, setPicked] = useState<{ key: string; choice: Choice } | null>(null);
   const [giftTo, setGiftTo] = useState<string | null>(null);
@@ -68,26 +71,27 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostP
           <span>Match {Math.max(game.match, 1)}</span>
           {mine && (
             <span className="rpg-balance" aria-label={`Your balance ${mine.coins}`}>
-              You have {formatCoins(mine.coins)}
+              You have <Coins value={mine.coins} />
             </span>
           )}
         </p>
+        <div key={`${game.phase}-${game.match}`} className="rpg-stage">
         {game.phase === "countdown" && <Countdown n={game.timeLeft} />}
         {game.phase === "select" && (
           <>
-            <Select game={game} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={sending} giftTo={giftTo} setGiftTo={setGiftTo} />
-            <ItemShop game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />
+            <Select game={game} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={busy} giftTo={giftTo} setGiftTo={setGiftTo} />
+            <ItemShop game={game} me={me} nameOf={nameOf} send={send} sending={busy} priv={priv} />
           </>
         )}
         {game.phase === "betting" && duel && (
           <>
-            <Betting game={game} duel={duel} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={sending} />
-            <ItemTraps game={game} duel={duel} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />
+            <Betting game={game} duel={duel} me={me} nameOf={nameOf} avatarOf={avatarOf} send={send} sending={busy} />
+            <ItemTraps game={game} duel={duel} me={me} nameOf={nameOf} send={send} sending={busy} priv={priv} />
           </>
         )}
-        {game.phase === "bomb" && <BombPhase game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />}
-        {game.phase === "nukeVote" && <NukeVotePhase game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />}
-        {game.phase === "nukeDuel" && <NukeDuelPhase game={game} me={me} nameOf={nameOf} send={send} sending={sending} priv={priv} />}
+        {game.phase === "bomb" && <BombPhase game={game} me={me} nameOf={nameOf} send={send} sending={busy} priv={priv} />}
+        {game.phase === "nukeVote" && <NukeVotePhase game={game} me={me} nameOf={nameOf} send={send} sending={busy} priv={priv} />}
+        {game.phase === "nukeDuel" && <NukeDuelPhase game={game} me={me} nameOf={nameOf} send={send} sending={busy} priv={priv} />}
         {game.phase === "duel" && duel && (
           <Duel
             game={game}
@@ -95,7 +99,7 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostP
             me={me}
             nameOf={nameOf}
             myPick={myPick}
-            sending={sending}
+            sending={busy}
             onPick={(choice) => {
               setPicked({ key: pickKey, choice });
               void send({ type: "pick", choice });
@@ -104,6 +108,7 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostP
         )}
         {game.phase === "results" && <Results game={game} me={me} nameOf={nameOf} />}
         {game.phase === "over" && <Over game={game} me={me} avatarOf={avatarOf} />}
+        </div>
         {!inGame && game.phase !== "over" && <p className="field-hint">You are watching. You are no longer in this game.</p>}
         {problem && (
           <p className="field-hint rpg-problem" role="alert">
@@ -130,7 +135,7 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostP
                       {game.itemsOn && !p.removed && (game.itemCounts[p.id] ?? 0) > 0 ? `${role ? " · " : ""}${game.itemCounts[p.id]} item${game.itemCounts[p.id] === 1 ? "" : "s"}` : ""}
                     </span>
                   </span>
-                  <strong className="rpg-money">{formatCoins(p.coins)}</strong>
+                  <strong className="rpg-money"><Coins value={p.coins} /></strong>
                 </li>
               );
             })}
@@ -169,7 +174,9 @@ function Timer({ seconds, label = "Time left" }: { seconds: number | null; label
   if (seconds === null) return <span className="rpg-timer">…</span>;
   return (
     <span className={`rpg-timer${seconds <= 5 ? " is-low" : ""}`} role="timer" aria-label={`${label}: ${seconds} seconds`}>
-      {seconds}s
+      <span key={seconds <= 5 ? seconds : "n"} className="rpg-timer-n">
+        {seconds}s
+      </span>
     </span>
   );
 }
@@ -335,7 +342,7 @@ function Betting({ game, duel, me, nameOf, avatarOf, send, sending }: { game: Rp
       <Versus duel={duel} me={me} nameOf={nameOf} avatarOf={avatarOf} />
       <p className="rpg-pool" aria-label={`Prize pool ${duel.pool}`}>
         <span className="meta">Prize pool</span>
-        <strong>{formatCoins(duel.pool)}</strong>
+        <strong><Coins value={duel.pool} /></strong>
       </p>
       {myBet ? (
         <p className="rpg-locked">
@@ -404,6 +411,7 @@ function Duel({
   const duelist = me === duel.challenger || me === duel.challengee;
   const locked = duel.picked.includes(me) || !!myPick;
   const showing = duel.overlay > 0 && duel.last;
+  const overlay = useLinger(showing ? duel.last : null);
   return (
     <div className="rpg-phase rpg-duel">
       <div className="rpg-head">
@@ -442,34 +450,36 @@ function Duel({
           </button>
         ))}
       </div>
-      {duelist && locked && !showing && <p className="rpg-wait">Choice locked. Waiting for your opponent…</p>}
-      {!duelist && !showing && (
-        <p className="meta">
-          {duel.picked.length === 0 ? "Nobody has picked yet." : `${duel.picked.length} of 2 locked in.`}
-        </p>
-      )}
-      {showing && duel.last && <RoundOverlay duel={duel} me={me} nameOf={nameOf} />}
+      <div className="rpg-statusline">
+        {duelist && locked && !showing && <p className="rpg-wait">Choice locked. Waiting for your opponent…</p>}
+        {duelist && !locked && !showing && <p className="meta">Pick before the clock runs out.</p>}
+        {!duelist && !showing && (
+          <p className="meta">
+            {duel.picked.length === 0 ? "Nobody has picked yet." : `${duel.picked.length} of 2 locked in.`}
+          </p>
+        )}
+      </div>
+      {overlay.value && <RoundOverlay duel={duel} last={overlay.value} leaving={overlay.leaving} me={me} nameOf={nameOf} />}
     </div>
   );
 }
 
-function RoundOverlay({ duel, me, nameOf }: { duel: RpgOnlineDuel; me: string; nameOf: (id: string) => string }) {
-  const last = duel.last!;
+function RoundOverlay({ duel, last, leaving, me, nameOf }: { duel: RpgOnlineDuel; last: NonNullable<RpgOnlineDuel["last"]>; leaving: boolean; me: string; nameOf: (id: string) => string }) {
   const duelist = me === duel.challenger || me === duel.challengee;
   const tone = last.winner === null ? "tie" : !duelist ? "watch" : last.winner === me ? "win" : "lose";
   const title = last.winner === null ? "TIE!" : !duelist ? `${nameOf(last.winner)} won the round` : last.winner === me ? "ROUND WON!" : "ROUND LOST!";
   const sub = last.reason === "bothMiss" ? "Neither duelist picked in time." : last.reason === "miss" ? "A missed pick loses the round." : last.reason === "same" ? "Same pick. The round is replayed." : "";
   const show = (id: string) => (last.picks[id] ? `${EMOJI[last.picks[id] as Choice]} ${LABEL[last.picks[id] as Choice]}` : "No pick");
   return (
-    <div className={`rpg-overlay is-${tone}`} role="status">
+    <div className={`rpg-overlay is-${tone}${leaving ? " is-leaving" : ""}`} role="status">
       <p className="rpg-overlay-title">{title}</p>
       <div className="rpg-overlay-picks">
-        <span>
+        <span className="is-a">
           <span className="meta">{nameOf(duel.challenger)}</span>
           <strong>{show(duel.challenger)}</strong>
         </span>
         <span className="rpg-vs">VS</span>
-        <span>
+        <span className="is-b">
           <span className="meta">{nameOf(duel.challengee)}</span>
           <strong>{show(duel.challengee)}</strong>
         </span>
@@ -497,7 +507,7 @@ function Results({ game, me, nameOf }: { game: RpgOnline; me: string; nameOf: (i
         {ranked.map((p, i) => {
           const d = r?.delta[p.id] ?? 0;
           return (
-            <li key={p.id} className={p.id === me ? "is-me" : ""}>
+            <li key={p.id} className={p.id === me ? "is-me" : ""} style={{ "--i": i } as React.CSSProperties}>
               <span className="rpg-rank">{i + 1}</span>
               <span className="rpg-grow">
                 {p.name}
@@ -506,7 +516,7 @@ function Results({ game, me, nameOf }: { game: RpgOnline; me: string; nameOf: (i
                 {r?.loser === p.id && <span className="rpg-tag is-lose"> Lost</span>}
               </span>
               {d !== 0 && <span className={d > 0 ? "rpg-up" : "rpg-down"}>{d > 0 ? "+" : "-"}{formatCoins(Math.abs(d))}</span>}
-              <strong className="rpg-money">{formatCoins(p.coins)}</strong>
+              <strong className="rpg-money"><Coins value={p.coins} /></strong>
             </li>
           );
         })}
@@ -526,7 +536,7 @@ function Over({ game, me, avatarOf }: { game: RpgOnline; me: string; avatarOf: (
       {top && <p className="rpg-winner">{top.id === me ? "You finish on top" : `${top.name} finishes on top`} with {formatCoins(top.coins)}</p>}
       <ol className="rpg-results">
         {ranked.map((p, i) => (
-          <li key={p.id} className={`rpg-final-${Math.min(i + 1, 4)}${p.id === me ? " is-me" : ""}`}>
+          <li key={p.id} className={`rpg-final-${Math.min(i + 1, 4)}${p.id === me ? " is-me" : ""}`} style={{ "--i": i } as React.CSSProperties}>
             <span className="rpg-rank">{i + 1}</span>
             <Avatar name={p.name} avatar={avatarOf(p.id)} size={32} />
             <span className="rpg-grow">

@@ -216,3 +216,71 @@
   .rpg-fx-bomb { opacity: 0.35; }
   .rpg-fx-nuke { opacity: 0.2; }
 }
+
+/* ---------- Motion: smooth state changes instead of hard swaps ---------- */
+.rpg-stage { display: grid; gap: 14px; animation: rpg-stage-in 360ms var(--ease) backwards; }
+@keyframes rpg-stage-in { from { opacity: 0; transform: translateY(12px) scale(0.99); } to { opacity: 1; transform: none; } }
+
+/* Lists and cards inside a phase cascade in. */
+.rpg-stage .rpg-targets li, .rpg-stage .rpg-results li, .rpg-stage .rpg-weapon, .rpg-shop li { animation: rpg-item-in 340ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
+.rpg-stage .rpg-targets li:nth-child(2), .rpg-stage .rpg-weapon:nth-child(2), .rpg-shop li:nth-child(2) { --i: 1; }
+.rpg-stage .rpg-targets li:nth-child(3), .rpg-stage .rpg-weapon:nth-child(3), .rpg-shop li:nth-child(3) { --i: 2; }
+.rpg-stage .rpg-targets li:nth-child(4), .rpg-shop li:nth-child(4) { --i: 3; }
+.rpg-stage .rpg-targets li:nth-child(n + 5), .rpg-shop li:nth-child(n + 5) { --i: 4; }
+@keyframes rpg-item-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rpg-gift, .rpg-bet, .rpg-items, .rpg-locked, .rpg-row[role="group"] { animation: rpg-item-in 300ms var(--ease) backwards; }
+.rpg-versus .rpg-side-card.is-a { animation: rpg-slide-l 480ms var(--ease) backwards; }
+.rpg-versus .rpg-side-card.is-b { animation: rpg-slide-r 480ms var(--ease) backwards; }
+.rpg-versus .rpg-vs { animation: rpg-pop-big 420ms 200ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+@keyframes rpg-slide-l { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@keyframes rpg-slide-r { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes rpg-pop-big { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+
+/* Highlights fade between roles instead of snapping. */
+.rpg-players li, .rpg-targets li, .rpg-results li, .rpg-side-card { transition: border-color 300ms var(--ease), background-color 300ms var(--ease), opacity 300ms var(--ease); }
+.rpg-online .btn, .rpg-online .icon-btn { transition: opacity 200ms var(--ease), filter 160ms var(--ease), background-color 160ms var(--ease), transform 120ms var(--ease); }
+
+/* Counting coins flash the direction they moved. */
+.rpg-coins { display: inline-block; font-variant-numeric: tabular-nums; border-radius: 6px; }
+.rpg-coins.is-up { animation: rpg-flash-up 900ms var(--ease) both; }
+.rpg-coins.is-down { animation: rpg-flash-down 900ms var(--ease) both; }
+@keyframes rpg-flash-up { 0% { color: var(--rpg-green-ink); transform: scale(1.12); } 60% { color: var(--rpg-green-ink); } 100% { transform: none; } }
+@keyframes rpg-flash-down { 0% { color: var(--rpg-red-ink); transform: scale(0.94); } 60% { color: var(--rpg-red-ink); } 100% { transform: none; } }
+
+/* Timer: steady until the last five seconds, then each second pops. */
+.rpg-timer { transition: color 300ms var(--ease), border-color 300ms var(--ease), background-color 300ms var(--ease); }
+.rpg-timer-n { display: inline-block; }
+.rpg-timer.is-low { background: color-mix(in oklab, var(--rpg-red) 10%, var(--surface-2)); }
+.rpg-timer.is-low .rpg-timer-n { animation: rpg-tick 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes rpg-tick { from { transform: scale(1.35); } to { transform: none; } }
+
+/* Duel. */
+.rpg-statusline { min-height: 24px; display: grid; place-items: center; }
+.rpg-statusline > * { animation: fade-in 240ms var(--ease) backwards; }
+.rpg-dots span { transition: background-color 300ms var(--ease), border-color 300ms var(--ease), box-shadow 300ms var(--ease); }
+.rpg-dots span.is-on { animation: rpg-dot 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes rpg-dot { 0% { transform: scale(0.3); } 60% { transform: scale(1.4); } 100% { transform: none; } }
+.rpg-weapon:active:not(:disabled) { transform: translateY(-2px) scale(0.97); transition-duration: 80ms; }
+.rpg-weapon.is-picked { animation: rpg-picked 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both; box-shadow: 0 10px 28px color-mix(in oklab, var(--game) 35%, transparent); }
+@keyframes rpg-picked { 0% { transform: none; } 50% { transform: translateY(-14px) scale(1.08); } 100% { transform: translateY(-10px) scale(1.04); } }
+.rpg-weapon .rpg-emoji { transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.rpg-weapon:hover:not(:disabled) .rpg-emoji { transform: rotate(-8deg) scale(1.1); }
+.rpg-overlay-title { animation: rpg-pop-big 420ms 80ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.rpg-overlay-picks .is-a { animation: rpg-slide-l 380ms 140ms var(--ease) both; }
+.rpg-overlay-picks .is-b { animation: rpg-slide-r 380ms 140ms var(--ease) both; }
+.rpg-overlay.is-leaving { animation: rpg-overlay-out 220ms var(--ease) both; pointer-events: none; }
+@keyframes rpg-overlay-out { to { opacity: 0; transform: scale(0.97); } }
+.rpg-pool strong { display: inline-block; }
+
+/* Feed lines slide in from the top without nudging the rest. */
+.rpg-feed li { animation: rpg-feed-in 320ms var(--ease) backwards; }
+@keyframes rpg-feed-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+
+/* Item phases and banner exit. */
+.rpg-wire { transition: transform 160ms var(--ease), filter 160ms var(--ease), opacity 200ms var(--ease); }
+.rpg-wire:hover:not(:disabled) { transform: translateY(-3px); filter: brightness(1.1); }
+.rpg-wire:active:not(:disabled) { transform: scale(0.96); }
+.rpg-fx-bomb { animation: fade-in 300ms var(--ease) both, rpg-red-pulse 0.9s 300ms ease-in-out infinite; }
+.rpg-fx-nuke { animation: fade-in 300ms var(--ease) both, rpg-flicker 0.7s 300ms steps(2, end) infinite; }
+.rpg-banner.is-leaving { animation: rpg-banner-out 260ms var(--ease) both; }
+@keyframes rpg-banner-out { to { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.97); } }
