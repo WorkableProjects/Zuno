@@ -1,6 +1,6 @@
 import { flushSync } from "react-dom";
 
-export type NavDirection = "forward" | "back" | "up" | "down";
+export type NavDirection = "forward" | "back" | "up" | "down" | "theme";
 
 type ViewTransition = { finished: Promise<void>; skipTransition: () => void };
 type ViewTransitionDoc = Document & { startViewTransition?: (cb: () => void) => ViewTransition };
@@ -12,9 +12,24 @@ const MORPH = "zuno-morph";
 
 // The control the person last pressed, so a morph starts from the card they actually chose.
 let lastPressed: Element | null = null;
+let lastPoint: { x: number; y: number } | null = null;
 if (typeof window !== "undefined") {
-  window.addEventListener("pointerdown", (e) => (lastPressed = e.target as Element), { capture: true, passive: true });
-  window.addEventListener("keydown", () => (lastPressed = document.activeElement), { capture: true, passive: true });
+  window.addEventListener(
+    "pointerdown",
+    (e) => {
+      lastPressed = e.target as Element;
+      lastPoint = { x: e.clientX, y: e.clientY };
+    },
+    { capture: true, passive: true },
+  );
+  window.addEventListener(
+    "keydown",
+    () => {
+      lastPressed = document.activeElement;
+      lastPoint = null;
+    },
+    { capture: true, passive: true },
+  );
 }
 
 function morphTarget(key: string): HTMLElement | null {
@@ -69,6 +84,14 @@ export function withScreenTransition(direction: NavDirection, update: () => void
   const id = ++generation;
   root.dataset.nav = direction;
   root.dataset.vt = "";
+  if (direction === "theme") {
+    // The wipe grows from the press point, or from the focused control when using the keyboard.
+    const r = lastPressed?.getBoundingClientRect();
+    const x = lastPoint?.x ?? (r ? r.left + r.width / 2 : window.innerWidth / 2);
+    const y = lastPoint?.y ?? (r ? r.top + r.height / 2 : window.innerHeight / 2);
+    root.style.setProperty("--wipe-x", `${Math.round(x)}px`);
+    root.style.setProperty("--wipe-y", `${Math.round(y)}px`);
+  }
 
   const from = options.morph ? morphTarget(options.morph) : null;
   if (from) from.style.viewTransitionName = MORPH;

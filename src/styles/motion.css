@@ -139,11 +139,14 @@ html[data-morphing]::view-transition-old(zuno-stage) { animation-duration: 160ms
 html[data-nav="theme"]::view-transition-old(root),
 html[data-nav="theme"]::view-transition-old(zuno-stage),
 html[data-nav="theme"]::view-transition-old(zuno-side),
-html[data-nav="theme"]::view-transition-old(zuno-backdrop) { animation: none; }
+html[data-nav="theme"]::view-transition-old(zuno-backdrop),
+html[data-nav="theme"]::view-transition-old(zuno-corner) { animation: none; }
 html[data-nav="theme"]::view-transition-new(root),
 html[data-nav="theme"]::view-transition-new(zuno-stage),
 html[data-nav="theme"]::view-transition-new(zuno-side),
-html[data-nav="theme"]::view-transition-new(zuno-backdrop) { animation: vt-wipe 620ms var(--ease-out-expo) both; }
+html[data-nav="theme"]::view-transition-new(zuno-backdrop),
+html[data-nav="theme"]::view-transition-new(zuno-corner) { animation: vt-wipe 760ms cubic-bezier(0.65, 0, 0.35, 1) both; }
+html[data-nav="theme"]::view-transition-group(*) { animation: none; }
 @keyframes vt-wipe { from { clip-path: circle(0 at var(--wipe-x, 50%) var(--wipe-y, 50%)); } to { clip-path: circle(150vmax at var(--wipe-x, 50%) var(--wipe-y, 50%)); } }
 
 /* A page that mounts during a screen transition skips its own fade-in: the transition is the entrance.

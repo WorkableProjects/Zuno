@@ -33,23 +33,26 @@ button.ru-pill:active:not(:disabled),
 button.ru-pill:focus-visible { outline: 3px solid var(--game, var(--accent)); outline-offset: 2px; }
 
 /* ---------- Turn change ---------- */
-.ru-turn { animation: ru-turn-in var(--t-slow) var(--ease) both, ru-ring 900ms var(--ease) 120ms 1 both; }
+.ru-turn { animation: ru-turn-in 560ms var(--ease-pop) both, ru-ring 1100ms var(--ease) 160ms 1 both; }
 @keyframes ru-turn-in {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: translateY(-14px) scale(0.9); filter: blur(4px); }
+  55% { opacity: 1; filter: none; }
   to { opacity: 1; transform: none; }
 }
 @keyframes ru-ring {
   0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--game, var(--accent)) 45%, transparent); }
-  100% { box-shadow: 0 0 0 10px color-mix(in oklab, var(--game, var(--accent)) 0%, transparent); }
+  100% { box-shadow: 0 0 0 18px color-mix(in oklab, var(--game, var(--accent)) 0%, transparent); }
 }
 
 /* ---------- Cards: deal-in and flip (stagger with --i) ---------- */
-.ru-deal { animation: ru-deal-in var(--t-slow) var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+.ru-deal { animation: ru-deal-in 560ms var(--ease-pop) backwards; animation-delay: calc(var(--i, 0) * 80ms); }
 @keyframes ru-deal-in {
-  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  /* Cards arc in from above the table with a little spin. */
+  from { opacity: 0; transform: translate(-30px, -50px) rotate(-8deg) scale(0.85); }
+  50% { opacity: 1; }
   to { opacity: 1; transform: none; }
 }
-.ru-flip { animation: ru-flip-in 420ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 90ms); transform-origin: 50% 50%; backface-visibility: hidden; }
+.ru-flip { animation: ru-flip-in 620ms var(--ease-pop) backwards; animation-delay: calc(var(--i, 0) * 90ms); transform-origin: 50% 50%; backface-visibility: hidden; }
 @keyframes ru-flip-in {
   from { opacity: 0; transform: perspective(900px) rotateY(-90deg); }
   60% { opacity: 1; }
@@ -72,17 +75,17 @@ button.ru-pill:focus-visible { outline: 3px solid var(--game, var(--accent)); ou
 }
 
 /* ---------- Answer / result reveal ---------- */
-.ru-reveal { animation: ru-reveal-in var(--t-slow) var(--ease) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
+.ru-reveal { animation: ru-reveal-in 560ms var(--ease-out-expo) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
 @keyframes ru-reveal-in {
-  from { opacity: 0; filter: blur(6px); transform: translateY(8px); }
+  from { opacity: 0; filter: blur(10px); transform: translateY(12px) scale(0.94); letter-spacing: 0.04em; }
   to { opacity: 1; filter: none; transform: none; }
 }
 
 /* ---------- Winner ---------- */
-.ru-win { animation: ru-win-pop 520ms var(--ease) both; }
+.ru-win { animation: ru-win-pop 720ms var(--ease-pop) both; }
 @keyframes ru-win-pop {
   0% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
-  45% { transform: scale(1.04); box-shadow: 0 0 28px 2px color-mix(in oklab, var(--game, var(--accent)) 35%, transparent); }
+  45% { transform: scale(1.07) rotate(-0.6deg); box-shadow: 0 0 28px 2px color-mix(in oklab, var(--game, var(--accent)) 35%, transparent); }
   100% { transform: scale(1); box-shadow: 0 0 18px 0 color-mix(in oklab, var(--game, var(--accent)) 18%, transparent); }
 }
 

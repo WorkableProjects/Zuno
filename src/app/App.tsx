@@ -182,12 +182,18 @@ export function App() {
 
   const changeTheme = useCallback((next: Theme) => {
     const root = document.documentElement;
-    root.classList.add("theme-shift");
-    root.dataset.theme = next;
+    if (root.dataset.theme === next) return;
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "light" ? "#F2F4F8" : "#080B12");
-    window.setTimeout(() => root.classList.remove("theme-shift"), 400);
-    setTheme(next);
     saveTheme(next);
+    // A circular wipe from the toggle; the colour cross-fade remains for browsers without view transitions.
+    if (!("startViewTransition" in document)) {
+      root.classList.add("theme-shift");
+      window.setTimeout(() => root.classList.remove("theme-shift"), 400);
+    }
+    withScreenTransition("theme", () => {
+      root.dataset.theme = next;
+      setTheme(next);
+    });
   }, []);
 
   useEffect(() => {
