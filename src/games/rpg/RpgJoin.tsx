@@ -44,7 +44,9 @@ export function RpgJoin({ code: linkCode, name: givenName, onExit }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEscape(onExit);
-  useRegisterRoom(joined ? `rpg/${joined}` : null, (resume?.name ?? name).trim() || "Player");
+  // A kicked player gives up the room's chat identity.
+  const removed = joined && lobby && !(me in lobby.players);
+  useRegisterRoom(joined && !removed ? `rpg/${joined}` : null, (resume?.name ?? name).trim() || "Player");
 
   useEffect(() => {
     if (!joined) return;
@@ -102,7 +104,6 @@ export function RpgJoin({ code: linkCode, name: givenName, onExit }: Props) {
     }
   }, [joined, me, phase, seatedNow]);
 
-  const removed = joined && lobby && !(me in lobby.players);
   const playing = joined && lobby && !removed && lobby.phase === "playing" && lobby.game;
   const players = lobby ? orderedPlayers(lobby) : [];
   const mine = lobby?.players[me];

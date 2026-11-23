@@ -16,15 +16,28 @@ export const CHAT_FEED_MS = 8000;
 
 export type ChatMessage = { key: string; n: string; t: string; at: number; own: boolean };
 
+/**
+ * Takes whole code points while the UTF-16 length stays within `max` units,
+ * so a surrogate pair is never split. Limits are counted in UTF-16 units.
+ */
+function clampCodePoints(s: string, max: number): string {
+  let out = "";
+  for (const ch of Array.from(s)) {
+    if (out.length + ch.length > max) break;
+    out += ch;
+  }
+  return out;
+}
+
 /** Trims, drops control characters and clamps to the length limit. */
 export function sanitizeChatText(raw: string): string {
   // eslint-disable-next-line no-control-regex
-  return raw.replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, CHAT_MAX);
+  return clampCodePoints(raw.replace(/[\u0000-\u001f\u007f]+/g, " ").trim(), CHAT_MAX).trim();
 }
 
 export const isValidChatText = (t: unknown): t is string => typeof t === "string" && t.length >= 1 && t.length <= CHAT_MAX && t === t.trim();
 
-export const sanitizeChatName = (raw: string): string => raw.replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, CHAT_NAME_MAX) || "Player";
+export const sanitizeChatName = (raw: string): string => clampCodePoints(raw.replace(/[\u0000-\u001f\u007f]+/g, " ").trim(), CHAT_NAME_MAX).trim() || "Player";
 
 /** Pure cooldown check: true when enough time has passed since the last send. */
 export function chatCooldownReady(lastAt: number, now: number, ms = CHAT_COOLDOWN_MS): boolean {
@@ -73,7 +86,7 @@ export function useChat(room: Room | null, panelOpen: boolean) {
     void backend()
       .then((b) => {
         if (!b || cancelled) return;
-        const { ref, query, orderByKey, limitToLast, onChildAdded, onValue } = b.db;
+        const { ref, query, orderByKey, limitToLast, onChildAdded, onChildRemoved, onValue } = b.db;
         const q = query(ref(b.d, `${path}/chat`), orderByKey(), limitToLast(CHAT_HISTORY));
         let ready = false;
         const unChild = onChildAdded(
@@ -95,9 +108,11 @@ export function useChat(room: Room | null, panelOpen: boolean) {
           },
           () => undefined,
         );
+        const unRemoved = onChildRemoved(q, (snap) => setMessages((p) => p.filter((m) => m.key !== snap.key)));
         const unValue = onValue(q, () => void (ready = true), () => undefined, { onlyOnce: true });
         off = () => {
           unChild();
+          unRemoved();
           unValue();
         };
       })
@@ -118,7 +133,10 @@ export function useChat(room: Room | null, panelOpen: boolean) {
     last.current = now;
     try {
       const b = await backend();
-      if (!b) return "error";
+      if (!b) {
+        last.current = -Infinity;
+        return "error";
+      }
       const { ref, push, set, serverTimestamp } = b.db;
       const item = push(ref(b.d, `${r.path}/chat`));
       // Mark as ours before the write so the optimistic local event is recognised.
@@ -126,6 +144,8 @@ export function useChat(room: Room | null, panelOpen: boolean) {
       await set(item, { n: sanitizeChatName(r.name), t: text, at: serverTimestamp() });
       return "ok";
     } catch {
+      // A failed write should not hold the cooldown, so a retry goes straight through.
+      last.current = -Infinity;
       return "error";
     }
   }, []);

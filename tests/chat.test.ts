@@ -24,6 +24,25 @@ describe("chat helpers", () => {
     expect(sanitizeChatName("n".repeat(40))).toHaveLength(CHAT_NAME_MAX);
   });
 
+  it("never splits a surrogate pair when clamping", () => {
+    const loneSurrogate = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+    // Each emoji is two UTF-16 units. 199 units plus one emoji would be 201, so the emoji is dropped.
+    const text = sanitizeChatText("a".repeat(199) + "😀");
+    expect(text).toBe("a".repeat(199));
+    expect(text).toHaveLength(199);
+    expect(loneSurrogate.test(text)).toBe(false);
+
+    const longText = sanitizeChatText("😀".repeat(150));
+    expect(longText).toBe("😀".repeat(100));
+    expect(longText).toHaveLength(CHAT_MAX);
+    expect(loneSurrogate.test(longText)).toBe(false);
+
+    const name = sanitizeChatName("😀".repeat(20));
+    expect(name).toBe("😀".repeat(12));
+    expect(name).toHaveLength(CHAT_NAME_MAX);
+    expect(loneSurrogate.test(name)).toBe(false);
+  });
+
   it("drops malformed database messages", () => {
     expect(parseChatMessage("k", { n: "A", t: "hello", at: 5 })).toEqual({ key: "k", n: "A", t: "hello", at: 5 });
     for (const bad of [null, "x", {}, { n: "", t: "x", at: 1 }, { n: "A", t: "", at: 1 }, { n: "A", t: "x".repeat(CHAT_MAX + 1), at: 1 }, { n: "A".repeat(25), t: "x", at: 1 }, { n: 1, t: "x" }]) {

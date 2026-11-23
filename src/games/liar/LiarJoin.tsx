@@ -51,7 +51,9 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEscape(onExit);
-  useRegisterRoom(joined ? `liar/${joined}` : null, (resume?.name ?? name).trim() || "Player");
+  // A kicked player gives up the room's chat identity.
+  const removed = joined && lobby && !(me in lobby.players);
+  useRegisterRoom(joined && !removed ? `liar/${joined}` : null, (resume?.name ?? name).trim() || "Player");
 
   useEffect(() => {
     if (!joined) return;
@@ -100,7 +102,6 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const removed = joined && lobby && !(me in lobby.players);
   const playing =
     joined && lobby && !removed && lobby.phase === "playing" && lobby.game;
 

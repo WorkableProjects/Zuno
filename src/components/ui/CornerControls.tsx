@@ -36,9 +36,14 @@ export function CornerControls() {
   useSoundboardListener();
   const [panel, setPanel] = useState<Panel | null>(null);
   const [pinned, setPinned] = useState(false);
+  // Kept here, not in ChatPanel, so an unsent draft survives closing the chat.
+  const [draft, setDraft] = useState("");
   const active: Panel | null = panel === "chat" && !room ? null : panel;
   const chatOpen = active === "chat";
   const { messages, feed, unread, send, dismiss } = useChat(room, chatOpen);
+  useEffect(() => {
+    if (!room) setPanel((p) => (p === "chat" ? null : p));
+  }, [room]);
   const root = useRef<HTMLDivElement>(null);
   const buttons = useRef<Partial<Record<Panel, HTMLButtonElement | null>>>({});
   const showBadge = !!room && !chatOpen && unread > 0;
@@ -147,7 +152,7 @@ export function CornerControls() {
               max={100}
               step={1}
               value={muted ? 0 : percent}
-              aria-label="Music volume"
+              aria-label="Volume"
               aria-valuetext={silent ? "Off" : `${percent} percent`}
               style={{ "--level": `${muted ? 0 : percent}%` } as React.CSSProperties}
               onChange={(e) => setVolume(Number(e.target.value) / 100)}
@@ -183,7 +188,7 @@ export function CornerControls() {
           </div>
         )}
 
-        {chatOpen && <ChatPanel messages={messages} send={send} />}
+        {chatOpen && <ChatPanel messages={messages} send={send} value={draft} onChange={setDraft} />}
       </div>
 
       {room && !chatOpen && feed.length > 0 && (
@@ -208,8 +213,17 @@ export function CornerControls() {
   );
 }
 
-function ChatPanel({ messages, send }: { messages: ReturnType<typeof useChat>["messages"]; send: ReturnType<typeof useChat>["send"] }) {
-  const [text, setText] = useState("");
+function ChatPanel({
+  messages,
+  send,
+  value,
+  onChange,
+}: {
+  messages: ReturnType<typeof useChat>["messages"];
+  send: ReturnType<typeof useChat>["send"];
+  value: string;
+  onChange: (text: string) => void;
+}) {
   const [note, setNote] = useState("");
   const list = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -219,10 +233,10 @@ function ChatPanel({ messages, send }: { messages: ReturnType<typeof useChat>["m
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
   const submit = async () => {
-    if (!text.trim()) return;
-    const r = await send(text);
+    if (!value.trim()) return;
+    const r = await send(value);
     if (r === "ok") {
-      setText("");
+      onChange("");
       setNote("");
     } else if (r === "cooldown") setNote("One message per second.");
     else if (r === "error") setNote("Could not send. Try again.");
@@ -249,24 +263,24 @@ function ChatPanel({ messages, send }: { messages: ReturnType<typeof useChat>["m
         <input
           ref={input}
           className="chat-input"
-          value={text}
+          value={value}
           maxLength={CHAT_MAX}
           autoComplete="off"
           placeholder="Message"
           aria-label="Message"
           onChange={(e) => {
-            setText(e.target.value);
+            onChange(e.target.value);
             setNote("");
           }}
         />
-        <button type="submit" className="icon-btn chat-send" aria-label="Send message" title="Send" disabled={!text.trim()}>
+        <button type="submit" className="icon-btn chat-send" aria-label="Send message" title="Send" disabled={!value.trim()}>
           <Send size={16} strokeWidth={1.5} />
         </button>
       </form>
-      {(note || text.length >= CHAT_MAX - 40) && (
+      {(note || value.length >= CHAT_MAX - 40) && (
         <div className="chat-foot" aria-live="polite">
           <span className="chat-note">{note}</span>
-          {text.length >= CHAT_MAX - 40 && <span className="chat-count">{text.length}/{CHAT_MAX}</span>}
+          {value.length >= CHAT_MAX - 40 && <span className="chat-count">{value.length}/{CHAT_MAX}</span>}
         </div>
       )}
     </div>
