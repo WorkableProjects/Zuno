@@ -65,33 +65,6 @@
 @keyframes bg-sweep {
   to { transform: rotate(360deg); }
 }
-/* Restrained PS5-style glitter: a lighter-gray speckle drifting on its own, about 10% visible. */
-.backdrop-glitter {
-  position: absolute;
-  inset: -64px;
-  opacity: 0.1;
-  pointer-events: none;
-  background-image:
-    radial-gradient(1.4px 1.4px at 12% 18%, #c9ced6 50%, transparent 52%),
-    radial-gradient(1px 1px at 38% 62%, #c9ced6 50%, transparent 52%),
-    radial-gradient(1.6px 1.6px at 66% 28%, #c9ced6 50%, transparent 52%),
-    radial-gradient(1px 1px at 84% 80%, #c9ced6 50%, transparent 52%),
-    radial-gradient(1.2px 1.2px at 52% 90%, #c9ced6 50%, transparent 52%);
-  background-size: 220px 220px;
-  animation: glitter-drift 60s linear infinite, glitter-shimmer 5s ease-in-out infinite alternate;
-}
-.backdrop-glitter.is-slow {
-  background-size: 340px 340px;
-  opacity: 0.08;
-  animation: glitter-drift 110s linear infinite reverse, glitter-shimmer 8s ease-in-out -3s infinite alternate;
-}
-@keyframes glitter-drift {
-  to { transform: translate3d(220px, 140px, 0); }
-}
-@keyframes glitter-shimmer {
-  from { filter: brightness(0.7); }
-  to { filter: brightness(1.5); }
-}
 .backdrop-grain {
   position: absolute;
   inset: 0;
@@ -151,12 +124,8 @@
     opacity: 1;
   }
   .bg-parallax,
-  .backdrop-drift,
-  .backdrop-glitter {
+  .backdrop-drift {
     animation: none !important;
-  }
-  .backdrop-glitter {
-    opacity: 0.06;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -172,6 +141,13 @@
 :root[data-motion="calm"] .g3d-space,
 :root[data-motion="calm"] .p3d-rig {
   animation: none !important;
+}
+/* Focus-heavy screens (setup, play, lobbies, builder, import) run Calm by
+   default: the 3D turning and orbits are reserved for the launcher. */
+:root[data-scene="focus"] .g3d-space,
+:root[data-scene="focus"] .p3d-rig,
+:root[data-scene="focus"] .g3d .light {
+  animation-play-state: paused !important;
 }
 :root[data-motion="off"] .backdrop *,
 :root[data-motion="off"] .backdrop *::before {

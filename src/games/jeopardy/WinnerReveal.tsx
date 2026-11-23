@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Crown, RotateCcw, Trophy } from "lucide-react";
 import { standings, type Team } from "./jeopardyEngine";
+import { playRise } from "../../lib/sfx";
 import "./winnerReveal.css";
 
 const formatScore = (n: number) => n.toLocaleString("en-US");
@@ -17,31 +18,6 @@ function prefersReducedMotion(): boolean {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch {
     return false;
-  }
-}
-
-/** Subtle rising tone while the drum roll builds. Never throws. */
-function playRise(ms: number): void {
-  try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const t = ctx.currentTime;
-    const d = ms / 1000;
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(180, t);
-    osc.frequency.exponentialRampToValueAtTime(620, t + d);
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.05, t + d * 0.9);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.15);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t + d + 0.2);
-    osc.onended = () => void ctx.close().catch(() => {});
-  } catch {
-    /* audio is optional */
   }
 }
 

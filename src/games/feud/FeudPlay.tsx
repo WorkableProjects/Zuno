@@ -164,16 +164,16 @@ export function FeudPlay({ me, game, priv, send, busy, host, avatarOf }: PlayPro
           </div>
         ) : game.phase === "over" ? (
           <div className="rpg-stage rpg-phase">
-            <h2 className="rpg-h">
+            <h2 className="rpg-h ru-reveal">
               <Trophy size={24} strokeWidth={1.5} /> {game.endedEarly ? "Game ended" : "Game over"}
             </h2>
-            <Standings players={game.players.map((p) => ({ id: p.id, name: p.name, score: p.score, removed: p.removed }))} me={me} avatarOf={avatarOf} />
+            <Standings final players={game.players.map((p) => ({ id: p.id, name: p.name, score: p.score, removed: p.removed }))} me={me} avatarOf={avatarOf} />
           </div>
         ) : (
           <div key={`round-${game.round}`} className="rpg-stage rpg-phase">
             <div className="rpg-head">
               <div>
-                <p className="rpg-pill feud-pill">
+                <p className="rpg-pill ru-pill feud-pill ru-turn">
                   Round {game.round} of {game.rounds} · <Crown size={12} strokeWidth={2} /> {isRoundHost ? "You're hosting" : `${nameOf(game.host)} hosts`}
                 </p>
                 <h2 className="rpg-h feud-prompt">{game.prompt}</h2>
@@ -182,7 +182,7 @@ export function FeudPlay({ me, game, priv, send, busy, host, avatarOf }: PlayPro
             </div>
             <div className="feud-strikes" aria-label={`${game.strikes} of ${game.maxStrikes} strikes`}>
               {Array.from({ length: game.maxStrikes }, (_, i) => (
-                <span key={i} className={`feud-x${i < game.strikes ? " is-on" : ""}`}>
+                <span key={i} className={`feud-x ru-badge${i < game.strikes ? " is-on" : ""}`}>
                   <X size={22} strokeWidth={3} />
                 </span>
               ))}
@@ -207,7 +207,7 @@ export function FeudPlay({ me, game, priv, send, busy, host, avatarOf }: PlayPro
             )}
 
             {game.phase === "judge" && game.pending && (
-              <div className="feud-judge card">
+              <div className="feud-judge card ru-reveal">
                 <p className="rpg-h">
                   {nameOf(game.pending.by)} guessed "{game.pending.text}"
                 </p>
@@ -241,7 +241,7 @@ export function FeudPlay({ me, game, priv, send, busy, host, avatarOf }: PlayPro
                   </button>
                 </form>
               ) : (
-                <p className="rpg-wait">{isRoundHost ? `${nameOf(game.guesser)} is answering. You'll judge anything the game can't match.` : `${nameOf(game.guesser)} is answering…`}</p>
+                <p key={game.guesser} className="rpg-wait">{isRoundHost ? `${nameOf(game.guesser)} is answering. You'll judge anything the game can't match.` : `${nameOf(game.guesser)} is answering…`}</p>
               ))}
             {game.phase === "roundEnd" && <p className="meta">Next survey soon.</p>}
           </div>

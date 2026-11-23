@@ -1,11 +1,15 @@
 import { Avatar } from "../../components/avatar/AvatarView";
 import type { AvatarSpec } from "../../components/avatar/avatarData";
+import { useSoundOnChange } from "../../lib/useGameSounds";
 import { Coins } from "../rpg/motion";
+import "./party.css";
 
 export function PartyTimer({ seconds, label = "Time left" }: { seconds: number; label?: string }) {
+  const low = seconds <= 5 && seconds > 0;
+  useSoundOnChange(seconds, (a, b) => (b < a && b <= 5 && b > 0 ? "tick" : null));
   return (
-    <span className={`rpg-timer${seconds <= 5 ? " is-low" : ""}`} role="timer" aria-label={`${label}: ${seconds} seconds`}>
-      <span key={seconds <= 5 ? seconds : "n"} className="rpg-timer-n">
+    <span className={`rpg-timer ru-pill${low ? " is-low ru-urgent" : ""}`} role="timer" aria-label={`${label}: ${seconds} seconds`}>
+      <span key={low ? seconds : "n"} className="rpg-timer-n ru-tick">
         {seconds}s
       </span>
     </span>
@@ -46,18 +50,18 @@ export interface StandingRow {
 }
 
 /** Players ranked by score (or kept in seat order), with animated numbers. */
-export function Standings({ players, me, avatarOf, money = false, keepOrder = false }: { players: StandingRow[]; me: string; avatarOf: (id: string) => AvatarSpec | null | undefined; money?: boolean; keepOrder?: boolean }) {
+export function Standings({ players, me, avatarOf, money = false, keepOrder = false, final = false }: { players: StandingRow[]; me: string; avatarOf: (id: string) => AvatarSpec | null | undefined; money?: boolean; keepOrder?: boolean; final?: boolean }) {
   const rows = keepOrder ? players : players.map((p, i) => ({ p, i })).sort((a, b) => b.p.score - a.p.score || a.i - b.i).map((x) => x.p);
   return (
     <ol className="rpg-players party-standings">
       {rows.map((p, i) => (
-        <li key={p.id} className={`${p.removed ? "is-gone" : ""}${p.id === me ? " is-me" : ""}${p.tag ? " is-turn" : ""}`} style={{ "--i": i } as React.CSSProperties}>
+        <li key={p.id} className={`${p.removed ? "is-gone" : ""}${p.id === me ? " is-me" : ""}${p.tag ? " is-turn" : ""}${final ? (i === 0 && p.score > 0 ? " ru-win" : " ru-reveal") : ""}`} style={{ "--i": i } as React.CSSProperties}>
           {!keepOrder && <span className="rpg-rank">{i + 1}</span>}
           <Avatar name={p.name} avatar={avatarOf(p.id) ?? null} size={30} />
           <span className="rpg-grow">
             {p.name}
             {p.id === me && <span className="meta"> · you</span>}
-            {(p.tag || p.removed) && <span className="meta rpg-status">{p.removed ? "Left" : p.tag}</span>}
+            {(p.tag || p.removed) && <span key={p.removed ? "left" : p.tag} className="meta rpg-status ru-reveal">{p.removed ? "Left" : p.tag}</span>}
           </span>
           <strong className="rpg-money">{money ? <Coins value={p.score} /> : <PointsValue value={p.score} />}</strong>
         </li>

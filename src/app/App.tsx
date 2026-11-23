@@ -16,6 +16,7 @@ import { DevicePrompt, StartupIntro } from "../components/intro/Intro";
 import { CornerControls } from "../components/ui/CornerControls";
 import { installHoverSounds, isSoundTheme, setSoundTheme, type SoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
+import { withScreenTransition } from "../lib/screenTransition";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
@@ -138,8 +139,8 @@ export function App() {
   const selected = items.find((i) => i.id === selectedId) ?? items[0];
   const screen = stack[stack.length - 1];
 
-  const push = useCallback((next: Screen) => setStack((s) => [...s, next]), []);
-  const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
+  const push = useCallback((next: Screen) => withScreenTransition("forward", () => setStack((s) => [...s, next])), []);
+  const pop = useCallback(() => withScreenTransition("back", () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s))), []);
   const home = useCallback(() => {
     if (hostedLobby.current) void closeLobby(hostedLobby.current).catch(() => undefined);
     hostedLobby.current = null;
@@ -149,8 +150,10 @@ export function App() {
     hostedRpg.current = null;
     if (hostedParty.current) void closePartyRoom(hostedParty.current.kind, hostedParty.current.code).catch(() => undefined);
     hostedParty.current = null;
-    setLoaded(null);
-    setStack([{ name: "dashboard" }]);
+    withScreenTransition("back", () => {
+      setLoaded(null);
+      setStack([{ name: "dashboard" }]);
+    });
   }, []);
 
   const select = useCallback((id: string) => {
@@ -284,6 +287,12 @@ export function App() {
 
   setSoundTheme(backdropTheme(screen, selected.gameType));
 
+  // The launcher keeps the full 3D backdrop; every other screen is calmer.
+  const focusScene = screen.name !== "dashboard" && screen.name !== "game";
+  useEffect(() => {
+    document.documentElement.dataset.scene = focusScene ? "focus" : "launcher";
+  }, [focusScene]);
+
   /** Asks before leaving a game in progress. */
   const guard = (title: string, text: string, label: string, run: () => void) => () => setPending({ title, text, label, run });
   const exitGame = guard("Leave this game?", "The match in progress ends and scores are lost.", "Leave game", home);
@@ -298,7 +307,7 @@ export function App() {
           accent={screen.name === "game" ? (getEngine(screen.gameType)?.appearance.accentColor ?? selected.backdrop.accent) : selected.backdrop.accent}
           onSection={(next) => {
             setSection(next);
-            if (screen.name !== "dashboard") setStack([{ name: "dashboard" }]);
+            if (screen.name !== "dashboard") withScreenTransition("back", () => setStack([{ name: "dashboard" }]));
           }}
           onSettings={() => setSettingsOpen(true)}
         >

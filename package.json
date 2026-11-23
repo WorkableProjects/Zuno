@@ -11,7 +11,6 @@
     "logo:export": "node scripts/export-logo.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/figtree": "^5.3.0",
     "firebase": "^11.10.0",
     "katex": "^0.16.22",

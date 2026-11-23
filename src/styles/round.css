@@ -1,0 +1,103 @@
+/* Round UI: shared motion and chrome for in-round moments across games.
+   Turn changes, card flips/deals, timer urgency, reveals, winners, and pill chrome.
+   Restrained on purpose: every animation plays once; nothing loops except the
+   last-seconds timer nudge, which is tied to each tick via a React key. */
+
+/* ---------- Chrome: pills, chips, badges ---------- */
+.ru-pill,
+.ru-chip,
+.ru-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  transition: transform var(--t-press) var(--ease), background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.ru-pill { padding: 4px 12px; font-size: 13px; font-weight: 600; }
+.ru-chip { padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; color: var(--text-2); }
+.ru-badge { padding: 2px 10px; font-size: 12px; font-weight: 600; }
+button.ru-pill:hover:not(:disabled),
+.ru-chip:hover:not(:disabled) {
+  border-color: color-mix(in oklab, var(--game, var(--accent)) 50%, var(--hairline));
+  background: color-mix(in oklab, var(--game, var(--accent)) 10%, var(--surface-2));
+}
+button.ru-pill:active:not(:disabled),
+.ru-chip:active:not(:disabled) { transform: scale(0.97); }
+.ru-chip:focus-visible,
+button.ru-pill:focus-visible { outline: 3px solid var(--game, var(--accent)); outline-offset: 2px; }
+
+/* ---------- Turn change ---------- */
+.ru-turn { animation: ru-turn-in var(--t-slow) var(--ease) both, ru-ring 900ms var(--ease) 120ms 1 both; }
+@keyframes ru-turn-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ru-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--game, var(--accent)) 45%, transparent); }
+  100% { box-shadow: 0 0 0 10px color-mix(in oklab, var(--game, var(--accent)) 0%, transparent); }
+}
+
+/* ---------- Cards: deal-in and flip (stagger with --i) ---------- */
+.ru-deal { animation: ru-deal-in var(--t-slow) var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes ru-deal-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.ru-flip { animation: ru-flip-in 420ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 90ms); transform-origin: 50% 50%; backface-visibility: hidden; }
+@keyframes ru-flip-in {
+  from { opacity: 0; transform: perspective(900px) rotateY(-90deg); }
+  60% { opacity: 1; }
+  to { opacity: 1; transform: perspective(900px) rotateY(0); }
+}
+
+/* ---------- Timer urgency (last seconds) ---------- */
+.ru-urgent {
+  color: var(--negative);
+  border-color: color-mix(in oklab, var(--negative) 55%, transparent);
+  background: color-mix(in oklab, var(--negative) 10%, var(--surface-2));
+  transition: color var(--t-med) var(--ease), border-color var(--t-med) var(--ease), background-color var(--t-med) var(--ease);
+}
+.ru-urgent .ru-tick,
+.ru-tick.ru-urgent { animation: ru-pulse 420ms var(--ease) both; display: inline-block; }
+@keyframes ru-pulse {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Answer / result reveal ---------- */
+.ru-reveal { animation: ru-reveal-in var(--t-slow) var(--ease) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes ru-reveal-in {
+  from { opacity: 0; filter: blur(6px); transform: translateY(8px); }
+  to { opacity: 1; filter: none; transform: none; }
+}
+
+/* ---------- Winner ---------- */
+.ru-win { animation: ru-win-pop 520ms var(--ease) both; }
+@keyframes ru-win-pop {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+  45% { transform: scale(1.04); box-shadow: 0 0 28px 2px color-mix(in oklab, var(--game, var(--accent)) 35%, transparent); }
+  100% { transform: scale(1); box-shadow: 0 0 18px 0 color-mix(in oklab, var(--game, var(--accent)) 18%, transparent); }
+}
+
+/* ---------- Reduced motion: opacity only, no travel ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .ru-turn, .ru-deal, .ru-flip, .ru-reveal, .ru-win { animation: ru-fade var(--t-med) linear both; animation-delay: 0ms; }
+  .ru-urgent .ru-tick, .ru-tick.ru-urgent { animation: none; }
+  .ru-pill, .ru-chip, .ru-badge { transition-property: background-color, border-color, color; }
+}
+[data-motion="off"] .ru-turn,
+[data-motion="off"] .ru-deal,
+[data-motion="off"] .ru-flip,
+[data-motion="off"] .ru-reveal,
+[data-motion="off"] .ru-win { animation: ru-fade var(--t-med) linear both; animation-delay: 0ms; }
+[data-motion="off"] .ru-urgent .ru-tick,
+[data-motion="off"] .ru-tick.ru-urgent { animation: none; }
+[data-motion="off"] .ru-chip:active, [data-motion="off"] button.ru-pill:active { transform: none; }
+@keyframes ru-fade { from { opacity: 0; } to { opacity: 1; } }

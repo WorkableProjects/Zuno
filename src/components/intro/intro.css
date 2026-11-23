@@ -8,10 +8,16 @@
   gap: 20px;
   background: var(--bg);
   cursor: pointer;
-  transition: opacity 420ms var(--ease), visibility 0s linear 420ms;
+  transition: opacity var(--t-slow) var(--ease), transform var(--t-slow) var(--ease), visibility 0s linear var(--t-slow);
 }
+/* Return visits: the same beats, compressed into a crisp ~320ms settle. */
+.intro.is-quick .intro-mark { animation-duration: 320ms; }
+.intro.is-quick .intro-line { animation-duration: 320ms; animation-delay: 60ms; }
+.intro.is-quick .intro-prompt { animation-delay: 200ms, 520ms; animation-duration: 240ms, 2.4s; }
+.intro.is-quick .intro-note { animation-delay: 260ms; animation-duration: 240ms; }
 .intro.is-leaving {
   opacity: 0;
+  transform: scale(1.03);
   visibility: hidden;
 }
 .intro-prompt {
@@ -342,7 +348,15 @@ html.intro-playing .dash * { animation-play-state: paused; }
 }
 .chat-feed-item {
   pointer-events: auto;
-  animation: chat-feed-in 420ms cubic-bezier(0.34, 1.4, 0.64, 1) both, chat-feed-out 380ms ease 7600ms forwards;
+  animation: chat-feed-in 420ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+.chat-feed-item.is-leaving {
+  animation: chat-feed-out 320ms var(--ease) forwards;
+  pointer-events: none;
+}
+.chat-feed-item.is-paused .chat-feed-timer {
+  animation-play-state: paused;
+  opacity: 0.45;
 }
 .chat-feed-btn {
   position: relative;
@@ -404,6 +418,7 @@ html.intro-playing .dash * { animation-play-state: paused; }
 }
 @media (prefers-reduced-motion: reduce) {
   .chat-feed-item { animation: none; }
+  .chat-feed-timer { display: none; }
   .corner-stack { transition: none; }
 }
 @media (max-width: 420px) {
@@ -430,3 +445,4 @@ html[data-device="mobile"] .icon-btn { min-height: 44px; }
 /* Jeopardy: use the extra width on desktop, stay compact on mobile. */
 html[data-device="desktop"] .setup { max-width: min(1560px, 100%); }
 html[data-device="mobile"] .setup { max-width: 560px; grid-template-columns: minmax(0, 1fr); gap: 32px; }
+[data-motion="off"] .chat-feed-timer { display: none; }

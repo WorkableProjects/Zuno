@@ -70,7 +70,7 @@ export function DrawPlay({ code, me, game, priv, send, busy, host, avatarOf }: P
     <div className="rpg-online draw-online">
       <section className="card rpg-main draw-main" aria-live="polite">
         <div className="draw-top">
-          <span className="meta">
+          <span key={game.round} className="meta ru-pill ru-turn">
             Round {Math.min(game.round, game.rounds)} of {game.rounds}
           </span>
           <div className="draw-word" aria-label={word ? `The word is ${word}` : game.reveal ? `The word was ${game.reveal}` : `${game.mask.filter((c) => c === "_").length} letters hidden`}>
@@ -92,10 +92,10 @@ export function DrawPlay({ code, me, game, priv, send, busy, host, avatarOf }: P
 
         {game.phase === "over" ? (
           <div className="rpg-stage rpg-phase">
-            <h2 className="rpg-h">
+            <h2 className="rpg-h ru-reveal">
               <Trophy size={24} strokeWidth={1.5} /> {game.endedEarly ? "Game ended" : "Game over"}
             </h2>
-            <Standings players={game.players.map((p) => ({ id: p.id, name: p.name, score: p.score, removed: p.removed }))} me={me} avatarOf={avatarOf} />
+            <Standings final players={game.players.map((p) => ({ id: p.id, name: p.name, score: p.score, removed: p.removed }))} me={me} avatarOf={avatarOf} />
           </div>
         ) : (
           <div className="draw-stage">
@@ -107,26 +107,26 @@ export function DrawPlay({ code, me, game, priv, send, busy, host, avatarOf }: P
                     <p className="rpg-h">Choose a word to draw</p>
                     <div className="draw-choices">
                       {priv.choices.map((w, i) => (
-                        <button key={w} type="button" className="btn btn-primary draw-choice" style={{ "--i": i } as React.CSSProperties} disabled={busy} onClick={() => void send({ type: "pick", index: i })}>
+                        <button key={w} type="button" className="btn btn-primary draw-choice ru-deal" style={{ "--i": i } as React.CSSProperties} disabled={busy} onClick={() => void send({ type: "pick", index: i })}>
                           {w}
                         </button>
                       ))}
                     </div>
                   </>
                 ) : (
-                  <p className="rpg-h">{drawer?.name ?? "Someone"} is choosing a word…</p>
+                  <p className="rpg-h ru-turn">{drawer?.name ?? "Someone"} is choosing a word…</p>
                 )}
               </div>
             )}
             {game.phase === "reveal" && (
               <div className="draw-overlay is-reveal" key={`rev-${game.turnKey}`}>
                 <p className="meta">The word was</p>
-                <p className="draw-reveal">{game.reveal}</p>
+                <p className="draw-reveal ru-reveal">{game.reveal}</p>
                 <ul className="draw-gains">
                   {Object.entries(game.turnPoints)
                     .sort((a, b) => b[1] - a[1])
                     .map(([id, pts], i) => (
-                      <li key={id} style={{ "--i": i } as React.CSSProperties}>
+                      <li key={id} className="ru-reveal" style={{ "--i": i } as React.CSSProperties}>
                         <span>
                           {nameOf(id)}
                           {id === game.drawer ? " (drawer)" : ""}

@@ -270,28 +270,15 @@
   inset: 0;
   background-image: radial-gradient(circle, rgb(255 255 255 / 0.5) 1.2px, transparent 1.6px);
   background-size: 32px 32px;
-  opacity: 0.1;
-  animation: vegas-dots 8s ease-in-out infinite;
+  opacity: 0.06;
+  animation: vegas-dots 20s ease-in-out infinite;
   -webkit-mask-image: linear-gradient(90deg, transparent 20%, #000 70%);
   mask-image: linear-gradient(90deg, transparent 20%, #000 70%);
 }
 @keyframes vegas-dots {
-  0%, 100% { opacity: 0.06; }
-  50% { opacity: 0.2; }
-}
-.vegas-flash {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(60% 60% at 70% 40%, rgb(255 255 255 / 0.55), transparent);
-  opacity: 0;
-  animation: vegas-flash 24s ease-out infinite;
-}
-@keyframes vegas-flash {
-  0%, 94%, 100% { opacity: 0; }
-  95% { opacity: 0.16; }
-  98% { opacity: 0; }
+  0%, 100% { opacity: 0.04; }
+  50% { opacity: 0.08; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .vegas-grid, .vegas-flash { animation: none !important; }
-  .vegas-flash { display: none; }
+  .vegas-grid { animation: none !important; }
 }

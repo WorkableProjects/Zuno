@@ -1,7 +1,42 @@
+@font-face {
+  font-family: "Dutch Display Sans";
+  src: url("/Fonts/Dutch%20Display%20Sans%20v2/static/DutchDisplaySans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dutch Display Sans";
+  src: url("/Fonts/Dutch%20Display%20Sans%20v2/static/DutchDisplaySans-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dutch Display Sans";
+  src: url("/Fonts/Dutch%20Display%20Sans%20v2/static/DutchDisplaySans-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dutch Display Sans";
+  src: url("/Fonts/Dutch%20Display%20Sans%20v2/static/DutchDisplaySans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dutch Display Sans";
+  src: url("/Fonts/Dutch%20Display%20Sans%20v2/static/DutchDisplaySans-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
 /* Design tokens. Spacing sits on a 4px grid. One easing curve, a few durations. */
 :root {
   --font-ui: "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Dutch Display Sans", "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --t-press: 110ms;

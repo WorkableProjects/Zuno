@@ -64,7 +64,6 @@ export function LibTile({ item, active, onSelect, onOpen, index }: { item: RailI
         ) : (
           <TileCover gameType={item.gameType} />
         )}
-        <span className="lib-glow" />
       </span>
       <span className="lib-name">{item.kind === "build" ? "Build a game" : item.title}</span>
     </button>

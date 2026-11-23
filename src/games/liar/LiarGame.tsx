@@ -240,7 +240,7 @@ export function Prep({ name, prompts, onSubmit, direct = false }: { name: string
               Add question
             </button>
             {prompts.slice(0, 3).map((p) => (
-              <button key={p} type="button" className="chip" onClick={() => patch(i, (x) => ({ ...x, questions: x.questions.some((q) => q.trim() === "") ? x.questions.map((q, z) => (q.trim() === "" && z === x.questions.findIndex((y) => y.trim() === "") ? p : q)) : [...x.questions, p] }))}>
+              <button key={p} type="button" className="chip ru-chip" onClick={() => patch(i, (x) => ({ ...x, questions: x.questions.some((q) => q.trim() === "") ? x.questions.map((q, z) => (q.trim() === "" && z === x.questions.findIndex((y) => y.trim() === "") ? p : q)) : [...x.questions, p] }))}>
                 {p}
               </button>
             ))}
@@ -288,14 +288,14 @@ function Statements({ state, mark }: { state: ReturnType<typeof createSession>; 
       {view.statements.map((s, i) => {
         const isLie = view.lieIndex === i;
         return (
-          <li key={i} className={`liar-card card${mark && isLie ? " is-lie" : ""}`}>
+          <li key={i} className={`liar-card card ${mark ? "ru-flip" : "ru-deal"}${mark && isLie ? " is-lie" : ""}`} style={{ "--i": i } as React.CSSProperties}>
             <span className="liar-num">{i + 1}</span>
             <div>
               <p className="liar-text">{s.text}</p>
               <ul className="liar-askable" aria-label={`Questions for statement ${i + 1}`}>
                 {s.questions.map((q, k) => <li key={k}>{q}</li>)}
               </ul>
-              {mark && view.lieIndex !== null && <p className={`liar-badge ${isLie ? "is-lie" : "is-truth"}`}>{isLie ? "The lie" : "True"}</p>}
+              {mark && view.lieIndex !== null && <p className={`liar-badge ru-badge ru-reveal ${isLie ? "is-lie" : "is-truth"}`} style={{ "--i": i + 2 } as React.CSSProperties}>{isLie ? "The lie" : "True"}</p>}
             </div>
           </li>
         );
@@ -328,7 +328,7 @@ function Voting({ state, dispatch }: { state: ReturnType<typeof createSession>; 
       <h2 className="liar-h">Vote for the lie</h2>
       <p className="meta" aria-live="polite">{votesIn(state)} of {list.length} votes in. Votes stay hidden until voting closes.</p>
       {current && !done ? (
-        <div className="card liar-gate" key={current.id}>
+        <div className="card liar-gate ru-turn" key={current.id}>
           <h3 className="liar-h">{current.name}, which statement is the lie?</h3>
           <div className="liar-options" role="group" aria-label="Choose the lie">
             {view.statements.map((s, i) => (
@@ -378,7 +378,7 @@ function Reveal({ state, dispatch }: { state: ReturnType<typeof createSession>; 
   const correct = Object.entries(last.votes).filter(([, v]) => v === last.turn.lieIndex).map(([id]) => byId[id]);
   return (
     <div className="liar-phase">
-      <h2 className="liar-h">The lie was statement {last.turn.lieIndex + 1}</h2>
+      <h2 className="liar-h ru-reveal">The lie was statement {last.turn.lieIndex + 1}</h2>
       <Statements state={state} mark />
       <ul className="liar-tally" aria-label="Vote totals">
         {t.counts.map((n, i) => <li key={i}>Statement {i + 1}: {n} {n === 1 ? "vote" : "votes"}</li>)}
@@ -393,7 +393,7 @@ function Reveal({ state, dispatch }: { state: ReturnType<typeof createSession>; 
         </ul>
       )}
       {state.options.scoring && (
-        <ul className="liar-tally" aria-label="Points this turn" aria-live="polite">
+        <ul className="liar-tally ru-reveal" aria-label="Points this turn" aria-live="polite">
           {(state.scoreLog ?? []).filter((e) => e.round === state.round && e.turnIndex === state.turnIndex).map((e, i) => (
             <li key={i}>{byId[e.playerId]} {e.points > 0 ? "+" : ""}{e.points}: {e.explanation}</li>
           ))}
@@ -418,14 +418,14 @@ function Reveal({ state, dispatch }: { state: ReturnType<typeof createSession>; 
   );
 }
 
-function Scores({ state }: { state: ReturnType<typeof createSession> }) {
+function Scores({ state, final, win }: { state: ReturnType<typeof createSession>; final?: boolean; win?: { id: string }[] }) {
   if (!state.options.scoring) return null;
   return (
     <ul className="liar-scores" aria-label="Scores">
       {activePlayers(state).map((p) => (
-        <li key={p.id} className={`score${storyteller(state)?.id === p.id ? " is-teller" : ""}`}>
+        <li key={p.id} className={`score${storyteller(state)?.id === p.id ? " is-teller" : ""}${final && win?.some((w) => w.id === p.id) ? " ru-win" : ""}`}>
           <span className="score-name">{p.name}</span>
-          <span className="score-value">{state.scores[p.id] ?? 0}</span>
+          <span key={state.scores[p.id] ?? 0} className="score-value ru-reveal">{state.scores[p.id] ?? 0}</span>
         </li>
       ))}
     </ul>
@@ -447,8 +447,8 @@ function Done({ state, onAgain, onExit }: { state: ReturnType<typeof createSessi
           </p>
           {state.options.scoring ? (
             <>
-              <p className="liar-h">{win.length === 0 ? "No points scored." : win.length > 1 ? `It is a tie: ${win.map((p) => p.name).join(" and ")}` : `${win[0].name} wins`}</p>
-              <Scores state={state} />
+              <p className="liar-h ru-reveal">{win.length === 0 ? "No points scored." : win.length > 1 ? `It is a tie: ${win.map((p) => p.name).join(" and ")}` : `${win[0].name} wins`}</p>
+              <Scores state={state} final win={win} />
             </>
           ) : (
             <p className="meta">Casual game: no scores, just a recap.</p>

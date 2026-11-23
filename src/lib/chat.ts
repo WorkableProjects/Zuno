@@ -99,12 +99,8 @@ export function useChat(room: Room | null, panelOpen: boolean) {
             // The first batch is history: only later messages notify.
             if (!ready || msg.own || open.current) return;
             setUnread((u) => u + 1);
+            // Each pop-up times itself out (and pauses while read): see ChatFeedItem.
             setFeed((f) => [...f, msg].slice(-CHAT_FEED_MAX));
-            const id = window.setTimeout(() => {
-              timers.delete(id);
-              setFeed((f) => f.filter((x) => x.key !== msg.key));
-            }, CHAT_FEED_MS);
-            timers.add(id);
           },
           () => undefined,
         );

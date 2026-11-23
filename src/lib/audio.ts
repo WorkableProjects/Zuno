@@ -8,18 +8,17 @@
 export type SoundTheme = "jeopardy" | "headbands" | "liar" | "rpg" | "blackjack" | "drawit" | "feud";
 
 /**
- * Each game's track, in order of preference. A game without its own file yet
- * falls back to the next one, so dropping "Blackjack.mp3" into public/music is
- * all it takes to give Blackjack its own music.
+ * Each game's track. A missing or broken file means silence: a game never
+ * borrows another game's theme.
  */
 const TRACKS: Record<SoundTheme, string[]> = {
   jeopardy: ["ZunoApody (Jpdy).mp3"],
   headbands: ["LoungeAble (Headbands).mp3"],
   liar: ["Liar's Little Clue.mp3"],
-  rpg: ["Rock Paper Gamble.mp3", "LoungeAble (Headbands).mp3"],
-  blackjack: ["Blackjack.mp3", "LoungeAble (Headbands).mp3"],
-  drawit: ["Draw It.mp3", "LoungeAble (Headbands).mp3"],
-  feud: ["Survey Feud.mp3", "ZunoApody (Jpdy).mp3"],
+  rpg: ["Rock Paper Gamble.mp3"],
+  blackjack: ["Blackjack.mp3"],
+  drawit: ["Draw It.mp3"],
+  feud: ["Survey Feud.mp3"],
 };
 
 export const SOUND_THEMES = Object.keys(TRACKS) as SoundTheme[];
@@ -30,15 +29,15 @@ const HOLD_LEVEL = 0.45;
 
 const MUTE_KEY = "zuno.muted";
 const VOLUME_KEY = "zuno.level";
-/** The meter's 0-100% maps onto quieter real gain: 70% on the meter plays at 0.3. */
-const GAIN_AT_FULL = 0.3 / 0.7;
+/** Loudest real gain for music, at 100% on the meter. */
+const MUSIC_MAX = 0.75;
 const DEFAULT_VOLUME = 0.7;
 /** Quick fades used when switching games or nudging the volume. */
 const CROSSFADE_MS = 900;
 /** Gap allowed between tiles before the music counts as left. */
 const LEAVE_GRACE_MS = 1500;
 /** How long the pointer rests on a tile before its music starts. */
-const HOVER_DELAY_MS = 1700;
+const HOVER_DELAY_MS = 700;
 const FADE_IN_MS = 1800;
 const FADE_OUT_MS = 700;
 
@@ -53,7 +52,7 @@ let hoveringTile = false;
 /** Set while a game page holds its music: hovering elsewhere cannot stop it. */
 let held = false;
 let level = 1;
-const gain = () => volume * GAIN_AT_FULL * level;
+const gain = () => perceptualGain(volume) * MUSIC_MAX * level;
 const players = new Map<SoundTheme, HTMLAudioElement | null>();
 const listeners = new Set<() => void>();
 
@@ -72,6 +71,16 @@ function readVolume(): number {
   } catch {
     return DEFAULT_VOLUME;
   }
+}
+
+/**
+ * Maps the 0-1 meter onto amplitude so the slider tracks perceived loudness
+ * (loudness halves every 10 dB): 70% on the meter sounds about 70% as loud as
+ * 100%. Shared by music and sound effects.
+ */
+export function perceptualGain(v: number): number {
+  if (v <= 0) return 0;
+  return Math.pow(Math.min(1, v), 1.66);
 }
 
 export const isMuted = () => muted;

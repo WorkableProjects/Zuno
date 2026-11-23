@@ -192,12 +192,9 @@ export function GameTile({ item, active, onSelect, onActivate }: Props) {
         )}
         <span className="tile-shade" />
         <span className="tile-gloss" />
-        <span className="tile-sheen" />
         {item.kind === "soon" && <span className="tile-badge">COMING SOON</span>}
       </span>
       <span className="tile-ring" />
-      <span className="tile-beam tile-beam-glow" />
-      <span className="tile-beam" />
     </button>
   );
 }

@@ -56,3 +56,41 @@
   transition-duration: 80ms !important;
   scroll-behavior: auto !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Screen transitions (see lib/screenTransition.ts).
+   Forward moves sink the old screen back and lift the new one in; back moves
+   do the reverse. The backdrop and the corner controls are held out of the
+   snapshot so the 3D field keeps moving and the shell never blinks.
+   --------------------------------------------------------------------------- */
+.backdrop { view-transition-name: zuno-backdrop; }
+.corner { view-transition-name: zuno-corner; }
+::view-transition-group(zuno-backdrop),
+::view-transition-group(zuno-corner) { animation: none; }
+::view-transition-old(zuno-backdrop),
+::view-transition-new(zuno-backdrop) { animation-duration: var(--t-bg); }
+
+::view-transition-old(root) {
+  animation: vt-out var(--t-med) cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(root) {
+  animation: vt-in var(--t-slow) var(--ease) 60ms both;
+}
+html[data-nav="back"]::view-transition-old(root) { animation-name: vt-out-back; }
+html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
+
+@keyframes vt-out { to { opacity: 0; transform: scale(0.975); filter: blur(2px); } }
+@keyframes vt-in { from { opacity: 0; transform: scale(1.02); } }
+@keyframes vt-out-back { to { opacity: 0; transform: scale(1.02); filter: blur(2px); } }
+@keyframes vt-in-back { from { opacity: 0; transform: scale(0.975); } }
+@keyframes vt-dissolve-out { to { opacity: 0; } }
+@keyframes vt-dissolve-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  html[data-nav]::view-transition-old(root) { animation: vt-dissolve-out 80ms linear both !important; }
+  ::view-transition-new(root),
+  html[data-nav]::view-transition-new(root) { animation: vt-dissolve-in 80ms linear both !important; }
+}
+html[data-motion="off"]::view-transition-old(root) { animation: vt-dissolve-out 80ms linear both; }
+html[data-motion="off"]::view-transition-new(root) { animation: vt-dissolve-in 80ms linear both; }

@@ -28,12 +28,14 @@ export function useRpgSounds(game: RpgOnline, me: string): void {
     // Item moments first: they often change the phase too.
     if (e1 !== e0 && e1 !== "-") {
       const [, kind, tone] = e1.split(":");
-      if (kind === "bomb") return tone === "good" ? "correct" : "airhorn";
-      if (kind === "nuke") return tone === "good" ? "wrong" : "airhorn";
-      if (kind === "mine") return "boing";
+      // Core game feedback stays in the platform voice; the comedy clips
+      // (air horn, boing, rimshot, sad trombone) live only on the soundboard.
+      if (kind === "bomb") return tone === "good" ? "correct" : "timeUp";
+      if (kind === "nuke") return tone === "good" ? "wrong" : "timeUp";
+      if (kind === "mine") return "wrong";
       if (kind === "shield" || kind === "insurance") return "correct";
       if (kind === "pickpocket") return "wrong";
-      return tone === "good" ? "rimshot" : "sadTrombone";
+      return tone === "good" ? "reveal" : "wrong";
     }
     if (p1 !== p0) {
       if (p1 === "bomb") return "drumroll";
