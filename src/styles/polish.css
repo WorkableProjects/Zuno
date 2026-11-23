@@ -152,6 +152,32 @@ html .screen { animation: screen-rise 520ms var(--ease-out-expo) both; }
 html .screen-bar { animation: bar-in 520ms var(--ease-out-expo) 60ms backwards; }
 @keyframes bar-in { from { opacity: 0; transform: translateY(-12px); } }
 
+/* ---------- Lobbies ---------- */
+html .flip-code { display: inline-flex; perspective: 600px; }
+html .flip-char { display: inline-block; transform-origin: 50% 60%; animation: flip-char 700ms var(--ease-pop) backwards; animation-delay: calc(var(--i) * 70ms + 200ms); }
+@keyframes flip-char { from { opacity: 0; transform: rotateX(-95deg) translateY(-10px); filter: blur(3px); } 60% { opacity: 1; } }
+html .hb-qr { animation: qr-in 700ms var(--ease-pop) 120ms backwards; }
+@keyframes qr-in { from { opacity: 0; transform: scale(0.7) rotate(-6deg); filter: blur(6px); } }
+/* A player who joins pops into the circle. Existing rows keep their place; only new ones animate. */
+html .hb-circle-row { animation: row-pop 520ms var(--ease-pop) backwards; transition: background-color var(--t-med) var(--ease), border-color var(--t-med) var(--ease); }
+@keyframes row-pop { from { opacity: 0; transform: translateX(-18px) scale(0.92); } 55% { opacity: 1; } }
+html .hb-players > li, html .liar-players > li, html .rpg-players > li { animation: row-pop 460ms var(--ease-pop) backwards; }
+
+/* ---------- Import drop zone: marching border and a lifted icon while a file hovers ---------- */
+html .importer.is-dragging .dropzone {
+  border-color: transparent;
+  background:
+    linear-gradient(color-mix(in oklab, var(--accent) 8%, var(--surface)), color-mix(in oklab, var(--accent) 8%, var(--surface))) padding-box,
+    repeating-linear-gradient(90deg, var(--accent) 0 12px, transparent 12px 22px) border-box;
+  background-size: auto, 44px 100%;
+  animation: march 600ms linear infinite;
+  transform: scale(1.01);
+}
+html .dropzone { transition: border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease), transform 420ms var(--ease-pop); }
+html .dropzone-icon { transition: transform 520ms var(--ease-pop), color var(--t-fast) var(--ease); }
+html .importer.is-dragging .dropzone-icon { transform: translateY(-6px) scale(1.15); color: var(--accent); }
+@keyframes march { to { background-position: 0 0, 44px 0; } }
+
 @media (prefers-reduced-motion: reduce) {
   html .hm-feature-art .tile-img { animation: none; }
   html .lx-rule { animation: none; }

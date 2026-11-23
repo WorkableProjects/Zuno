@@ -765,3 +765,37 @@
 @media (prefers-reduced-motion: reduce) {
   .board-cell { transition: none; }
 }
+
+/* ---------- Motion polish ---------- */
+/* First deal: cells flip onto the board in a diagonal sweep. */
+.board-wrap.is-dealing .board-head { animation: deal-head 520ms var(--ease-pop) backwards; }
+.board-wrap.is-dealing .board-head:nth-child(n) { animation-delay: calc(var(--hi, 0) * 40ms); }
+.board-wrap.is-dealing .board-slot { perspective: 700px; }
+.board-wrap.is-dealing .board-cell { animation: deal-cell 620ms var(--ease-pop) backwards; animation-delay: calc((var(--r) + var(--c)) * 45ms + 120ms); }
+@keyframes deal-head { from { opacity: 0; transform: translateY(-14px); } }
+@keyframes deal-cell { from { opacity: 0; transform: rotateX(-80deg) translateY(-12px) scale(0.9); } 60% { opacity: 1; } }
+.board-cell { transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform 380ms var(--ease-pop), box-shadow var(--t-med) var(--ease); }
+.board-cell:hover:not(:disabled) { transform: translateY(-3px) scale(1.03); box-shadow: var(--top-light), 0 12px 28px rgb(0 0 0 / 0.35), 0 0 0 1px color-mix(in oklab, var(--game) 45%, transparent), 0 0 22px color-mix(in oklab, var(--game) 25%, transparent); }
+.board-cell:hover:not(:disabled) .board-value { color: color-mix(in oklab, var(--game) 55%, var(--game-ink)); }
+.board-value { transition: color var(--t-fast) var(--ease); }
+.board-cell:active:not(:disabled) { transform: scale(0.95); transition-duration: 90ms; }
+
+/* A picked clue zooms open from its cell; returning to the board settles back. */
+.stage[data-phase="clue"] { transform-origin: var(--clue-ox, 50%) var(--clue-oy, 50%); animation: clue-open 560ms var(--ease-out-expo) both; }
+@keyframes clue-open { from { opacity: 0; transform: scale(0.18); filter: blur(10px); border-radius: 24px; } 50% { opacity: 1; filter: blur(0); } }
+.stage[data-phase="board"] { animation: board-back 420ms var(--ease-out-expo) both; }
+@keyframes board-back { from { opacity: 0; transform: scale(1.04); filter: blur(6px); } }
+.clue-text { animation: clue-text 640ms var(--ease-out-expo) 160ms backwards; }
+@keyframes clue-text { from { opacity: 0; transform: translateY(18px); letter-spacing: 0.02em; filter: blur(4px); } }
+
+/* Score changes: the number rolls, the card flashes green or red. */
+.score { overflow: hidden; isolation: isolate; }
+.score-flash { position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; animation: score-flash 900ms var(--ease) forwards; }
+.score-flash.is-up { background: radial-gradient(120% 140% at 80% 50%, color-mix(in oklab, var(--positive, #4ade80) 45%, transparent), transparent 70%); }
+.score-flash.is-down { background: radial-gradient(120% 140% at 80% 50%, color-mix(in oklab, var(--negative) 45%, transparent), transparent 70%); }
+@keyframes score-flash { from { opacity: 1; } to { opacity: 0; } }
+.score-value { display: inline-block; font-variant-numeric: tabular-nums; }
+.score-value.is-up { animation: score-up 600ms var(--ease-pop); }
+.score-value.is-down { animation: score-down 520ms var(--ease); }
+@keyframes score-up { 40% { transform: scale(1.28) translateY(-2px); color: var(--positive, #4ade80); } }
+@keyframes score-down { 20% { transform: translateX(-5px); color: var(--negative); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }

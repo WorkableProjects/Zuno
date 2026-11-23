@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FlipCode } from "../../components/ui/FlipCode";
 import { useRegisterRoom } from "../../lib/room";
 import { sanitizeChatName } from "../../lib/chat";
 import QRCode from "qrcode";
@@ -185,9 +186,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
               {qr && <img className="hb-qr" src={qr} alt={`QR code to join room ${code}`} width={200} height={200} />}
               <div className="hb-join-text">
                 <p className="meta">Room code</p>
-                <p className="hb-code" aria-label={`Room code ${code.split("").join(" ")}`}>
-                  {code}
-                </p>
+                <FlipCode code={code} />
                 <p className="hb-link">{joinLink(code)}</p>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => void copy()}>
                   {copied ? <Check size={16} strokeWidth={1.5} /> : <Copy size={16} strokeWidth={1.5} />}
