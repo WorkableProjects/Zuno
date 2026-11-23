@@ -1,7 +1,6 @@
 import type { BackgroundPreset, GameFile, ValidationResult } from "../game-files/schema/common";
 import { HEADBANDS_TYPE, eligibleIdentities, validateHeadbands, type HeadbandsFile } from "../game-files/schema/headbands";
 import { LIAR_TYPE, validateLiar, type LiarFile } from "../game-files/schema/liar";
-import { GAUNTLET_TYPE, countGauntletItems, validateGauntlet, type GauntletFile } from "../game-files/schema/gauntlet";
 import { JEOPARDY_TYPE, countClues, validateJeopardy, type JeopardyFile } from "../game-files/schema/jeopardy";
 
 /**
@@ -110,30 +109,6 @@ const engines: GameEngine[] = [
         ["Question prompts", file.content.questionPrompts.length],
         ["Players", `${file.settings.minPlayers} to ${file.settings.maxPlayers}`],
         ["Scoring", file.settings.scoringEnabled ? "On" : "Off"],
-      ];
-    },
-    listing: () => null,
-  },
-  {
-    gameType: GAUNTLET_TYPE,
-    title: "Trivia Gauntlet",
-    description: "Teams race through Quickfire, Puzzle and Wild lanes, gamble in the Choice round, survive Chaos and climb the Final Gauntlet. Hosted from one shared screen.",
-    schemaVersions: [1],
-    hasBuilder: true,
-    appearance: { accentColor: "#7EE0B5", backgroundPreset: "horizon" },
-    validate: validateGauntlet as GameEngine["validate"],
-    artwork: "board",
-    sampleFile: "trivia-gauntlet.zuno.json",
-    fileHolds: "the lanes, puzzles, wild cards and final round",
-    buildTitle: "Build a Trivia Gauntlet deck",
-    summarize: (f) => `${countGauntletItems(f as GauntletFile)} challenges · 3 lanes`,
-    stats: (f) => {
-      const c = (f as GauntletFile).content;
-      return [
-        ["Quickfire", c.lanes.quickfire.length],
-        ["Puzzles", c.lanes.puzzle.length],
-        ["Wild cards", c.lanes.wild.length],
-        ["Climb questions", c.final.climb.length],
       ];
     },
     listing: () => null,
