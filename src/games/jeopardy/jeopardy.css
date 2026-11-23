@@ -782,11 +782,11 @@
 
 /* A picked clue zooms open from its cell; returning to the board settles back. */
 .stage[data-phase="clue"] { transform-origin: var(--clue-ox, 50%) var(--clue-oy, 50%); animation: clue-open 560ms var(--ease-out-expo) both; }
-@keyframes clue-open { from { opacity: 0; transform: scale(0.18); filter: blur(10px); border-radius: 24px; } 50% { opacity: 1; filter: blur(0); } }
+@keyframes clue-open { from { opacity: 0; transform: scale(0.18); border-radius: 24px; } 50% { opacity: 1; } }
 .stage[data-phase="board"] { animation: board-back 420ms var(--ease-out-expo) both; }
-@keyframes board-back { from { opacity: 0; transform: scale(1.04); filter: blur(6px); } }
+@keyframes board-back { from { opacity: 0; transform: scale(1.04); } }
 .clue-text { animation: clue-text 640ms var(--ease-out-expo) 160ms backwards; }
-@keyframes clue-text { from { opacity: 0; transform: translateY(18px); letter-spacing: 0.02em; filter: blur(4px); } }
+@keyframes clue-text { from { opacity: 0; transform: translateY(18px); letter-spacing: 0.02em; } }
 
 /* Score changes: the number rolls, the card flashes green or red. */
 .score { overflow: hidden; isolation: isolate; }

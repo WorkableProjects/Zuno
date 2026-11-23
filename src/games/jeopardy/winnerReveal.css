@@ -161,9 +161,9 @@
   }
 }
 @keyframes wr-shake {
-  0%, 100% { margin-left: 0; }
-  25% { margin-left: -3px; }
-  75% { margin-left: 3px; }
+  0%, 100% { translate: 0; }
+  25% { translate: -3px 0; }
+  75% { translate: 3px 0; }
 }
 @keyframes wr-pulse {
   50% {

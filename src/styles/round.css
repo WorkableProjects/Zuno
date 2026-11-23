@@ -35,7 +35,7 @@ button.ru-pill:focus-visible { outline: 3px solid var(--game, var(--accent)); ou
 /* ---------- Turn change ---------- */
 .ru-turn { animation: ru-turn-in 560ms var(--ease-pop) both, ru-ring 1100ms var(--ease) 160ms 1 both; }
 @keyframes ru-turn-in {
-  from { opacity: 0; transform: translateY(-14px) scale(0.9); filter: blur(4px); }
+  from { opacity: 0; transform: translateY(-14px) scale(0.9); }
   55% { opacity: 1; filter: none; }
   to { opacity: 1; transform: none; }
 }
@@ -77,8 +77,8 @@ button.ru-pill:focus-visible { outline: 3px solid var(--game, var(--accent)); ou
 /* ---------- Answer / result reveal ---------- */
 .ru-reveal { animation: ru-reveal-in 560ms var(--ease-out-expo) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
 @keyframes ru-reveal-in {
-  from { opacity: 0; filter: blur(10px); transform: translateY(12px) scale(0.94); letter-spacing: 0.04em; }
-  to { opacity: 1; filter: none; transform: none; }
+  from { opacity: 0; transform: translateY(12px) scale(0.94); letter-spacing: 0.04em; }
+  to { opacity: 1; transform: none; }
 }
 
 /* ---------- Winner ---------- */

@@ -51,7 +51,7 @@ export function DrawBoard({ code, turnKey, canDraw, drawerName }: { code: string
       if (!dirty.current) return;
       dirty.current = false;
       const c = canvasRef.current;
-      const ctx = c?.getContext("2d", { willReadFrequently: true });
+      const ctx = c?.getContext("2d");
       if (!c || !ctx) return;
       const activeId = active.current?.id;
       const done = strokesRef.current.filter(([id]) => id !== activeId);

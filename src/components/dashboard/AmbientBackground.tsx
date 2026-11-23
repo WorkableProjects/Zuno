@@ -53,7 +53,7 @@ const SETTLE_MS = 90;
  * Full-screen artwork behind the whole app. Crossfades between games, keeps
  * at most two layers alive, and always lets the latest focused game win.
  */
-export function AmbientBackground({ spec, dim }: { spec: BackdropSpec; dim: boolean }) {
+export function AmbientBackground({ spec, dim, paused = false }: { spec: BackdropSpec; dim: boolean; paused?: boolean }) {
   const [layers, setLayers] = useState<BackdropSpec[]>([spec]);
   const root = useRef<HTMLDivElement>(null);
   const [lingered, setLingered] = useState(false);
@@ -83,7 +83,7 @@ export function AmbientBackground({ spec, dim }: { spec: BackdropSpec; dim: bool
   }, [layers]);
 
   return (
-    <div ref={root} className={`backdrop${dim ? " is-dim" : ""}${lingered ? " is-lingering" : ""}`} aria-hidden="true">
+    <div ref={root} className={`backdrop${dim ? " is-dim" : ""}${lingered ? " is-lingering" : ""}${paused ? " is-paused" : ""}`} aria-hidden="true">
       <div className="bg-parallax">
         {layers.map((l) => (
           <Layer key={l.key} spec={l} />

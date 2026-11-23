@@ -97,24 +97,24 @@
 /* Forward: the old page sinks back and dissolves, the new one rises out of the glass. */
 ::view-transition-old(zuno-stage) { animation: vt-out 200ms var(--ease-in-quick) both; }
 ::view-transition-new(zuno-stage) { animation: vt-in var(--t-page) var(--ease-out-expo) 70ms both; }
-@keyframes vt-out { to { opacity: 0; transform: scale(0.94); filter: blur(8px); } }
-@keyframes vt-in { from { opacity: 0; transform: translateY(26px) scale(1.04); filter: blur(10px); } }
+@keyframes vt-out { to { opacity: 0; transform: scale(0.94); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(26px) scale(1.04); } }
 
 /* Back: mirrored, the old page lifts toward you, the previous one settles up from behind. */
 html[data-nav="back"]::view-transition-old(zuno-stage) { animation-name: vt-out-back; }
 html[data-nav="back"]::view-transition-new(zuno-stage) { animation-name: vt-in-back; }
-@keyframes vt-out-back { to { opacity: 0; transform: scale(1.05); filter: blur(8px); } }
-@keyframes vt-in-back { from { opacity: 0; transform: scale(0.95); filter: blur(10px); } }
+@keyframes vt-out-back { to { opacity: 0; transform: scale(1.05); } }
+@keyframes vt-in-back { from { opacity: 0; transform: scale(0.95); } }
 
 /* Sidebar sections: a vertical parallax slide in nav order. */
 html[data-nav="down"]::view-transition-old(zuno-stage) { animation: vt-up-out 180ms var(--ease-in-quick) both; }
 html[data-nav="down"]::view-transition-new(zuno-stage) { animation: vt-up-in var(--t-page) var(--ease-out-expo) 40ms both; }
 html[data-nav="up"]::view-transition-old(zuno-stage) { animation: vt-down-out 180ms var(--ease-in-quick) both; }
 html[data-nav="up"]::view-transition-new(zuno-stage) { animation: vt-down-in var(--t-page) var(--ease-out-expo) 40ms both; }
-@keyframes vt-up-out { to { opacity: 0; transform: translateY(-48px); filter: blur(6px); } }
-@keyframes vt-up-in { from { opacity: 0; transform: translateY(64px); filter: blur(6px); } }
-@keyframes vt-down-out { to { opacity: 0; transform: translateY(48px); filter: blur(6px); } }
-@keyframes vt-down-in { from { opacity: 0; transform: translateY(-64px); filter: blur(6px); } }
+@keyframes vt-up-out { to { opacity: 0; transform: translateY(-48px); } }
+@keyframes vt-up-in { from { opacity: 0; transform: translateY(64px); } }
+@keyframes vt-down-out { to { opacity: 0; transform: translateY(48px); } }
+@keyframes vt-down-in { from { opacity: 0; transform: translateY(-64px); } }
 
 /* Shared element: the tile grows into the game page (or shrinks back into its slot). */
 ::view-transition-group(zuno-morph) {
@@ -135,18 +135,11 @@ html[data-nav="up"]::view-transition-new(zuno-stage) { animation: vt-down-in var
 /* While a tile morphs, the rest of the page steps aside quickly so the tile reads as the hero. */
 html[data-morphing]::view-transition-old(zuno-stage) { animation-duration: 160ms; }
 
-/* Theme: a circular wipe from wherever the toggle was pressed. */
-html[data-nav="theme"]::view-transition-old(root),
-html[data-nav="theme"]::view-transition-old(zuno-stage),
-html[data-nav="theme"]::view-transition-old(zuno-side),
-html[data-nav="theme"]::view-transition-old(zuno-backdrop),
-html[data-nav="theme"]::view-transition-old(zuno-corner) { animation: none; }
-html[data-nav="theme"]::view-transition-new(root),
-html[data-nav="theme"]::view-transition-new(zuno-stage),
-html[data-nav="theme"]::view-transition-new(zuno-side),
-html[data-nav="theme"]::view-transition-new(zuno-backdrop),
-html[data-nav="theme"]::view-transition-new(zuno-corner) { animation: vt-wipe 760ms cubic-bezier(0.65, 0, 0.35, 1) both; }
-html[data-nav="theme"]::view-transition-group(*) { animation: none; }
+/* Theme: a circular wipe from wherever the toggle was pressed. The named groups are
+   dropped for this one transition, so the whole screen is a single viewport-sized layer. */
+html[data-nav="theme"] :is(.backdrop, .app-stage, .lx-side, .corner) { view-transition-name: none !important; }
+html[data-nav="theme"]::view-transition-old(root) { animation: none; }
+html[data-nav="theme"]::view-transition-new(root) { animation: vt-wipe 520ms cubic-bezier(0.65, 0, 0.35, 1) both; }
 @keyframes vt-wipe { from { clip-path: circle(0 at var(--wipe-x, 50%) var(--wipe-y, 50%)); } to { clip-path: circle(150vmax at var(--wipe-x, 50%) var(--wipe-y, 50%)); } }
 
 /* A page that mounts during a screen transition skips its own fade-in: the transition is the entrance.
