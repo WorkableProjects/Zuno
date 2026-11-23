@@ -17,7 +17,7 @@ import { CornerControls } from "../components/ui/CornerControls";
 import { installHoverSounds, isSoundTheme, setSoundTheme, type SoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
 import { withScreenTransition } from "../lib/screenTransition";
-import { SettingsPanel } from "../components/settings/SettingsPanel";
+import { SettingsPage } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
 import { RPG_TYPE, blankRpgFile, type RpgFile } from "../game-files/schema/rpg";
@@ -125,7 +125,6 @@ export function App() {
   const hostedParty = useRef<{ kind: PartyKind; code: string } | null>(null);
   /** A destructive navigation waiting for confirmation. */
   const [pending, setPending] = useState<{ title: string; text: string; label: string; run: () => void } | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState<LoadedGame | null>(null);
   const [draftBackdrop, setDraftBackdrop] = useState<BackdropSpec | null>(null);
   const [buildType, setBuildType] = useState(JEOPARDY_TYPE);
@@ -309,9 +308,14 @@ export function App() {
             setSection(next);
             if (screen.name !== "dashboard") withScreenTransition("back", () => setStack([{ name: "dashboard" }]));
           }}
-          onSettings={() => setSettingsOpen(true)}
+          onSettings={() => {
+            setSection("settings");
+            if (screen.name !== "dashboard") withScreenTransition("back", () => setStack([{ name: "dashboard" }]));
+          }}
         >
-          {screen.name === "dashboard" ? (
+          {screen.name === "dashboard" && section === "settings" ? (
+            <SettingsPage theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} />
+          ) : screen.name === "dashboard" ? (
             <LauncherHome
               section={section}
               items={items}
@@ -324,6 +328,7 @@ export function App() {
               }}
               onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
               onForget={forgetRecent}
+              onSection={setSection}
             />
           ) : (
             <GameDetail
@@ -510,7 +515,6 @@ export function App() {
       <CornerControls docked={screen.name === "dashboard" || screen.name === "game"} />
       <StartupIntro />
       {device === null && <DevicePrompt onChoose={chooseDevice} />}
-      {settingsOpen && <SettingsPanel theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} onClose={() => setSettingsOpen(false)} />}
     </>
   );
 }

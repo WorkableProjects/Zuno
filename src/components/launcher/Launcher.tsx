@@ -1,14 +1,15 @@
 import { ZunoMark } from "../brand/Logo";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { House, LayoutGrid, LogIn, Plus, Search, Settings, X } from "lucide-react";
+import { House, LayoutGrid, Plus, Search, Settings, X } from "lucide-react";
 import { getEngine } from "../../games/registry";
 import { TileCover } from "../dashboard/GameTile";
 import type { RailItem } from "../dashboard/railItems";
 import { GAME_INFO } from "./gameInfo";
+import { HomeView } from "./HomeView";
 import "../dashboard/dashboard.css";
 import "./launcher.css";
 
-export type Section = "home" | "library";
+export type Section = "home" | "library" | "settings";
 
 /** The round sidebar shared by the home, library and game pages. */
 export function LauncherShell({ section, onSection, onSettings, children, accent }: { section: Section | null; onSection: (s: Section) => void; onSettings: () => void; children: ReactNode; accent: string }) {
@@ -29,7 +30,7 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
               <span className="lx-nav-label">{label}</span>
             </button>
           ))}
-          <button type="button" className="lx-nav-btn" aria-label="Settings" title="Settings" onClick={onSettings}>
+          <button type="button" className={`lx-nav-btn${section === "settings" ? " is-on" : ""}`} aria-current={section === "settings" ? "page" : undefined} aria-label="Settings" title="Settings" onClick={onSettings}>
             <Settings size={20} strokeWidth={1.75} />
             <span className="lx-nav-label">Settings</span>
           </button>
@@ -79,12 +80,13 @@ interface HomeProps {
   onOpen: (item: RailItem) => void;
   onJoin?: () => void;
   onForget: (item: RailItem) => void;
+  onSection: (s: Section) => void;
 }
 
 type Filter = "all" | "online" | "local" | "files";
 
 /** Home and Library: a grid of big tiles. Hover previews the game's music and backdrop; a click opens its page. */
-export function LauncherHome({ section, items, selectedId, onSelect, onOpen, onJoin, onForget }: HomeProps) {
+export function LauncherHome({ section, items, selectedId, onSelect, onOpen, onJoin, onForget, onSection }: HomeProps) {
   const grid = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
@@ -150,28 +152,5 @@ export function LauncherHome({ section, items, selectedId, onSelect, onOpen, onJ
     );
   }
 
-  return (
-    <main className="lx-page" ref={grid}>
-      <header className="lx-head">
-        <div>
-          <p className="lx-eyebrow">Zuno</p>
-          <h1 className="lx-title">Home</h1>
-        </div>
-        {onJoin && (
-          <button type="button" className="btn btn-secondary lx-join" onClick={onJoin}>
-            <LogIn size={18} strokeWidth={1.75} />
-            Join with a code
-          </button>
-        )}
-      </header>
-      <h2 className="lx-section">Games</h2>
-      {tiles(engines, 2, build)}
-      {files.length > 0 && (
-        <>
-          <h2 className="lx-section">Jump back in</h2>
-          {tiles(files.slice(0, 6), 3)}
-        </>
-      )}
-    </main>
-  );
+  return <HomeView items={items} engines={engines} files={files} build={build} selectedId={selectedId} onSelect={onSelect} onOpen={onOpen} onJoin={onJoin} onForget={onForget} onSection={onSection} gridRef={grid} />;
 }

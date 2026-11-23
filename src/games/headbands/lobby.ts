@@ -113,11 +113,16 @@ export function lobbiesAvailable(): boolean {
 
 let app: FirebaseApp | null = null;
 let db: Database | null = null;
+/** The shared Firebase app (lobbies and profiles). */
+export function firebaseApp(): FirebaseApp {
+  if (!lobbiesAvailable()) throw new Error("Online features are not set up for this site.");
+  if (!app) app = initializeApp({ ...config, authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined ?? (config.projectId ? `${config.projectId}.firebaseapp.com` : undefined) }, "zuno-lobby");
+  return app;
+}
 export function database(): Database {
   if (!lobbiesAvailable()) throw new Error("Online lobbies are not set up for this site.");
   if (!db) {
-    app = initializeApp(config, "zuno-lobby");
-    db = getDatabase(app);
+    db = getDatabase(firebaseApp());
     // Local development against `firebase emulators:start`, e.g. VITE_FIREBASE_EMULATOR=localhost:9000
     const emulator = import.meta.env.VITE_FIREBASE_EMULATOR as string | undefined;
     if (emulator) {

@@ -1,9 +1,9 @@
-import { useState, useSyncExternalStore } from "react";
-import { Monitor, Moon, Smartphone, Sun, Volume2, VolumeX, X } from "lucide-react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { Info, Monitor, Moon, Palette, Smartphone, Sparkles, Sun, UserRound, Volume2, VolumeX } from "lucide-react";
 import { applyMotion, loadMotion, loadSfxOn, saveMotion, saveSfxOn, type Device, type Motion, type Theme } from "../../app/storage";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 import { setSfxEnabled } from "../../lib/sfx";
-import { Dialog } from "../ui/Dialog";
+import { ProfileCard } from "./ProfileCard";
 import "./settings.css";
 
 interface Props {
@@ -11,10 +11,40 @@ interface Props {
   onTheme: (theme: Theme) => void;
   device: Device;
   onDevice: (device: Device) => void;
-  onClose: () => void;
 }
 
-export function SettingsPanel({ theme, onTheme, device, onDevice, onClose }: Props) {
+const SECTIONS = [
+  { id: "profile", label: "Profile", Icon: UserRound },
+  { id: "look", label: "Look", Icon: Palette },
+  { id: "sound", label: "Sound", Icon: Volume2 },
+  { id: "motion", label: "Motion", Icon: Sparkles },
+  { id: "about", label: "About", Icon: Info },
+] as const;
+
+function Card({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  return (
+    <section id={`st-${id}`} className="st-card" aria-labelledby={`st-${id}-h`}>
+      <h2 id={`st-${id}-h`} className="st-card-title">
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (on: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} className={`st-switch${on ? " is-on" : ""}`} onClick={() => onChange(!on)}>
+      <span>{label}</span>
+      <span className="st-switch-track" aria-hidden="true">
+        <span className="st-switch-dot" />
+      </span>
+    </button>
+  );
+}
+
+/** The Settings page, a section of the launcher. */
+export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
   const muted = useSyncExternalStore(subscribeMuted, isMuted);
   const [volume, setVol] = useState(getVolume);
   const [sfxOn, setSfxOn] = useState(loadSfxOn);
@@ -30,51 +60,52 @@ export function SettingsPanel({ theme, onTheme, device, onDevice, onClose }: Pro
     saveSfxOn(on);
     setSfxEnabled(on);
   };
+  const jump = (id: string) => document.getElementById(`st-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
-    <Dialog title="Settings" onClose={onClose} variant="sheet">
-      {(close) => (
-        <>
-          <div className="sheet-head">
-            <h2 className="dialog-title">Settings</h2>
-            <button type="button" className="icon-btn" aria-label="Close settings" onClick={close}>
-              <X size={20} strokeWidth={1.5} />
+    <main className="lx-page st">
+      <header className="lx-head">
+        <h1 className="lx-title">Settings</h1>
+      </header>
+      <div className="st-layout">
+        <nav className="st-nav" aria-label="Settings sections" data-nav-row="1">
+          {SECTIONS.map(({ id, label, Icon }) => (
+            <button key={id} type="button" className="st-nav-btn" onClick={() => jump(id)}>
+              <Icon size={18} strokeWidth={1.75} />
+              {label}
             </button>
-          </div>
+          ))}
+        </nav>
 
-          <div className="field settings-field">
-            <span className="field-label" id="theme-label">
-              Theme
-            </span>
-            <div className="segmented" role="radiogroup" aria-labelledby="theme-label" data-nav-row="0">
+        <div className="st-cards">
+          <Card id="profile" title="Profile">
+            <ProfileCard />
+          </Card>
+
+          <Card id="look" title="Look">
+            <span className="field-label">Theme</span>
+            <div className="st-themes" role="radiogroup" aria-label="Theme" data-nav-row="20">
               {(
                 [
-                  ["dark", "Dark Mode", Moon],
-                  ["light", "Light Mode", Sun],
+                  ["dark", "Dark", Moon],
+                  ["light", "Light", Sun],
                 ] as const
               ).map(([value, label, Icon]) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={theme === value}
-                  data-autofocus={theme === value ? "" : undefined}
-                  className={`segment${theme === value ? " is-on" : ""}`}
-                  onClick={() => onTheme(value)}
-                >
-                  <Icon size={18} strokeWidth={1.5} />
-                  {label}
+                <button key={value} type="button" role="radio" aria-checked={theme === value} className={`st-theme st-theme-${value}${theme === value ? " is-on" : ""}`} onClick={() => onTheme(value)}>
+                  <span className="st-theme-preview" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                  <span className="st-theme-label">
+                    <Icon size={16} strokeWidth={1.75} />
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>
-            <p className="field-hint">Saved on this device. Zuno has no accounts.</p>
-          </div>
-
-          <div className="field settings-field">
-            <span className="field-label" id="device-label">
-              Layout
-            </span>
-            <div className="segmented" role="radiogroup" aria-labelledby="device-label" data-nav-row="1">
+            <span className="field-label st-gap">Layout</span>
+            <div className="segmented" role="radiogroup" aria-label="Layout" data-nav-row="21">
               {(
                 [
                   ["desktop", "Desktop", Monitor],
@@ -88,34 +119,23 @@ export function SettingsPanel({ theme, onTheme, device, onDevice, onClose }: Pro
               ))}
             </div>
             <p className="field-hint">Desktop uses the full width. Mobile stays compact and vertical.</p>
-          </div>
+          </Card>
 
-          <div className="field settings-field">
-            <span className="field-label" id="music-label">
-              Music
-            </span>
-            <div className="segmented" role="radiogroup" aria-labelledby="music-label" data-nav-row="2">
-              {(
-                [
-                  [false, "On", Volume2],
-                  [true, "Off", VolumeX],
-                ] as const
-              ).map(([value, label, Icon]) => (
-                <button key={label} type="button" role="radio" aria-checked={muted === value} className={`segment${muted === value ? " is-on" : ""}`} onClick={() => setMuted(value)}>
-                  <Icon size={18} strokeWidth={1.5} />
-                  {label}
-                </button>
-              ))}
+          <Card id="sound" title="Sound">
+            <div className="st-list" data-nav-row="30">
+              <Toggle on={!muted} label="Music" onChange={(on) => setMuted(!on)} />
+              <Toggle on={sfxOn} label="Sound effects" onChange={chooseSfx} />
             </div>
-            <label className="settings-range" data-nav-row="3">
-              <span>Volume</span>
+            <label className="settings-range" data-nav-row="31">
+              {volume === 0 || muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               <input
                 type="range"
                 min={0}
                 max={100}
                 step={5}
                 value={Math.round(volume * 100)}
-                aria-label="Volume"
+                aria-label="Music volume"
+                disabled={muted}
                 onChange={(e) => {
                   const v = Number(e.target.value) / 100;
                   setVol(v);
@@ -124,50 +144,31 @@ export function SettingsPanel({ theme, onTheme, device, onDevice, onClose }: Pro
               />
               <span className="settings-range-value">{Math.round(volume * 100)}%</span>
             </label>
-          </div>
+          </Card>
 
-          <div className="field settings-field">
-            <span className="field-label" id="sfx-label">
-              Sound effects
-            </span>
-            <div className="segmented" role="radiogroup" aria-labelledby="sfx-label" data-nav-row="4">
+          <Card id="motion" title="Background motion">
+            <div className="st-motion" role="radiogroup" aria-label="Background motion" data-nav-row="40">
               {(
                 [
-                  [true, "On"],
-                  [false, "Off"],
+                  ["full", "Full 3D", "Everything moves."],
+                  ["calm", "Calm", "Gradients drift, no 3D turning."],
+                  ["off", "Still", "A frozen backdrop."],
                 ] as const
-              ).map(([value, label]) => (
-                <button key={label} type="button" role="radio" aria-checked={sfxOn === value} className={`segment${sfxOn === value ? " is-on" : ""}`} onClick={() => chooseSfx(value)}>
-                  {label}
+              ).map(([value, label, hint]) => (
+                <button key={value} type="button" role="radio" aria-checked={motion === value} className={`st-option${motion === value ? " is-on" : ""}`} onClick={() => chooseMotion(value)}>
+                  <strong>{label}</strong>
+                  <small>{hint}</small>
                 </button>
               ))}
             </div>
-            <p className="field-hint">Clicks and game sounds. Music has its own switch.</p>
-          </div>
+          </Card>
 
-          <div className="field settings-field">
-            <span className="field-label" id="motion-label">
-              Background motion
-            </span>
-            <div className="segmented" role="radiogroup" aria-labelledby="motion-label" data-nav-row="5">
-              {(
-                [
-                  ["full", "Full 3D"],
-                  ["calm", "Calm"],
-                  ["off", "Still"],
-                ] as const
-              ).map(([value, label]) => (
-                <button key={value} type="button" role="radio" aria-checked={motion === value} className={`segment${motion === value ? " is-on" : ""}`} onClick={() => chooseMotion(value)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="field-hint">Calm keeps the gradients moving but stops the 3D turning. Still freezes the background.</p>
-          </div>
-
-          <p className="settings-version">Zuno v{__APP_VERSION__}</p>
-        </>
-      )}
-    </Dialog>
+          <Card id="about" title="About">
+            <p className="field-hint">Theme, layout and sound are saved on this device. Your name and picture follow your profile.</p>
+            <p className="settings-version">Zuno v{__APP_VERSION__}</p>
+          </Card>
+        </div>
+      </div>
+    </main>
   );
 }
