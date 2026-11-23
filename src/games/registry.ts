@@ -18,7 +18,7 @@ export interface GameEngine {
   appearance: { accentColor: string; backgroundPreset: BackgroundPreset };
   validate: (raw: Record<string, unknown>) => ValidationResult<GameFile>;
   /** Decorative scene drawn behind the dashboard for this engine. */
-  artwork: "board" | "cards" | "statements" | null;
+  artwork: "board" | "cards" | "statements" | "hands" | null;
   /** Runs only in online lobbies. The dashboard offers Host lobby and Join instead of Load. */
   onlineOnly?: boolean;
   /** A sample in public/samples that the importer can load. */
@@ -122,9 +122,9 @@ const engines: GameEngine[] = [
     description: "Rock paper scissors duels with money on the line. Challenge a rival, let everyone else bet on the winner, and take the whole pot.",
     schemaVersions: [1],
     hasBuilder: false,
-    appearance: { accentColor: "#7C3AED", backgroundPreset: "aurora" },
+    appearance: { accentColor: "#7C3AED", backgroundPreset: "vegas" },
     validate: validateRpg as GameEngine["validate"],
-    artwork: null,
+    artwork: "hands",
     onlineOnly: true,
     sampleFile: "rock-paper-gamble.zuno.json",
     fileHolds: "the starting money and the timers",

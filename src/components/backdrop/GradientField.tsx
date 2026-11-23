@@ -31,6 +31,12 @@ export function GradientField({ accent, preset }: { accent: string; preset: Back
           <span className="light light-b" />
           <span className="light light-c" />
           {preset === "horizon" && <span className="sun" />}
+          {preset === "vegas" && (
+            <>
+              <span className="vegas-grid" />
+              <span className="vegas-flash" />
+            </>
+          )}
         </div>
       </div>
     </div>

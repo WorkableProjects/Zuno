@@ -50,7 +50,7 @@ export function fallbackAppearance(gameType: string, title: string): { accentCol
   const h = hashString(`${gameType}:${title}`);
   return {
     accentColor: hslToHex(h % 360, 72, 68),
-    backgroundPreset: BACKGROUND_PRESETS[(h >>> 9) % BACKGROUND_PRESETS.length],
+    backgroundPreset: BACKGROUND_PRESETS[(h >>> 9) % 4],
   };
 }
 

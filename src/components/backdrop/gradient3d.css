@@ -245,3 +245,53 @@
 @media (prefers-reduced-motion: reduce) {
   .g3d-space, .g3d .light, .g3d-sheen { animation: none !important; }
 }
+
+/* Vegas: violet, cyan and amber lights, a soft dot grid and an occasional flash */
+.scene-vegas .light-a {
+  top: -20vmax;
+  right: 8vmax;
+  width: 80vmax;
+  height: 70vmax;
+}
+.scene-vegas .light-b {
+  bottom: -26vmax;
+  right: -20vmax;
+  width: 84vmax;
+  height: 66vmax;
+}
+.scene-vegas .light-c {
+  top: 20vh;
+  right: 36vmax;
+  width: 56vmax;
+  height: 56vmax;
+}
+.vegas-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.5) 1.2px, transparent 1.6px);
+  background-size: 32px 32px;
+  opacity: 0.1;
+  animation: vegas-dots 8s ease-in-out infinite;
+  -webkit-mask-image: linear-gradient(90deg, transparent 20%, #000 70%);
+  mask-image: linear-gradient(90deg, transparent 20%, #000 70%);
+}
+@keyframes vegas-dots {
+  0%, 100% { opacity: 0.06; }
+  50% { opacity: 0.2; }
+}
+.vegas-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(60% 60% at 70% 40%, rgb(255 255 255 / 0.55), transparent);
+  opacity: 0;
+  animation: vegas-flash 24s ease-out infinite;
+}
+@keyframes vegas-flash {
+  0%, 94%, 100% { opacity: 0; }
+  95% { opacity: 0.16; }
+  98% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vegas-grid, .vegas-flash { animation: none !important; }
+  .vegas-flash { display: none; }
+}

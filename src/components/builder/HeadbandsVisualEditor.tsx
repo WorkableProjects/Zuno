@@ -31,7 +31,7 @@ interface Props {
 type Draft = HeadbandsFile;
 
 const SWATCHES = ["#FFB454", "#79B8FF", "#6FD3C1", "#9BD772", "#FFD166", "#F06A9A", "#C58BFF", "#8266E8"];
-const PRESET_LABELS: Record<BackgroundPreset, string> = { aurora: "Aurora", horizon: "Horizon", tide: "Tide", spotlight: "Spotlight" };
+const PRESET_LABELS: Record<BackgroundPreset, string> = { aurora: "Aurora", horizon: "Horizon", tide: "Tide", spotlight: "Spotlight", vegas: "Vegas" };
 
 let counter = 0;
 const tempId = () => `i-${Date.now().toString(36)}-${(counter++).toString(36)}`;
