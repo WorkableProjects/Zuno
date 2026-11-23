@@ -59,38 +59,108 @@
 
 /* ---------------------------------------------------------------------------
    Screen transitions (see lib/screenTransition.ts).
-   Forward moves sink the old screen back and lift the new one in; back moves
-   do the reverse. The backdrop and the corner controls are held out of the
-   snapshot so the 3D field keeps moving and the shell never blinks.
+   Groups, bottom to top:
+     zuno-backdrop  the 3D field: a slow cross-fade only
+     zuno-stage     every page; this is what moves
+     zuno-side      the launcher sidebar: pinned, never moves
+     zuno-morph     a tile that grows into its game page (and back)
+     zuno-corner    the corner controls: pinned
+   The root snapshot is left empty, so nothing ever blinks behind the stage.
    --------------------------------------------------------------------------- */
 .backdrop { view-transition-name: zuno-backdrop; }
+.app-stage { view-transition-name: zuno-stage; }
+.lx-side { view-transition-name: zuno-side; }
 .corner { view-transition-name: zuno-corner; }
+
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; }
 ::view-transition-group(zuno-backdrop),
-::view-transition-group(zuno-corner) { animation: none; }
+::view-transition-group(zuno-corner),
+::view-transition-group(zuno-side) { animation-duration: var(--t-page); animation-timing-function: var(--ease-out-expo); }
 ::view-transition-old(zuno-backdrop),
-::view-transition-new(zuno-backdrop) { animation-duration: var(--t-bg); }
+::view-transition-new(zuno-backdrop) { animation-duration: var(--t-bg); animation-timing-function: ease; }
+/* Sidebar holds still when it stays; slides in or out when a screen gains or loses it. */
+::view-transition-old(zuno-side),
+::view-transition-new(zuno-side) { animation: none; }
+::view-transition-old(zuno-side):only-child { animation: vt-side-out 260ms var(--ease-in-quick) both; }
+::view-transition-new(zuno-side):only-child { animation: vt-side-in var(--t-page) var(--ease-pop) 80ms both; }
+@keyframes vt-side-out { to { opacity: 0; transform: translateX(-60px) scale(0.92); } }
+@keyframes vt-side-in { from { opacity: 0; transform: translateX(-60px) scale(0.92); } }
 
-::view-transition-old(root) {
-  animation: vt-out var(--t-med) cubic-bezier(0.4, 0, 1, 1) both;
-}
-::view-transition-new(root) {
-  animation: vt-in var(--t-slow) var(--ease) 60ms both;
-}
-html[data-nav="back"]::view-transition-old(root) { animation-name: vt-out-back; }
-html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
+/* The stage snapshots are as tall as the page; pin them to the top so scale works from the viewport. */
+::view-transition-group(zuno-stage) { animation: none; }
+::view-transition-image-pair(zuno-stage) { isolation: auto; }
+::view-transition-old(zuno-stage),
+::view-transition-new(zuno-stage) { transform-origin: 50% 40vh; mix-blend-mode: normal; }
 
-@keyframes vt-out { to { opacity: 0; transform: scale(0.975); filter: blur(2px); } }
-@keyframes vt-in { from { opacity: 0; transform: scale(1.02); } }
-@keyframes vt-out-back { to { opacity: 0; transform: scale(1.02); filter: blur(2px); } }
-@keyframes vt-in-back { from { opacity: 0; transform: scale(0.975); } }
+/* Forward: the old page sinks back and dissolves, the new one rises out of the glass. */
+::view-transition-old(zuno-stage) { animation: vt-out 200ms var(--ease-in-quick) both; }
+::view-transition-new(zuno-stage) { animation: vt-in var(--t-page) var(--ease-out-expo) 70ms both; }
+@keyframes vt-out { to { opacity: 0; transform: scale(0.94); filter: blur(8px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(26px) scale(1.04); filter: blur(10px); } }
+
+/* Back: mirrored, the old page lifts toward you, the previous one settles up from behind. */
+html[data-nav="back"]::view-transition-old(zuno-stage) { animation-name: vt-out-back; }
+html[data-nav="back"]::view-transition-new(zuno-stage) { animation-name: vt-in-back; }
+@keyframes vt-out-back { to { opacity: 0; transform: scale(1.05); filter: blur(8px); } }
+@keyframes vt-in-back { from { opacity: 0; transform: scale(0.95); filter: blur(10px); } }
+
+/* Sidebar sections: a vertical parallax slide in nav order. */
+html[data-nav="down"]::view-transition-old(zuno-stage) { animation: vt-up-out 180ms var(--ease-in-quick) both; }
+html[data-nav="down"]::view-transition-new(zuno-stage) { animation: vt-up-in var(--t-page) var(--ease-out-expo) 40ms both; }
+html[data-nav="up"]::view-transition-old(zuno-stage) { animation: vt-down-out 180ms var(--ease-in-quick) both; }
+html[data-nav="up"]::view-transition-new(zuno-stage) { animation: vt-down-in var(--t-page) var(--ease-out-expo) 40ms both; }
+@keyframes vt-up-out { to { opacity: 0; transform: translateY(-48px); filter: blur(6px); } }
+@keyframes vt-up-in { from { opacity: 0; transform: translateY(64px); filter: blur(6px); } }
+@keyframes vt-down-out { to { opacity: 0; transform: translateY(48px); filter: blur(6px); } }
+@keyframes vt-down-in { from { opacity: 0; transform: translateY(-64px); filter: blur(6px); } }
+
+/* Shared element: the tile grows into the game page (or shrinks back into its slot). */
+::view-transition-group(zuno-morph) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
+  border-radius: 24px;
+  overflow: clip;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.45);
+}
+::view-transition-old(zuno-morph),
+::view-transition-new(zuno-morph) { height: 100%; width: 100%; object-fit: cover; animation-duration: 520ms; }
+::view-transition-old(zuno-morph) { animation: vt-morph-out 300ms ease both; }
+::view-transition-new(zuno-morph) { animation: vt-morph-in 420ms ease 120ms both; }
+::view-transition-old(zuno-morph):only-child { animation: vt-out 220ms var(--ease-in-quick) both; }
+::view-transition-new(zuno-morph):only-child { animation: vt-in var(--t-page) var(--ease-out-expo) both; }
+@keyframes vt-morph-out { to { opacity: 0; } }
+@keyframes vt-morph-in { from { opacity: 0; } }
+/* While a tile morphs, the rest of the page steps aside quickly so the tile reads as the hero. */
+html[data-morphing]::view-transition-old(zuno-stage) { animation-duration: 160ms; }
+
+/* Theme: a circular wipe from wherever the toggle was pressed. */
+html[data-nav="theme"]::view-transition-old(root),
+html[data-nav="theme"]::view-transition-old(zuno-stage),
+html[data-nav="theme"]::view-transition-old(zuno-side),
+html[data-nav="theme"]::view-transition-old(zuno-backdrop) { animation: none; }
+html[data-nav="theme"]::view-transition-new(root),
+html[data-nav="theme"]::view-transition-new(zuno-stage),
+html[data-nav="theme"]::view-transition-new(zuno-side),
+html[data-nav="theme"]::view-transition-new(zuno-backdrop) { animation: vt-wipe 620ms var(--ease-out-expo) both; }
+@keyframes vt-wipe { from { clip-path: circle(0 at var(--wipe-x, 50%) var(--wipe-y, 50%)); } to { clip-path: circle(150vmax at var(--wipe-x, 50%) var(--wipe-y, 50%)); } }
+
+/* A page that mounts during a screen transition skips its own fade-in: the transition is the entrance.
+   Zero duration (not animation:none) so the animation counts as finished and never replays when
+   the transition ends; swapping the name back would restart it from opacity 0 and flash. */
+html[data-vt] .screen,
+html[data-vt] .lx-page,
+html[data-vt] .launcher,
+html[data-vt] .lx-detail { animation-duration: 0s !important; animation-delay: 0s !important; }
+
 @keyframes vt-dissolve-out { to { opacity: 0; } }
 @keyframes vt-dissolve-in { from { opacity: 0; } }
-
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  html[data-nav]::view-transition-old(root) { animation: vt-dissolve-out 80ms linear both !important; }
-  ::view-transition-new(root),
-  html[data-nav]::view-transition-new(root) { animation: vt-dissolve-in 80ms linear both !important; }
+  ::view-transition-group(*) { animation-duration: 1ms !important; }
+  ::view-transition-old(*) { animation: vt-dissolve-out 80ms linear both !important; }
+  ::view-transition-new(*) { animation: vt-dissolve-in 80ms linear both !important; }
 }
-html[data-motion="off"]::view-transition-old(root) { animation: vt-dissolve-out 80ms linear both; }
-html[data-motion="off"]::view-transition-new(root) { animation: vt-dissolve-in 80ms linear both; }
+html[data-motion="off"]::view-transition-group(*) { animation-duration: 1ms !important; }
+html[data-motion="off"]::view-transition-old(*) { animation: vt-dissolve-out 80ms linear both !important; }
+html[data-motion="off"]::view-transition-new(*) { animation: vt-dissolve-in 80ms linear both !important; }

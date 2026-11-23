@@ -80,7 +80,7 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
 
       {featured && (
         <section className="hm-feature" style={{ "--game": featured.backdrop.accent } as React.CSSProperties} aria-label="Tonight's pick">
-          <div className="hm-feature-art" aria-hidden="true">
+          <div className="hm-feature-art" aria-hidden="true" data-morph={featured.kind === "engine" ? `game:${featured.gameType}` : undefined}>
             <TileCover gameType={featured.gameType} />
           </div>
           <div className="hm-feature-body">
@@ -193,7 +193,7 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
                 onPointerEnter={(ev) => ev.pointerType === "mouse" && onSelect(e.id)}
                 onClick={() => onOpen(e)}
               >
-                <span className="hm-chipcard-art">
+                <span className="hm-chipcard-art" data-morph={`game:${e.gameType}`}>
                   <TileCover gameType={e.gameType} />
                 </span>
                 <strong>{e.title}</strong>

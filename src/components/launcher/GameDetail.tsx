@@ -34,7 +34,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
 
   return (
     <main className="lx-detail" key={gameType}>
-      <section className="lx-hero">
+      <section className="lx-hero" data-morph={`game:${gameType}`}>
         <button type="button" className="lx-back" onClick={onBack} data-nav-row="1">
           <ArrowLeft size={16} strokeWidth={2} />
           Back

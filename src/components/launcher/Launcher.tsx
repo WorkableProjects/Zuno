@@ -56,7 +56,7 @@ export function LibTile({ item, active, onSelect, onOpen, index }: { item: RailI
       onPointerEnter={(e) => e.pointerType === "mouse" && onSelect()}
       onClick={onOpen}
     >
-      <span className="lib-art">
+      <span className="lib-art" data-morph={item.kind === "engine" ? `game:${item.gameType}` : undefined}>
         {item.kind === "build" ? (
           <span className="lib-build">
             <Plus size={40} strokeWidth={1.5} />

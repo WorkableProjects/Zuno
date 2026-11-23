@@ -138,8 +138,8 @@ export function App() {
   const selected = items.find((i) => i.id === selectedId) ?? items[0];
   const screen = stack[stack.length - 1];
 
-  const push = useCallback((next: Screen) => withScreenTransition("forward", () => setStack((s) => [...s, next])), []);
-  const pop = useCallback(() => withScreenTransition("back", () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s))), []);
+  const push = useCallback((next: Screen, morph?: string) => withScreenTransition("forward", () => setStack((s) => [...s, next]), { morph }), []);
+  const pop = useCallback((morph?: string) => withScreenTransition("back", () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), { morph: typeof morph === "string" ? morph : undefined }), []);
   const home = useCallback(() => {
     if (hostedLobby.current) void closeLobby(hostedLobby.current).catch(() => undefined);
     hostedLobby.current = null;
@@ -154,6 +154,25 @@ export function App() {
       setStack([{ name: "dashboard" }]);
     });
   }, []);
+
+  /** Sidebar moves: slide up or down by nav order; leaving a game page morphs it back into its tile. */
+  const goSection = useCallback(
+    (next: Section) => {
+      const order: Section[] = ["home", "library", "settings"];
+      const top = stack[stack.length - 1];
+      if (top.name === "dashboard" && next === section) return;
+      const dir = top.name !== "dashboard" ? "back" : order.indexOf(next) > order.indexOf(section) ? "down" : "up";
+      withScreenTransition(
+        dir,
+        () => {
+          setSection(next);
+          if (top.name !== "dashboard") setStack([{ name: "dashboard" }]);
+        },
+        { morph: top.name === "game" ? `game:${top.gameType}` : undefined },
+      );
+    },
+    [stack, section],
+  );
 
   const select = useCallback((id: string) => {
     setSelectedId(id);
@@ -299,19 +318,14 @@ export function App() {
   return (
     <>
       <AmbientBackground spec={backdrop} dim={screen.name !== "game"} />
+      <div className="app-stage" data-screen={screen.name}>
 
       {(screen.name === "dashboard" || screen.name === "game") && (
         <LauncherShell
           section={screen.name === "dashboard" ? section : null}
           accent={screen.name === "game" ? (getEngine(screen.gameType)?.appearance.accentColor ?? selected.backdrop.accent) : selected.backdrop.accent}
-          onSection={(next) => {
-            setSection(next);
-            if (screen.name !== "dashboard") withScreenTransition("back", () => setStack([{ name: "dashboard" }]));
-          }}
-          onSettings={() => {
-            setSection("settings");
-            if (screen.name !== "dashboard") withScreenTransition("back", () => setStack([{ name: "dashboard" }]));
-          }}
+          onSection={goSection}
+          onSettings={() => goSection("settings")}
         >
           {screen.name === "dashboard" && section === "settings" ? (
             <SettingsPage theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} />
@@ -322,19 +336,19 @@ export function App() {
               selectedId={selected.id}
               onSelect={select}
               onOpen={(item) => {
-                if (item.kind === "engine") push({ name: "game", gameType: item.gameType });
+                if (item.kind === "engine") push({ name: "game", gameType: item.gameType }, `game:${item.gameType}`);
                 else if (item.kind === "build") toBuilder();
                 else if (item.kind === "file") openRecent(item);
               }}
               onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
               onForget={forgetRecent}
-              onSection={setSection}
+              onSection={goSection}
             />
           ) : (
             <GameDetail
               key={screen.gameType}
               gameType={screen.gameType}
-              onBack={pop}
+              onBack={() => pop(`game:${screen.gameType}`)}
               onLoad={(gameType) => push({ name: "import", gameType })}
               onBuild={(gameType) => toBuilder(gameType)}
               onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
@@ -511,6 +525,7 @@ export function App() {
       {screen.name === "ai" &&
         (screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
 
+      </div>
       {pending && <ConfirmDialog title={pending.title} text={pending.text} confirmLabel={pending.label} danger onConfirm={pending.run} onClose={() => setPending(null)} />}
       <CornerControls docked={screen.name === "dashboard" || screen.name === "game"} />
       <StartupIntro />

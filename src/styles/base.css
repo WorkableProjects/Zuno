@@ -601,3 +601,6 @@ body {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/* The app's page layer. It stays out of layout; it only gives screen transitions one group to move. */
+.app-stage { position: relative; min-height: 100dvh; }
