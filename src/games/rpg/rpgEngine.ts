@@ -225,6 +225,13 @@ export function eligible(p: RpgPlayer): boolean {
   return !p.removed && p.coins > 0;
 }
 
+/** Landmine and Interceptor need two duelists and a bystander. */
+export const TRAP_ITEMS: readonly ItemId[] = ["landmine", "interceptor"];
+export const TRAP_MIN_PLAYERS = 3;
+export function trapsUsable(players: readonly RpgPlayer[]): boolean {
+  return players.filter(eligible).length >= TRAP_MIN_PLAYERS;
+}
+
 export function activePlayer(s: RpgState): RpgPlayer | undefined {
   return s.players[s.active];
 }
@@ -639,7 +646,7 @@ function removePlayer(s: RpgState, id: string): RpgState {
   const left = { ...s, players, log: log(s, `${p.name} left the game.`) };
   // An item in flight with nobody left to run it fizzles and play carries on.
   if (s.phase === "bomb" && s.bomb && (s.bomb.by === id || s.bomb.target === id)) return resumeSelect({ ...left, log: log(left, "The bomb fizzled out.") });
-  if ((s.phase === "nukeVote" || s.phase === "nukeDuel") && s.nuke?.by === id) return resumeSelect({ ...left, log: log(left, "The nuke was called off.") });
+  if ((s.phase === "nukeVote" || s.phase === "nukeDuel") && (s.nuke?.by === id || (s.nuke?.stage === "duel" && s.nuke.target === id))) return resumeSelect({ ...left, log: log(left, "The nuke was called off.") });
   return left;
 }
 
@@ -714,7 +721,9 @@ function buy(s: RpgState, a: Extract<RpgAction, { type: "buy" }>): RpgState {
   if (!me || !ITEM_IDS.includes(a.item)) return s;
   if (itemsOf(s, me.id).includes(a.item)) return s;
   const cost = itemCost(s, a.item);
-  if (!isMoney(cost) || cost > me.coins) return s;
+  // Buying must leave coins to play with, so cost has to be strictly less than the balance.
+  if (!isMoney(cost) || cost >= me.coins) return s;
+  if (TRAP_ITEMS.includes(a.item) && !trapsUsable(s.players)) return s;
   const next = setItems(s, me.id, [...itemsOf(s, me.id), a.item]);
   return {
     ...next,

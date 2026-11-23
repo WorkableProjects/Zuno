@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bomb, Check, Rocket, ShoppingCart, Zap } from "lucide-react";
 import { ITEM_IDS, formatCoins, itemInfo, type ItemId } from "../../game-files/schema/rpg";
-import { CHOICES, WIRES, type Choice } from "./rpgEngine";
+import { CHOICES, TRAP_ITEMS, TRAP_MIN_PLAYERS, WIRES, type Choice } from "./rpgEngine";
 import { ItemInfoBody, ItemInfoTip } from "./ItemInfo";
 import type { RpgOnline, RpgOnlineDuel, RpgMove, RpgPrivate } from "./rpgLobby";
 
@@ -22,9 +22,11 @@ const LABEL: Record<Choice, string> = { rock: "Rock", paper: "Paper", scissors: 
 export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
   const [open, setOpen] = useState(false);
   const [aiming, setAiming] = useState(false);
+  const [confirmNuke, setConfirmNuke] = useState(false);
   const mine = game.players.find((p) => p.id === me);
   if (!game.itemsOn || !mine || mine.removed) return null;
   const broke = mine.coins <= 0;
+  const trapsOk = game.players.filter((p) => !p.removed && p.coins > 0).length >= TRAP_MIN_PLAYERS;
   const targets = game.players.filter((p) => p.id !== me && !p.removed && p.coins > 0);
   return (
     <div className="rpg-items card">
@@ -40,13 +42,14 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
           {ITEM_IDS.map((id) => {
             const have = priv.items.includes(id);
             const cost = game.itemCosts[id];
+            const needs = TRAP_ITEMS.includes(id) && !trapsOk;
             return (
               <li key={id}>
                 <span className="rpg-grow">
                   <strong>{itemInfo(id, game.itemCosts).name}</strong> <ItemInfoTip id={id} costs={game.itemCosts} />
-                  <span className="meta rpg-status">{itemInfo(id, game.itemCosts).short}</span>
+                  <span className="meta rpg-status">{needs ? "Needs 3+ players" : itemInfo(id, game.itemCosts).short}</span>
                 </span>
-                <button type="button" className="btn btn-primary btn-sm" disabled={have || cost > mine.coins || sending} onClick={() => void send({ type: "buy", item: id })}>
+                <button type="button" className="btn btn-primary btn-sm" disabled={have || needs || cost >= mine.coins || sending} onClick={() => void send({ type: "buy", item: id })}>
                   {have ? "Owned" : `Buy ${formatCoins(cost)}`}
                 </button>
               </li>
@@ -67,12 +70,31 @@ export function ItemShop({ game, me, nameOf, send, sending, priv }: Common) {
                   Use
                 </button>
               )}
-              {id === "nuke" && (
-                <button type="button" className="btn btn-quiet btn-sm" disabled={sending || targets.length === 0} onClick={() => void send({ type: "nuke" })}>
-                  <Rocket size={16} strokeWidth={1.5} />
-                  Launch
-                </button>
-              )}
+              {id === "nuke" &&
+                (confirmNuke ? (
+                  <span className="rpg-row" role="group" aria-label="Confirm nuke launch">
+                    <button
+                      type="button"
+                      className="btn rpg-btn-danger btn-sm"
+                      disabled={sending || targets.length === 0}
+                      onClick={() => {
+                        setConfirmNuke(false);
+                        void send({ type: "nuke" });
+                      }}
+                    >
+                      <Rocket size={16} strokeWidth={1.5} />
+                      Confirm launch
+                    </button>
+                    <button type="button" className="btn btn-quiet btn-sm" onClick={() => setConfirmNuke(false)}>
+                      Cancel
+                    </button>
+                  </span>
+                ) : (
+                  <button type="button" className="btn btn-quiet btn-sm" disabled={sending || targets.length === 0} onClick={() => setConfirmNuke(true)}>
+                    <Rocket size={16} strokeWidth={1.5} />
+                    Launch
+                  </button>
+                ))}
               {(id === "landmine" || id === "interceptor") && <span className="meta">Use during betting</span>}
             </li>
           ))}
@@ -259,7 +281,9 @@ export function ItemFx({ game }: { game: RpgOnline }) {
     setShown(ev);
     const t = window.setTimeout(() => setShown(null), 4500);
     return () => window.clearTimeout(t);
-  }, [ev]);
+    // Keyed on the id: phones get a fresh object each snapshot, which would clear the timer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ev?.id]);
   const bombing = game.phase === "bomb";
   const nuking = game.phase === "nukeVote" || game.phase === "nukeDuel";
   return (

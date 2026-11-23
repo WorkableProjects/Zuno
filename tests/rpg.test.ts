@@ -387,8 +387,21 @@ describe("items", () => {
       expect(buy(withCoins(s, { b: 0 }), "b", "landmine").inventory.b).toBeUndefined();
       expect(buy(toBetting(s), "c", "landmine").inventory.c).toBeUndefined();
       expect(buy(atSelect(3, 10000, { items: false }), "b", "landmine").inventory.b).toBeUndefined();
-      const exact = buy(withCoins(s, { b: 500 }), "b", "landmine");
-      expect(coins(exact, "b")).toBe(0);
+    });
+    it("never leaves the buyer broke: cost must be below the balance", () => {
+      const s = rich();
+      expect(buy(withCoins(s, { b: 500 }), "b", "landmine").inventory.b).toBeUndefined();
+      const ok = buy(withCoins(s, { b: 501 }), "b", "landmine");
+      expect(coins(ok, "b")).toBe(1);
+    });
+    it("rejects Landmine and Interceptor below 3 active players", () => {
+      const two = atSelect(2, 10000);
+      expect(buy(two, "b", "landmine").inventory.b).toBeUndefined();
+      expect(buy(two, "b", "interceptor").inventory.b).toBeUndefined();
+      expect(buy(two, "b", "bomb").inventory.b).toEqual(["bomb"]);
+      const three = withCoins(rich(4), { c: 0, d: 0 });
+      expect(buy(three, "b", "landmine").inventory.b).toBeUndefined();
+      expect(buy(atSelect(3, 10000), "b", "interceptor").inventory.b).toEqual(["interceptor"]);
     });
     it("honours per-item cost overrides", () => {
       const s = buy(atSelect(3, 10000, { itemCosts: { ...DEFAULT_ITEM_COSTS, landmine: 100 } }), "b", "landmine");
@@ -520,6 +533,14 @@ describe("items", () => {
     it("a missed pick loses the round", () => {
       const s = ticks(run(duel(), { type: "pick", by: "a", choice: "rock" }), 15);
       expect(coins(s, "a")).toBeGreaterThan(2000);
+    });
+    it("fizzles when the duel target leaves mid-duel", () => {
+      let s = withCoins(buy(rich(4), "a", "nuke"), { a: 2000, b: 4000, c: 1000, d: 3000 });
+      s = run(s, { type: "useNuke", by: "a" }, { type: "vote", by: "b", vote: "allow" }, { type: "vote", by: "c", vote: "allow" }, { type: "vote", by: "d", vote: "allow" });
+      expect(s.phase).toBe("nukeDuel");
+      s = run(s, { type: "removePlayer", id: "b" });
+      expect(s.phase).toBe("select");
+      expect(s.nuke).toBeNull();
     });
     it("rejects bad use and non-duelist picks", () => {
       const s = buy(rich(), "a", "nuke");
