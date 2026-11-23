@@ -26,10 +26,21 @@ export function useRoom(): Room | null {
   return useSyncExternalStore(subscribe, () => current, () => null);
 }
 
-/** Registers the room for as long as the calling screen is mounted. */
+/**
+ * Registers the room for as long as the calling screen is mounted. Clearing is
+ * deferred a tick so handing over between screens (lobby to game, a name edit,
+ * a remount) never drops the room: a new registration in the same tick wins and
+ * listeners never see a null in between.
+ */
+let owner = 0;
 export function useRegisterRoom(path: string | null, name: string): void {
   useEffect(() => {
+    const me = ++owner;
     setRoom(path ? { path, name } : null);
-    return () => setRoom(null);
+    return () => {
+      window.setTimeout(() => {
+        if (owner === me) setRoom(null);
+      }, 0);
+    };
   }, [path, name]);
 }

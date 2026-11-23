@@ -325,6 +325,33 @@ let sfxOn = (() => {
 /** Sound effects can be switched off on their own, leaving the music playing. */
 export function setSfxEnabled(on: boolean) {
   sfxOn = on;
+  sfxListeners.forEach((l) => l());
+}
+const sfxListeners = new Set<() => void>();
+export const isSfxEnabled = () => sfxOn;
+export function subscribeSfx(l: () => void): () => void {
+  sfxListeners.add(l);
+  return () => void sfxListeners.delete(l);
+}
+
+/**
+ * Creates and resumes the audio context. Call from inside a user gesture:
+ * iOS Safari and Android Chrome keep it suspended otherwise. Plays one silent
+ * sample, which iOS needs before it will output anything. Returns true once running.
+ */
+export function unlockSfx(): boolean {
+  const b = getBus();
+  if (!b) return false;
+  try {
+    if (b.ac.state === "suspended") void b.ac.resume().catch(() => undefined);
+    const src = b.ac.createBufferSource();
+    src.buffer = b.ac.createBuffer(1, 1, 22050);
+    src.connect(b.ac.destination);
+    src.start(0);
+  } catch {
+    /* optional */
+  }
+  return b.ac.state === "running";
 }
 
 export function playSfx(name: Sfx): void {
@@ -407,11 +434,22 @@ export function installClickSounds(): () => void {
     dialogs = n;
   });
   observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["open"] });
+  // The first touch or key press unlocks audio so sounds from the room can play later.
+  let unlocked = false;
+  const onGesture = () => {
+    if (unlocked) return;
+    unlocked = unlockSfx();
+    if (unlocked) {
+      for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.removeEventListener(t, onGesture, true);
+    }
+  };
+  for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.addEventListener(t, onGesture, true);
   document.addEventListener("pointerover", onOver, { passive: true });
   document.addEventListener("click", onClick, true);
   document.addEventListener("change", onChange, true);
   return () => {
     observer.disconnect();
+    for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.removeEventListener(t, onGesture, true);
     document.removeEventListener("pointerover", onOver);
     document.removeEventListener("click", onClick, true);
     document.removeEventListener("change", onChange, true);

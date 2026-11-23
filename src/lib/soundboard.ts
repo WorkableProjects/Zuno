@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { getRoom, subscribeRoom } from "./room";
-import { getSfxContext, playSfx, playSfxBuffer, type Sfx } from "./sfx";
+import { getSfxContext, playSfx, playSfxBuffer, unlockSfx, type Sfx } from "./sfx";
 
 /**
  * A tiny soundboard. Pressing a sound plays it on this device and, when an
@@ -44,6 +44,7 @@ export function preloadBoardClips(): Promise<void> {
 
 /** Plays the recorded clip when loaded, otherwise the synthesized sound. */
 export function playBoardSound(id: BoardId): void {
+  note(id);
   const buf = clips.get(id);
   if (buf && playSfxBuffer(buf)) return;
   playSfx(id);
@@ -69,7 +70,10 @@ function syncListener(): void {
   stop?.();
   stop = null;
   listening = path;
-  if (path) stop = listen(path);
+  if (path) {
+    stop = listen(path);
+    void preloadBoardClips();
+  }
 }
 
 /** Keeps the soundboard listener in step with the room store; mount once. */
@@ -91,6 +95,26 @@ export async function backend() {
   return lobbiesAvailable() ? { d: database(), db } : null;
 }
 
+/** Keys of sounds this device already played itself, so the room listener skips them. */
+const played = new Set<string>();
+const markPlayed = (key: string) => {
+  played.add(key);
+  window.setTimeout(() => played.delete(key), 60_000);
+};
+
+/** Window hook for tests and debugging: every board sound that reaches playBoardSound. */
+function note(id: BoardId) {
+  try {
+    const w = window as unknown as { __boardPlays?: string[] };
+    (w.__boardPlays ??= []).push(id);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Number of recent sounds watched; wide enough that bursts are never missed. */
+const BOARD_WINDOW = 20;
+
 function listen(path: string): () => void {
   let off: (() => void) | null = null;
   let cancelled = false;
@@ -98,11 +122,16 @@ function listen(path: string): () => void {
     .then((b) => {
       if (!b || cancelled) return;
       const { ref, query, orderByKey, limitToLast, onChildAdded, onValue } = b.db;
-      const q = query(ref(b.d, `${path}/board`), orderByKey(), limitToLast(1));
+      const q = query(ref(b.d, `${path}/board`), orderByKey(), limitToLast(BOARD_WINDOW));
       let ready = false;
+      const seen = new Set<string>();
       const unChild = onChildAdded(q, (snap) => {
+        const key = snap.key;
+        if (!key || seen.has(key)) return;
+        seen.add(key);
         // The first batch is whatever was already there: skip it.
         if (!ready) return;
+        if (played.has(key)) return;
         const id = (snap.val() as { s?: unknown } | null)?.s;
         if (isBoardId(id)) playBoardSound(id);
       }, () => undefined);
@@ -126,24 +155,23 @@ export function sendBoardSound(id: BoardId, by?: string): boolean {
   const now = Date.now();
   if (!cooldownReady(lastSent, now)) return false;
   lastSent = now;
+  // Runs inside the tap: unlock audio here, and play at once so the sender
+  // never waits on the network or on their own listener.
+  unlockSfx();
+  playBoardSound(id);
   const path = getRoom()?.path ?? null;
-  if (!path) {
-    playBoardSound(id);
-    return true;
-  }
+  if (!path) return true;
   void backend()
     .then((b) => {
-      if (!b) {
-        playBoardSound(id);
-        return;
-      }
-      const { ref, push, remove, serverTimestamp } = b.db;
+      if (!b) return;
+      const { ref, push, set, remove, serverTimestamp } = b.db;
       const name = by?.trim().slice(0, 24);
-      // The room's own listener plays it, here included, so every device hears it together.
-      const item = push(ref(b.d, `${path}/board`), { s: id, at: serverTimestamp(), ...(name ? { by: name } : {}) });
+      // Mark the key before writing: the local write fires the listener synchronously.
+      const item = push(ref(b.d, `${path}/board`));
+      if (item.key) markPlayed(item.key);
+      void set(item, { s: id, at: serverTimestamp(), ...(name ? { by: name } : {}) }).catch(() => undefined);
       window.setTimeout(() => void remove(item).catch(() => undefined), KEEP_MS);
-      item.catch(() => playBoardSound(id));
     })
-    .catch(() => playBoardSound(id));
+    .catch(() => undefined);
   return true;
 }

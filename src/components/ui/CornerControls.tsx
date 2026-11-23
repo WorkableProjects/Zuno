@@ -3,6 +3,7 @@ import { Annoyed, Bell, Drum, LayoutGrid, Megaphone, MessageCircle, Music2, Part
 import { preloadBoardClips, sendBoardSound, useSoundboardListener, type BoardId } from "../../lib/soundboard";
 import { useRoom } from "../../lib/room";
 import { CHAT_MAX, useChat } from "../../lib/chat";
+import { isSfxEnabled, subscribeSfx } from "../../lib/sfx";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 
 const BOARD: { id: BoardId; label: string; Icon: LucideIcon }[] = [
@@ -27,7 +28,9 @@ export function CornerControls() {
   const muted = useSyncExternalStore(subscribeMuted, isMuted, () => false);
   const volume = useSyncExternalStore(subscribeMuted, getVolume, () => 0.7);
   const percent = Math.round(volume * 100);
+  const sfxOn = useSyncExternalStore(subscribeSfx, isSfxEnabled, () => true);
   const silent = muted || percent === 0;
+  const heardOff = silent || !sfxOn;
   const VolIcon = silent ? VolumeX : percent < 34 ? Volume : percent < 67 ? Volume1 : Volume2;
   const room = useRoom();
   useSoundboardListener();
@@ -64,6 +67,26 @@ export function CornerControls() {
       document.removeEventListener("pointerdown", onDown, true);
     };
   }, [active, pinned]);
+
+  // On phones the on-screen keyboard shrinks the visual viewport but not fixed
+  // elements: lift the controls so the chat input stays visible above it.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const el = root.current;
+    if (!vv || !el) return;
+    const apply = () => {
+      const covered = chatOpen ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+      el.style.setProperty("--kb", `${Math.round(covered)}px`);
+    };
+    apply();
+    vv.addEventListener("resize", apply);
+    vv.addEventListener("scroll", apply);
+    return () => {
+      vv.removeEventListener("resize", apply);
+      vv.removeEventListener("scroll", apply);
+      el.style.removeProperty("--kb");
+    };
+  }, [chatOpen]);
 
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
   const stackBtn = (p: Panel) => (el: HTMLButtonElement | null) => void (buttons.current[p] = el);
@@ -156,6 +179,7 @@ export function CornerControls() {
               ))}
             </div>
             <p className="corner-hint">{room ? "Plays for everyone in this room" : "Plays on this device"}</p>
+            {heardOff && <p className="corner-hint corner-warn" role="status">{!sfxOn && !silent ? "Sound effects are off in Settings, so you will not hear the board." : "Sound is off, so you will not hear the board."}</p>}
           </div>
         )}
 
