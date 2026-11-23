@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { FlipCode } from "../../components/ui/FlipCode";
 import { useRegisterRoom } from "../../lib/room";
 import QRCode from "qrcode";
 import {
@@ -191,7 +192,7 @@ export function LiarLobby({
               )}
               <div className="hb-join-text">
                 <p className="meta">Room code</p>
-                <p className="hb-code">{code}</p>
+                <FlipCode code={code} />
                 <p className="hb-link">{liarJoinLink(code)}</p>
                 <button
                   type="button"

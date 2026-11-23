@@ -167,7 +167,7 @@ export function JeopardyGame({ file, teams, allowNegativeScores, timeLimitSecond
         )}
       </header>
 
-      <div className="stage" ref={stage} key={state.phase === "clue" ? state.current?.questionId : state.phase}>
+      <div className="stage" ref={stage} data-phase={state.phase} key={state.phase === "clue" ? state.current?.questionId : state.phase}>
         {state.phase === "board" && <Board file={file} state={state} dispatch={dispatch} />}
         {state.phase === "clue" && <Clue file={file} state={state} dispatch={dispatch} timeLimitSeconds={timeLimitSeconds} />}
         {state.phase === "final" && <Final file={file} state={state} dispatch={dispatch} />}
@@ -313,7 +313,14 @@ interface PartProps {
   dispatch: React.Dispatch<SessionAction>;
 }
 
+/** Games whose board has already been dealt once; later returns to the board skip the deal. */
+const dealt = new WeakSet<object>();
+
 function Board({ file, state, dispatch }: PartProps) {
+  const [deal] = useState(() => !dealt.has(file));
+  useEffect(() => {
+    dealt.add(file);
+  }, [file]);
   const categories = file.content.categories;
   const rows = Math.max(...categories.map((c) => c.questions.length));
   const allUsed = state.used.length >= totalClues(file);
@@ -321,7 +328,7 @@ function Board({ file, state, dispatch }: PartProps) {
   let focusGiven = false;
 
   return (
-    <div className="board-wrap">
+    <div className={`board-wrap${deal ? " is-dealing" : ""}`}>
       <div className="board" role="grid" aria-label="Game board" style={{ "--cols": categories.length, "--rows": rows } as React.CSSProperties}>
         <div className="board-row board-head-row" role="row">
           {categories.map((c) => {
@@ -346,7 +353,7 @@ function Board({ file, state, dispatch }: PartProps) {
               const autofocus = !used && !focusGiven;
               if (autofocus) focusGiven = true;
               return (
-                <div key={c.id} role="gridcell" className="board-slot">
+                <div key={c.id} role="gridcell" className="board-slot" style={{ "--r": r, "--c": categories.indexOf(c) } as React.CSSProperties}>
                   <button
                     type="button"
                     className={`board-cell is-${status}${used ? " is-used" : ""}`}
@@ -354,7 +361,18 @@ function Board({ file, state, dispatch }: PartProps) {
                     data-autofocus={autofocus ? "" : undefined}
                     disabled={used}
                     aria-label={`${c.title}, ${q.value} points, ${STATUS_LABEL[status]}`}
-                    onClick={() => dispatch({ type: "open", categoryId: c.id, questionId: q.id })}
+                    onClick={(e) => {
+                      // The clue zooms open from the cell that was picked.
+                      const stage = e.currentTarget.closest<HTMLElement>(".stage");
+                      if (stage) {
+                        const a = e.currentTarget.getBoundingClientRect();
+                        const b = stage.getBoundingClientRect();
+                        const root = document.documentElement.style;
+                        root.setProperty("--clue-ox", `${a.left + a.width / 2 - b.left}px`);
+                        root.setProperty("--clue-oy", `${a.top + a.height / 2 - b.top}px`);
+                      }
+                      dispatch({ type: "open", categoryId: c.id, questionId: q.id });
+                    }}
                   >
                     <span className="board-value">{q.value}</span>
                     {used && <StatusIcon status={status} />}
@@ -695,10 +713,46 @@ function Final({ file, state, dispatch }: PartProps) {
   );
 }
 
+/** Rolls a number toward its new value over half a second (instantly when motion is off). */
+function useCountUp(value: number): number {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    const still = document.documentElement.dataset.motion === "off" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const start = from.current;
+    if (still || start === value) {
+      from.current = value;
+      setShown(value);
+      return;
+    }
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / 550);
+      const eased = 1 - Math.pow(1 - k, 3);
+      const v = Math.round(start + (value - start) * eased);
+      from.current = v;
+      setShown(v);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return shown;
+}
+
 function ScoreCell({ team, index, dispatch, progress }: { team: Team; index: number; dispatch: React.Dispatch<SessionAction>; progress?: { correct: number; incorrect: number } }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const box = useRef<HTMLDivElement>(null);
+  const shown = useCountUp(team.score);
+  const prev = useRef(team.score);
+  const [flash, setFlash] = useState<{ dir: "up" | "down"; n: number } | null>(null);
+  useEffect(() => {
+    if (team.score === prev.current) return;
+    setFlash((f) => ({ dir: team.score > prev.current ? "up" : "down", n: (f?.n ?? 0) + 1 }));
+    prev.current = team.score;
+  }, [team.score]);
   const open = () => {
     setDraft(String(team.score));
     setEditing(true);
@@ -716,6 +770,7 @@ function ScoreCell({ team, index, dispatch, progress }: { team: Team; index: num
   };
   return (
     <div className="score">
+      {flash && <span key={flash.n} className={`score-flash is-${flash.dir}`} aria-hidden="true" />}
       <span className="score-who">
         <span className="score-name">
           <TeamDot team={team} index={index} />
@@ -731,7 +786,10 @@ function ScoreCell({ team, index, dispatch, progress }: { team: Team; index: num
         <Members team={team} />
       </span>
       <button type="button" className="score-edit" aria-label={`Edit ${team.name} score, now ${formatScore(team.score)}`} aria-expanded={editing} onClick={open}>
-        <span className="score-value" aria-live="polite">
+        <span className={`score-value${flash ? ` is-${flash.dir}` : ""}`} key={flash?.n ?? 0} aria-hidden="true">
+          {formatScore(shown)}
+        </span>
+        <span className="sr-only" aria-live="polite">
           {formatScore(team.score)}
         </span>
         <Pencil size={14} strokeWidth={1.5} className="score-pencil" aria-hidden="true" />

@@ -1,5 +1,5 @@
 /* Home: greeting, a featured game, quick actions, recents and room-type strips. */
-.hm { display: grid; gap: 8px; }
+.hm { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .hm-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .hm-hello { display: flex; align-items: center; gap: 14px; }
 .hm-name { margin: 0; font: 700 clamp(30px, 3.6vw, 46px) / 1.05 var(--font-display); letter-spacing: -0.01em; }
@@ -70,7 +70,7 @@
 .hm-recent-text small { color: var(--text-3); font: 400 13px var(--font-ui); }
 .hm-recent-go { color: var(--text-3); }
 
-.hm-strip { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 14px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.hm-strip { display: flex; gap: 14px; overflow-x: auto; padding: 12px 6px 18px; margin: -8px -6px 0; scroll-snap-type: x proximity; scrollbar-width: thin; }
 .hm-chipcard {
   flex: 0 0 auto; width: 200px; display: grid; gap: 4px; padding: 10px 10px 14px; border-radius: var(--r-round); scroll-snap-align: start;
   border: 1px solid var(--hairline); background: color-mix(in oklab, var(--surface) 72%, transparent); color: var(--text); text-align: left; cursor: pointer;
@@ -90,4 +90,35 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .hm-feature { animation: none; }
+}
+
+/* Account prompt for people who are not signed in. Yes opens Settings; No hides it for good. */
+.hm-cta {
+  position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px 18px;
+  padding: 18px 20px; margin-bottom: 14px; border-radius: var(--r-round); overflow: hidden; isolation: isolate;
+  border: 1px solid color-mix(in oklab, var(--game) 40%, var(--hairline));
+  background:
+    linear-gradient(100deg, color-mix(in oklab, var(--game) 22%, transparent), transparent 60%),
+    color-mix(in oklab, var(--surface) 80%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--top-light), 0 14px 34px rgb(0 0 0 / 0.25);
+  animation: hm-cta-in 620ms var(--ease-pop) 200ms backwards;
+}
+.hm-cta::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.12) 50%, transparent 65%);
+  transform: translateX(-100%); animation: hm-cta-sheen 1.6s var(--ease) 900ms 1 both;
+}
+.hm-cta-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--game); color: #fff; box-shadow: 0 8px 20px color-mix(in oklab, var(--game) 45%, transparent); }
+.hm-cta-title { margin: 0; font: 700 20px / 1.2 var(--font-display); }
+.hm-cta-sub { margin: 4px 0 0; color: var(--text-2); font: 400 14px / 1.4 var(--font-ui); }
+.hm-cta-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.hm-cta.is-leaving { animation: hm-cta-out 340ms var(--ease-in-quick) forwards; pointer-events: none; }
+@keyframes hm-cta-in { from { opacity: 0; transform: translateY(-14px) scale(0.96); } }
+@keyframes hm-cta-out { to { opacity: 0; transform: translateX(40px) scale(0.96); filter: blur(4px); } }
+@keyframes hm-cta-sheen { to { transform: translateX(100%); } }
+@media (max-width: 640px) {
+  .hm-cta { grid-template-columns: auto 1fr; }
+  .hm-cta-actions { grid-column: 1 / -1; }
+  .hm-cta-actions .btn { flex: 1; }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { FlipCode } from "../../components/ui/FlipCode";
 import { useRegisterRoom } from "../../lib/room";
 import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Crown, Play, UserMinus } from "lucide-react";
@@ -180,7 +181,7 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
               {qr && <img className="hb-qr" src={qr} alt={`QR code to join room ${code}`} width={200} height={200} />}
               <div className="hb-join-text">
                 <p className="meta">Room code</p>
-                <p className="hb-code">{code}</p>
+                <FlipCode code={code} />
                 <p className="hb-link">{rpgJoinLink(code)}</p>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => void copy()}>
                   {copied ? <Check size={16} strokeWidth={1.5} /> : <Copy size={16} strokeWidth={1.5} />}

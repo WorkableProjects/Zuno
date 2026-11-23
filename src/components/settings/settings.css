@@ -96,7 +96,7 @@
 .st-me small { display: inline-flex; align-items: center; gap: 6px; color: var(--text-3); font-size: 13px; }
 .st-signout { margin-left: auto; }
 
-.st-themes { display: grid; grid-template-columns: repeat(2, minmax(0, 200px)); gap: 12px; margin-top: 8px; }
+.st-themes { display: grid; grid-template-columns: repeat(3, minmax(0, 200px)); gap: 12px; margin-top: 8px; }
 .st-theme {
   display: grid; gap: 8px; padding: 8px; border-radius: 16px; border: 2px solid var(--hairline); background: none; color: var(--text); cursor: pointer;
   transition: border-color var(--t-fast) var(--ease), transform var(--t-press) var(--ease);
@@ -112,6 +112,9 @@
 .st-theme-light .st-theme-preview { background: #f2f4f8; }
 .st-theme-light .st-theme-preview span { background: #dfe3ec; }
 .st-theme-light .st-theme-preview span:nth-child(2) { background: #c3cad8; }
+.st-theme-vice .st-theme-preview { background: linear-gradient(180deg, #2a0b4a 0%, #7a1d6e 55%, #ff7a59 100%); }
+.st-theme-vice .st-theme-preview span { background: rgb(20 7 38 / 0.7); box-shadow: inset 0 0 0 1px #ff3ea5; }
+.st-theme-vice .st-theme-preview span:nth-child(2) { background: linear-gradient(90deg, #ff3ea5, #22e1ff); box-shadow: 0 0 10px #ff3ea5; }
 .st-theme-label { display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 2px; font: 600 14px var(--font-ui); }
 
 .st-list { display: grid; gap: 4px; }

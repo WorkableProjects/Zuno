@@ -2,7 +2,8 @@ import type { BackgroundPreset } from "../game-files/schema/common";
 
 /** Small local preferences. No account, no server. Every read and write is guarded. */
 
-export type Theme = "dark" | "light";
+/** "vice" is a neon Miami-night skin layered over the dark palette. */
+export type Theme = "dark" | "light" | "vice";
 
 const KEYS = {
   theme: "zuno.theme",
@@ -30,7 +31,8 @@ function write(key: string, value: string): boolean {
 }
 
 export function loadTheme(): Theme {
-  return read(KEYS.theme) === "light" ? "light" : "dark";
+  const v = read(KEYS.theme);
+  return v === "light" || v === "vice" ? v : "dark";
 }
 export function saveTheme(theme: Theme) {
   write(KEYS.theme, theme);
