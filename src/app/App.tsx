@@ -195,15 +195,16 @@ export function App() {
     if (root.dataset.theme === paletteOf(next) && (root.dataset.skin ?? "") === skinOf(next)) return;
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "light" ? "#F2F4F8" : next === "vice" ? "#140726" : "#080B12");
     saveTheme(next);
-    // A circular wipe from the toggle; the colour cross-fade remains for browsers without view transitions.
-    if (!("startViewTransition" in document)) {
-      root.classList.add("theme-shift");
-      window.setTimeout(() => root.classList.remove("theme-shift"), 400);
-    }
-    withScreenTransition("theme", () => {
+    // A circular wipe from the toggle. When no view transition runs, the update happens
+    // synchronously, so the colour cross-fade class must already be on.
+    root.classList.add("theme-shift");
+    const wiped = withScreenTransition("theme", () => {
       applyTheme(next);
       setTheme(next);
     });
+    // The wipe applies the theme later, off a snapshot; a cross-fade then would fight it.
+    if (wiped) root.classList.remove("theme-shift");
+    else window.setTimeout(() => root.classList.remove("theme-shift"), 400);
   }, []);
 
   useEffect(() => {
@@ -335,7 +336,7 @@ export function App() {
 
   return (
     <>
-      <AmbientBackground spec={backdrop} dim={screen.name !== "game"} />
+      <AmbientBackground spec={backdrop} dim={screen.name !== "game"} paused={screen.name !== "dashboard" && screen.name !== "game"} />
       <div className="app-stage" data-screen={screen.name}>
 
       {(screen.name === "dashboard" || screen.name === "game") && (

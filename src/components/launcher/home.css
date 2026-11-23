@@ -115,7 +115,7 @@
 .hm-cta-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .hm-cta.is-leaving { animation: hm-cta-out 340ms var(--ease-in-quick) forwards; pointer-events: none; }
 @keyframes hm-cta-in { from { opacity: 0; transform: translateY(-14px) scale(0.96); } }
-@keyframes hm-cta-out { to { opacity: 0; transform: translateX(40px) scale(0.96); filter: blur(4px); } }
+@keyframes hm-cta-out { to { opacity: 0; transform: translateX(40px) scale(0.96); } }
 @keyframes hm-cta-sheen { to { transform: translateX(100%); } }
 @media (max-width: 640px) {
   .hm-cta { grid-template-columns: auto 1fr; }

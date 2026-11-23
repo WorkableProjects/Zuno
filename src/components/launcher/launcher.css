@@ -225,7 +225,7 @@
 .lib-name { transition: color var(--t-fast) var(--ease), transform var(--t-med) var(--ease-pop); }
 .lib-tile:hover .lib-name, .lib-tile.is-active .lib-name { transform: translateX(4px); }
 /* Selected tile: the accent halo breathes slowly. */
-.lib-tile.is-active .lib-art { animation: lx-halo 2.8s ease-in-out infinite; }
+.lib-tile.is-active .lib-art { animation: lx-halo 1.4s ease-in-out 1; }
 @keyframes lx-halo {
   50% {
     box-shadow:
@@ -236,7 +236,7 @@
   }
 }
 .lib-tile { animation: lx-tile-in 560ms var(--ease-out-expo) backwards; animation-delay: calc(var(--i, 0) * var(--t-stagger) + 60ms); }
-@keyframes lx-tile-in { from { opacity: 0; transform: translateY(26px) scale(0.92) rotateX(14deg); filter: blur(4px); } }
+@keyframes lx-tile-in { from { opacity: 0; transform: translateY(26px) scale(0.92) rotateX(14deg); } }
 .launcher .lib-tile:focus-visible .lib-art { outline: 2px solid var(--text); outline-offset: 8px; }
 .launcher .lib-tile:focus, .launcher .lib-tile:focus-visible { outline: none; box-shadow: none; }
 .launcher .lib-tile:focus-visible .lib-name { color: color-mix(in oklab, var(--game) 60%, var(--text)); }
@@ -293,11 +293,11 @@
 .lx-big-word:only-child { -webkit-text-fill-color: transparent; color: var(--text); }
 .lx-big-word:last-child:not(:first-child) { -webkit-text-fill-color: transparent; }
 @keyframes lx-shimmer { from { background-position: 100% 0; } to { background-position: 0% 0; } }
-@keyframes lx-rise { from { opacity: 0; transform: translateY(40%) scale(0.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes lx-rise { from { opacity: 0; transform: translateY(40%) scale(0.96); } to { opacity: 1; transform: none; } }
 .lx-desc { margin: 0; max-width: 56ch; color: var(--text-2); font: 400 clamp(16px, 1.4vw, 19px) / 1.5 var(--font-ui); animation: lx-item-in 450ms var(--ease) 260ms backwards; }
 .lx-actions { display: flex; flex-wrap: wrap; gap: 12px; animation: lx-item-in 450ms var(--ease) 340ms backwards; }
 .lx-play { min-width: 160px; font-size: 17px; background: var(--game); color: #fff; border-color: transparent; box-shadow: 0 12px 30px color-mix(in oklab, var(--game) 45%, transparent); }
-.lx-play { position: relative; overflow: hidden; isolation: isolate; animation: lx-play-breathe 3.2s ease-in-out 1.2s infinite; }
+.lx-play { position: relative; overflow: hidden; isolation: isolate; animation: lx-play-breathe 1.6s ease-in-out 1.2s 1; }
 .lx-play:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-2px) scale(1.03); }
 .lx-play::before {
   content: ""; position: absolute; inset: 0; z-index: -1;

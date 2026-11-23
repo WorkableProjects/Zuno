@@ -95,13 +95,13 @@ html .st-card:nth-child(3) { animation-delay: 160ms; }
 html .st-card:nth-child(4) { animation-delay: 220ms; }
 html .st-card:nth-child(5) { animation-delay: 280ms; }
 html .st-card:nth-child(n + 6) { animation-delay: 340ms; }
-@keyframes card-in { from { opacity: 0; transform: translateY(22px) scale(0.97); filter: blur(4px); } }
+@keyframes card-in { from { opacity: 0; transform: translateY(22px) scale(0.97); } }
 
 /* ---------- Dialogs and sheets: spring in, blur the world behind ---------- */
 html .dialog-backdrop { animation: backdrop-in 320ms var(--ease) both; backdrop-filter: blur(8px); }
-@keyframes backdrop-in { from { opacity: 0; backdrop-filter: blur(0); } }
+@keyframes backdrop-in { from { opacity: 0; backdrop- } }
 html .dialog { animation: dialog-pop 460ms var(--ease-pop) both; transform-origin: 50% 60%; }
-@keyframes dialog-pop { from { opacity: 0; transform: translateY(18px) scale(0.9); filter: blur(6px); } 60% { opacity: 1; filter: none; } }
+@keyframes dialog-pop { from { opacity: 0; transform: translateY(18px) scale(0.9); } 60% { opacity: 1; } }
 html .dialog > * { animation: dialog-child 420ms var(--ease-out-expo) backwards; }
 html .dialog > :nth-child(1) { animation-delay: 60ms; }
 html .dialog > :nth-child(2) { animation-delay: 110ms; }
@@ -109,11 +109,11 @@ html .dialog > :nth-child(3) { animation-delay: 160ms; }
 html .dialog > :nth-child(n + 4) { animation-delay: 210ms; }
 @keyframes dialog-child { from { opacity: 0; transform: translateY(8px); } }
 html .sheet { animation: sheet-slide 520ms var(--ease-out-expo) both; }
-@keyframes sheet-slide { from { opacity: 0; transform: translateX(60px); filter: blur(6px); } }
+@keyframes sheet-slide { from { opacity: 0; transform: translateX(60px); } }
 html .dialog-layer.is-closing .dialog { animation: dialog-out 160ms var(--ease-in-quick) both; }
 html .dialog-layer.is-closing .sheet { animation: sheet-out 160ms var(--ease-in-quick) both; }
 html .dialog-layer.is-closing .dialog-backdrop { animation: fade-out 180ms var(--ease) both; }
-@keyframes dialog-out { to { opacity: 0; transform: scale(0.94); filter: blur(4px); } }
+@keyframes dialog-out { to { opacity: 0; transform: scale(0.94); } }
 @keyframes sheet-out { to { opacity: 0; transform: translateX(40px); } }
 
 /* ---------- Home cards ---------- */
@@ -148,16 +148,16 @@ html .lx-back:hover svg { transform: translateX(-4px); }
 
 /* ---------- Shared screens ---------- */
 html .screen { animation: screen-rise 520ms var(--ease-out-expo) both; }
-@keyframes screen-rise { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
+@keyframes screen-rise { from { opacity: 0; transform: translateY(14px); } }
 html .screen-bar { animation: bar-in 520ms var(--ease-out-expo) 60ms backwards; }
 @keyframes bar-in { from { opacity: 0; transform: translateY(-12px); } }
 
 /* ---------- Lobbies ---------- */
 html .flip-code { display: inline-flex; perspective: 600px; }
 html .flip-char { display: inline-block; transform-origin: 50% 60%; animation: flip-char 700ms var(--ease-pop) backwards; animation-delay: calc(var(--i) * 70ms + 200ms); }
-@keyframes flip-char { from { opacity: 0; transform: rotateX(-95deg) translateY(-10px); filter: blur(3px); } 60% { opacity: 1; } }
+@keyframes flip-char { from { opacity: 0; transform: rotateX(-95deg) translateY(-10px); } 60% { opacity: 1; } }
 html .hb-qr { animation: qr-in 700ms var(--ease-pop) 120ms backwards; }
-@keyframes qr-in { from { opacity: 0; transform: scale(0.7) rotate(-6deg); filter: blur(6px); } }
+@keyframes qr-in { from { opacity: 0; transform: scale(0.7) rotate(-6deg); } }
 /* A player who joins pops into the circle. Existing rows keep their place; only new ones animate. */
 html .hb-circle-row { animation: row-pop 520ms var(--ease-pop) backwards; transition: background-color var(--t-med) var(--ease), border-color var(--t-med) var(--ease); }
 @keyframes row-pop { from { opacity: 0; transform: translateX(-18px) scale(0.92); } 55% { opacity: 1; } }

@@ -65,11 +65,11 @@ export interface TransitionOptions {
  * its end state and starts fresh, so fast clicks never snap or stack.
  * Browsers without the API simply update straight away.
  */
-export function withScreenTransition(direction: NavDirection, update: () => void, options: TransitionOptions = {}): void {
+export function withScreenTransition(direction: NavDirection, update: () => void, options: TransitionOptions = {}): boolean {
   const doc = document as ViewTransitionDoc;
   if (!doc.startViewTransition || document.visibilityState !== "visible") {
     update();
-    return;
+    return false;
   }
   if (current) {
     try {
@@ -117,9 +117,11 @@ export function withScreenTransition(direction: NavDirection, update: () => void
       }
     });
     void current.finished.finally(done);
+    return true;
   } catch {
     done();
     update();
+    return false;
   }
 }
 
