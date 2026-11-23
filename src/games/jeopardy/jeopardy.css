@@ -166,7 +166,7 @@
     transform var(--t-press) var(--ease);
 }
 .board-value {
-  font: 500 clamp(22px, 3.4vw, 56px) / 1 var(--font-display);
+  font: 500 clamp(18.7px, 2.9vw, 47.6px) / 1 var(--font-display);
   letter-spacing: -0.02em;
 }
 .board-cell:hover:not(:disabled),
@@ -248,7 +248,7 @@
   color: var(--text-2);
 }
 .score-value {
-  font: 500 clamp(20px, 2.2vw, 32px) / 1 var(--font-display);
+  font: 500 clamp(17px, 1.9vw, 27.2px) / 1 var(--font-display);
 }
 .score-edit {
   display: inline-flex;
@@ -329,11 +329,11 @@
 }
 .clue-category {
   margin-top: 4px;
-  font: 500 24px/32px var(--font-display);
+  font: 500 20.4px/32px var(--font-display);
 }
 .clue-text {
   margin-top: 12px;
-  font: 500 clamp(28px, 4.2vw, 60px) / 1.12 var(--font-display);
+  font: 600 clamp(28px, 4.2vw, 60px) / 1.12 var(--font-ui);
   letter-spacing: -0.02em;
   text-wrap: balance;
   overflow-wrap: anywhere;
@@ -360,7 +360,7 @@
 }
 .answer-text {
   margin-top: 4px;
-  font: 500 clamp(24px, 3vw, 40px) / 1.2 var(--font-display);
+  font: 600 clamp(24px, 3vw, 40px) / 1.2 var(--font-ui);
   color: var(--game-ink);
   overflow-wrap: anywhere;
 }
@@ -492,7 +492,7 @@
   white-space: nowrap;
 }
 .standing-score {
-  font: 500 28px/1 var(--font-display);
+  font: 500 23.8px/1 var(--font-display);
 }
 .standing.is-first .standing-score {
   color: var(--game-ink);
@@ -538,7 +538,7 @@
 }
 .timer-readout {
   min-width: 4.5ch;
-  font: 500 20px/1 var(--font-display);
+  font: 700 20px/1 var(--font-ui);
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -575,7 +575,7 @@
   cursor: pointer;
 }
 .dd-splash-text {
-  font: 600 clamp(48px, 11vw, 144px) / 1 var(--font-display);
+  font: 600 clamp(40.8px, 9.3vw, 122.4px) / 1 var(--font-display);
   letter-spacing: -0.03em;
   color: var(--game);
   animation: dd-pop 1500ms var(--ease) both;

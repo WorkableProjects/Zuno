@@ -1,4 +1,4 @@
-import { getVolume, isMuted } from "./audio";
+import { getVolume, isMuted, perceptualGain } from "./audio";
 
 /**
  * Game and menu sound effects, synthesized live with Web Audio: no files to
@@ -366,10 +366,40 @@ export function playSfx(name: Sfx): void {
   if (!b) return;
   try {
     const out = b.ac.createGain();
-    out.gain.value = 0.5 * getVolume();
+    out.gain.value = 0.5 * perceptualGain(getVolume());
     out.connect(b.input);
     DESIGNS[name]({ ac: b.ac, out, t: b.ac.currentTime + 0.005 });
     window.setTimeout(() => out.disconnect(), 4000);
+  } catch {
+    /* sound is optional */
+  }
+}
+
+/**
+ * A tone that rises over `ms`, for drum-roll builds before a reveal. Goes
+ * through the shared bus, so it honors the sound-effects switch, mute and volume.
+ */
+export function playRise(ms: number): void {
+  if (!sfxOn || isMuted() || getVolume() <= 0) return;
+  const b = getBus();
+  if (!b) return;
+  try {
+    const { ac } = b;
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    const t = ac.currentTime + 0.005;
+    const d = ms / 1000;
+    const peak = 0.12 * perceptualGain(getVolume());
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.exponentialRampToValueAtTime(620, t + d);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + d * 0.9);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.15);
+    osc.connect(g).connect(b.input);
+    osc.start(t);
+    osc.stop(t + d + 0.2);
+    osc.onended = () => g.disconnect();
   } catch {
     /* sound is optional */
   }
@@ -387,7 +417,7 @@ export function playSfxBuffer(buf: AudioBuffer): boolean {
   if (!b) return false;
   try {
     const out = b.ac.createGain();
-    out.gain.value = 0.9 * getVolume();
+    out.gain.value = 0.9 * perceptualGain(getVolume());
     out.connect(b.input);
     const src = b.ac.createBufferSource();
     src.buffer = buf;
@@ -401,6 +431,8 @@ export function playSfxBuffer(buf: AudioBuffer): boolean {
 }
 
 const INTERACTIVE = "button, [role=button], [role=tab], [role=radio], a[href], .tile, summary";
+const HOVER_TILES = ".tile, .lib-tile";
+const NAV_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab", "w", "a", "s", "d", "W", "A", "S", "D"]);
 const isBack = (el: Element) => /^(back|exit|leave|close|cancel)/i.test(el.getAttribute("aria-label") ?? (el as HTMLElement).innerText ?? "");
 
 /**
@@ -408,13 +440,29 @@ const isBack = (el: Element) => /^(back|exit|leave|close|cancel)/i.test(el.getAt
  * cancel, switches, dialogs opening and closing. Game sounds come on top.
  */
 export function installClickSounds(): () => void {
+  // Hover ticks are kept for the moments they help: the mouse landing on a
+  // dashboard game tile, and focus moving by keyboard. Sweeping the mouse over
+  // ordinary buttons stays quiet.
   let hovered: Element | null = null;
+  let keyboard = false;
   const onOver = (e: PointerEvent) => {
     if (e.pointerType !== "mouse") return;
-    const el = (e.target as Element | null)?.closest?.(INTERACTIVE) ?? null;
+    keyboard = false;
+    const el = (e.target as Element | null)?.closest?.(HOVER_TILES) ?? null;
     if (el === hovered) return;
     hovered = el;
-    if (el && !(el as HTMLButtonElement).disabled && !el.closest(".corner")) playSfx("hover");
+    if (el && !(el as HTMLButtonElement).disabled) playSfx("hover");
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (NAV_KEYS.has(e.key)) keyboard = true;
+  };
+  const onPointerDown = () => {
+    keyboard = false;
+  };
+  const onFocus = (e: FocusEvent) => {
+    if (!keyboard) return;
+    const el = (e.target as Element | null)?.closest?.(INTERACTIVE);
+    if (el && !el.closest(".corner")) playSfx("hover");
   };
   const onClick = (e: MouseEvent) => {
     const el = (e.target as Element | null)?.closest?.(INTERACTIVE);
@@ -445,12 +493,18 @@ export function installClickSounds(): () => void {
   };
   for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.addEventListener(t, onGesture, true);
   document.addEventListener("pointerover", onOver, { passive: true });
+  document.addEventListener("keydown", onKey, true);
+  document.addEventListener("pointerdown", onPointerDown, true);
+  document.addEventListener("focusin", onFocus, true);
   document.addEventListener("click", onClick, true);
   document.addEventListener("change", onChange, true);
   return () => {
     observer.disconnect();
     for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.removeEventListener(t, onGesture, true);
     document.removeEventListener("pointerover", onOver);
+    document.removeEventListener("keydown", onKey, true);
+    document.removeEventListener("pointerdown", onPointerDown, true);
+    document.removeEventListener("focusin", onFocus, true);
     document.removeEventListener("click", onClick, true);
     document.removeEventListener("change", onChange, true);
   };

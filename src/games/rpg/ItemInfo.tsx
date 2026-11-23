@@ -1,9 +1,16 @@
+import { createPortal } from "react-dom";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Info } from "lucide-react";
 import { itemInfo, type ItemId } from "../../game-files/schema/rpg";
 
 /** Name, cost, when to use and exactly what an item does, for this room's costs. */
-export function ItemInfoBody({ id, costs }: { id: ItemId; costs: Record<ItemId, number> }) {
+export function ItemInfoBody({
+  id,
+  costs,
+}: {
+  id: ItemId;
+  costs: Record<ItemId, number>;
+}) {
   const info = itemInfo(id, costs);
   return (
     <>
@@ -26,7 +33,13 @@ const CLOSE_MS = 140;
  * a tap or click pins it. Escape or a tap outside closes it. A hover-only
  * popover ignores the pointer so it never covers the controls under it.
  */
-export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, number> }) {
+export function ItemInfoTip({
+  id,
+  costs,
+}: {
+  id: ItemId;
+  costs: Record<ItemId, number>;
+}) {
   const tipId = useId();
   const root = useRef<HTMLSpanElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -38,7 +51,12 @@ export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, n
   const open = hover || focus || pinned;
   // Stays mounted briefly after closing so it can animate out.
   const [mounted, setMounted] = useState(false);
-  const [pos, setPos] = useState<{ left: number; top: number; width: number; above: boolean } | null>(null);
+  const [pos, setPos] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    above: boolean;
+  } | null>(null);
 
   useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
@@ -87,9 +105,13 @@ export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, n
       if (!btn) return;
       const r = btn.getBoundingClientRect();
       const width = Math.min(320, window.innerWidth - 32);
-      const left = Math.max(16, Math.min(r.left + r.width / 2 - 24, window.innerWidth - 16 - width));
+      const left = Math.max(
+        16,
+        Math.min(r.left + r.width / 2 - 24, window.innerWidth - 16 - width),
+      );
       const h = tipRef.current?.offsetHeight ?? 220;
-      const above = r.bottom + 8 + h > window.innerHeight - 16 && r.top - 8 - h >= 16;
+      const above =
+        r.bottom + 8 + h > window.innerHeight - 16 && r.top - 8 - h >= 16;
       setPos({ left, top: above ? r.top - 8 : r.bottom + 8, width, above });
     };
     place();
@@ -112,7 +134,10 @@ export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, n
       onPointerEnter={(e) => {
         if (e.pointerType !== "mouse") return;
         window.clearTimeout(hoverTimer.current);
-        hoverTimer.current = window.setTimeout(() => setHover(true), OPEN_DELAY);
+        hoverTimer.current = window.setTimeout(
+          () => setHover(true),
+          OPEN_DELAY,
+        );
       }}
       onPointerLeave={(e) => {
         if (e.pointerType !== "mouse") return;
@@ -145,16 +170,24 @@ export function ItemInfoTip({ id, costs }: { id: ItemId; costs: Record<ItemId, n
       >
         <Info size={16} strokeWidth={1.5} />
       </button>
-      {mounted && (
-        <div
-          className={`rpg-tip-pos${pinned ? " is-pinned" : ""}${pos?.above ? " is-above" : ""}${open && pos ? " is-open" : ""}`}
-          style={pos ? { left: pos.left, top: pos.top, width: pos.width } : { left: -9999, top: 0, width: 320 }}
-        >
-          <div ref={tipRef} id={tipId} role="tooltip" className="rpg-tip">
-            <ItemInfoBody id={id} costs={costs} />
-          </div>
-        </div>
-      )}
+      {mounted &&
+        createPortal(
+          <div
+            className={`rpg-tip-pos${pinned ? " is-pinned" : ""}${pos?.above ? " is-above" : ""}${open && pos ? " is-open" : ""}`}
+            style={
+              pos
+                ? { left: pos.left, top: pos.top, width: pos.width }
+                : { left: -9999, top: 0, width: 320 }
+            }
+          >
+            <div ref={tipRef} id={tipId} role="tooltip" className="rpg-tip">
+              <ItemInfoBody id={id} costs={costs} />
+            </div>
+          </div>,
+          // Rendered on <body>: a transformed or blurred ancestor panel would
+          // otherwise become the fixed box's anchor and throw it off the button.
+          document.body,
+        )}
     </span>
   );
 }

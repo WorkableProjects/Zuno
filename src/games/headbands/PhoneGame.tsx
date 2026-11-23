@@ -120,7 +120,7 @@ export function PhoneGame({ code, me, lobby, game, onMove }: Props) {
               <Pause size={24} strokeWidth={1.5} /> Paused by the host
             </h1>
           ) : (
-            <h1 className="page-title hb-turn-title">
+            <h1 key={`${game.turn}-${current?.id ?? ""}`} className="page-title hb-turn-title ru-turn">
               {myTurn ? "Your turn" : `${current?.name ?? "Someone"}’s turn`}
             </h1>
           )}
@@ -211,7 +211,7 @@ export function PhoneGame({ code, me, lobby, game, onMove }: Props) {
               {(() => {
                 const card = cardFor(lobby, current.id);
                 return card ? (
-                  <div className="hb-their-card">
+                  <div className="hb-their-card ru-flip" key={current.id}>
                     <p className="field-label">
                       {current.name}’s card, hidden from them
                     </p>
@@ -443,7 +443,7 @@ function PlayerRow({
           <ol className="hb-history">
             {asked.map((h, i) => (
               <li key={i}>
-                <span className={`hb-pill hb-pill-${h.answer}`}>
+                <span className={`hb-pill ru-badge hb-pill-${h.answer}`}>
                   {answerLabel(h.answer)}
                 </span>
                 <span className="hb-history-q">
@@ -477,19 +477,20 @@ function PhoneRecap({
     <div className="hb-play">
       <section className="card hb-phone-card">
         <p className="meta">Game over</p>
-        <h1 className="page-title">
+        <h1 className={`page-title ru-reveal${solved === players.length ? " ru-win" : ""}`}>
           {solved === players.length
             ? "Everyone solved"
             : `${solved} of ${players.length} solved`}
         </h1>
         <ol className="hb-phone-players">
-          {players.map((p) => {
+          {players.map((p, i) => {
             const card = cardFor(lobby, p.id);
             const show = p.id !== me || p.solved || game.revealed;
             return (
               <li
                 key={p.id}
-                className={`hb-phone-player${p.solved ? " is-solved" : ""}`}
+                className={`hb-phone-player ru-deal${p.solved ? " is-solved" : ""}`}
+                style={{ "--i": i } as React.CSSProperties}
               >
                 <div className="hb-phone-player-head">
                   <span className="hb-roster-name">

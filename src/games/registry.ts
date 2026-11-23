@@ -167,7 +167,7 @@ const engines: GameEngine[] = [
     description: "One player draws a secret word while everyone watches it appear live and races to guess. Faster guesses score more.",
     schemaVersions: [1],
     hasBuilder: false,
-    appearance: { accentColor: "#F59E0B", backgroundPreset: "horizon" },
+    appearance: { accentColor: "#F59E0B", backgroundPreset: "aurora" },
     validate: validateDrawIt as GameEngine["validate"],
     artwork: "sketch",
     onlineOnly: true,

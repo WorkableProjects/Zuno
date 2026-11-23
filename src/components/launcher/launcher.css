@@ -32,17 +32,23 @@
   backdrop-filter: blur(18px) saturate(1.2);
   box-shadow: var(--top-light), 0 20px 50px rgb(0 0 0 / 0.35);
 }
+/* The Zuno mark sits in the rail itself: no tile, just the sun and a soft glow. */
 .lx-mark {
   display: grid;
   place-items: center;
   width: 46px;
   height: 46px;
-  border-radius: 16px;
-  font: 800 24px / 1 var(--font-display);
-  color: #fff;
-  background: linear-gradient(135deg, var(--sunset-1), var(--sunset-2) 55%, var(--sunset-3));
-  box-shadow: 0 8px 22px color-mix(in oklab, var(--sunset-2) 45%, transparent);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--sunset-2) 40%, transparent));
+  transition: transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
 }
+.lx-mark:hover { transform: scale(1.06); filter: drop-shadow(0 8px 22px color-mix(in oklab, var(--sunset-2) 55%, transparent)); }
+.lx-mark:active { transform: scale(0.96); transition-duration: var(--t-press); }
+.lx-mark:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
 .lx-nav { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
 .lx-nav-btn {
   position: relative;
@@ -151,33 +157,27 @@
     linear-gradient(160deg, color-mix(in oklab, var(--game) 30%, var(--surface-2)), var(--surface) 80%);
   border: 1px solid var(--hairline);
   box-shadow: var(--shadow-tile);
-  transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow var(--t-med) var(--ease), border-color var(--t-med) var(--ease);
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
 .lib-art .tile-img { position: absolute; inset: 14% 10%; width: 80%; height: 72%; transition: transform 400ms var(--ease); }
 .lib-art .cover-bg { fill: transparent; }
 .lib-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .lib-build { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-2); }
 .lib-tile.is-build .lib-art { background: color-mix(in oklab, var(--surface) 60%, transparent); border: 2px dashed var(--border); box-shadow: none; }
-.lib-glow {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.22) 50%, transparent 65%);
-  background-size: 250% 100%;
-  background-position: 120% 0;
-  opacity: 0;
-  transition: opacity var(--t-med) var(--ease);
-}
 .lib-name { padding: 0 4px; font: 600 16px / 1.25 var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color var(--t-fast) var(--ease); }
+/* Selected: a gentle 1.02 lift and a concentric rounded accent halo. */
 .lib-tile:hover .lib-art, .lib-tile:focus-visible .lib-art, .lib-tile.is-active .lib-art {
-  transform: translateY(-6px) scale(1.02);
-  border-color: color-mix(in oklab, var(--game) 70%, transparent);
-  box-shadow: 0 22px 44px rgb(0 0 0 / 0.5), 0 0 0 3px color-mix(in oklab, var(--game) 45%, transparent);
+  transform: translateY(-3px) scale(1.02);
+  border-color: color-mix(in oklab, var(--game) 80%, var(--text));
+  box-shadow:
+    0 18px 36px rgb(0 0 0 / 0.45),
+    0 0 0 3px rgb(var(--bg-rgb) / 0.85),
+    0 0 0 5px color-mix(in oklab, var(--game) 75%, transparent),
+    0 0 28px 4px color-mix(in oklab, var(--game) 32%, transparent);
 }
-.lib-tile:hover .tile-img, .lib-tile.is-active .tile-img { transform: scale(1.06) rotate(-1.5deg); }
-.lib-tile:hover .lib-glow, .lib-tile.is-active .lib-glow { opacity: 1; animation: lib-sheen 1.6s var(--ease) 1; }
-@keyframes lib-sheen { from { background-position: 120% 0; } to { background-position: -40% 0; } }
-.lib-tile:active .lib-art { transform: scale(0.97); transition-duration: 90ms; }
+.lib-tile:hover .tile-img, .lib-tile.is-active .tile-img { transform: scale(1.04); }
+.lib-tile:active .lib-art { transform: scale(0.98); transition-duration: var(--t-press); }
+.launcher .lib-tile:focus-visible .lib-art { outline: 2px solid var(--text); outline-offset: 8px; }
 .launcher .lib-tile:focus, .launcher .lib-tile:focus-visible { outline: none; box-shadow: none; }
 .launcher .lib-tile:focus-visible .lib-name { color: color-mix(in oklab, var(--game) 60%, var(--text)); }
 
@@ -202,7 +202,7 @@
   transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
 .lx-back:hover { background: color-mix(in oklab, var(--surface-2) 80%, transparent); transform: translateX(-2px); }
-.lx-hero-body { align-self: center; display: grid; gap: 18px; max-width: 760px; }
+.lx-hero-body { position: relative; z-index: 1; align-self: center; display: grid; gap: 18px; max-width: 760px; }
 .lx-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; animation: lx-item-in 400ms var(--ease) 60ms backwards; }
 .lx-chip {
   display: inline-flex;
@@ -216,8 +216,12 @@
   font: 600 13px / 1 var(--font-ui);
   color: var(--text-2);
 }
-.lx-big { display: flex; flex-wrap: wrap; gap: 0 0.22em; margin: 0; font: 800 clamp(56px, 10vw, 150px) / 0.92 var(--font-display); letter-spacing: -0.035em; text-transform: uppercase; text-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
-.lx-big-word { display: inline-block; animation: lx-rise 700ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
+.lx-big { display: flex; flex-wrap: wrap; gap: 0 0.22em; margin: 0; font: 700 clamp(40px, 8vw, 112px) / 0.95 var(--font-display); letter-spacing: 0;
+  /* Dutch Display Sans is wide: size the title by its longest word so it stays in the
+     left column and only grazes the hero art (caps run about 0.8em each). */
+  font-size: min(clamp(40px, 8vw, 112px), calc(52vw / var(--len, 8)));
+  max-width: min(100%, 50vw); text-transform: uppercase; text-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
+.lx-big-word { display: inline-block; padding-block: 0.06em; /* room for Dutch Display Sans ascenders during the blur rise */ animation: lx-rise 700ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
 .lx-big-word:last-child:not(:first-child) { color: color-mix(in oklab, var(--game) 70%, #fff); }
 @keyframes lx-rise { from { opacity: 0; transform: translateY(40%) scale(0.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 .lx-desc { margin: 0; max-width: 56ch; color: var(--text-2); font: 400 clamp(16px, 1.4vw, 19px) / 1.5 var(--font-ui); animation: lx-item-in 450ms var(--ease) 260ms backwards; }
@@ -261,7 +265,8 @@
 /* ---------- Phones: the sidebar becomes a round bottom bar ---------- */
 @media (max-width: 760px) {
   .lx-side { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; height: 68px; flex-direction: row; padding: 0 12px; gap: 10px; border-radius: 999px; }
-  .lx-mark { width: 40px; height: 40px; font-size: 20px; }
+  .lx-mark { width: 40px; height: 40px; }
+  .lx-mark svg { width: 34px; height: 34px; }
   .lx-nav { flex-direction: row; justify-content: center; }
   .lx-nav-label { display: none; }
   .lx-main { padding-left: var(--page-x); padding-bottom: 96px; }

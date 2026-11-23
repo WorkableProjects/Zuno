@@ -119,12 +119,6 @@
 }
 
 /* ---------- Tile ---------- */
-@property --beam {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
 .tile {
   --tile-r: 18px;
   position: relative;
@@ -133,14 +127,15 @@
   height: var(--tile);
   border-radius: var(--tile-r);
   outline: none;
-  transition: transform var(--t-med) var(--ease);
+  transition: transform var(--t-fast) var(--ease);
   -webkit-tap-highlight-color: transparent;
 }
+/* Selected: a gentle lift and a concentric accent halo (see .tile-ring). */
 .tile.is-active {
-  transform: translateY(-4px) scale(1.07);
+  transform: translateY(-3px) scale(1.02);
 }
 .tile:active {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1px) scale(0.99);
   transition-duration: var(--t-press);
 }
 .tile:disabled {
@@ -208,47 +203,6 @@
   opacity: 1;
 }
 
-/* B. Specular sheen: a soft band crossing the artwork, top-left to bottom-right */
-.tile-sheen {
-  position: absolute;
-  inset: -50%;
-  background: linear-gradient(135deg, transparent 43%, rgba(255, 255, 255, 0.08) 46%, rgba(255, 255, 255, 0.38) 50%, rgba(255, 255, 255, 0.08) 54%, transparent 57%);
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform;
-}
-.tile.is-active .tile-sheen {
-  /* One sweep on focus, then a rare quiet repeat while the tile stays selected */
-  animation:
-    sheen-sweep 720ms cubic-bezier(0.4, 0, 0.2, 1) 80ms 1,
-    sheen-repeat 9s linear 6s infinite;
-}
-@keyframes sheen-sweep {
-  from {
-    opacity: 1;
-    transform: translate3d(-56%, -56%, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(56%, 56%, 0);
-  }
-}
-@keyframes sheen-repeat {
-  0% {
-    opacity: 0.7;
-    transform: translate3d(-56%, -56%, 0);
-  }
-  9% {
-    opacity: 0.7;
-    transform: translate3d(56%, 56%, 0);
-  }
-  9.01%,
-  100% {
-    opacity: 0;
-    transform: translate3d(56%, 56%, 0);
-  }
-}
-
 /* Stable border. Quiet when idle, brighter when active */
 .tile-ring {
   position: absolute;
@@ -256,75 +210,24 @@
   border-radius: var(--tile-r);
   border: 1px solid var(--hairline);
   pointer-events: none;
-  transition: border-color var(--t-med) var(--ease);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 .tile.is-active .tile-ring {
-  border-color: var(--ring);
+  border-color: color-mix(in oklab, var(--game) 80%, var(--text));
+  box-shadow:
+    0 0 0 3px rgb(var(--bg-rgb) / 0.85),
+    0 0 0 5px color-mix(in oklab, var(--game) 75%, transparent),
+    0 0 28px 4px color-mix(in oklab, var(--game) 35%, transparent);
 }
 
-/* A. Border beam: a narrow highlight travelling around the perimeter */
-.tile-beam {
-  position: absolute;
-  inset: -2px;
-  border-radius: calc(var(--tile-r) + 2px);
-  padding: 2px;
-  background: conic-gradient(
-    from var(--beam),
-    transparent 0turn,
-    transparent 0.7turn,
-    color-mix(in oklab, var(--game) 70%, transparent) 0.84turn,
-    var(--beam-core) 0.93turn,
-    transparent 1turn
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 220ms var(--ease);
-  animation: beam-travel 3.4s linear infinite paused;
-}
-.tile-beam-glow {
-  filter: blur(6px);
-}
-.tile.is-active .tile-beam {
-  opacity: 1;
-  transition-duration: 200ms;
-  animation-play-state: running;
-}
-.tile.is-active .tile-beam-glow {
-  opacity: 0.5;
-}
-@keyframes beam-travel {
-  to {
-    --beam: 360deg;
-  }
-}
-
-/* Keyboard focus adds a clear static outline on top of the moving light */
+/* Keyboard focus adds a clear high-contrast outline outside the halo */
 .tile:focus-visible .tile-ring {
   border-color: color-mix(in oklab, var(--text) 72%, transparent);
-}
-
-/* No animated custom properties, or reduced motion: a static high-contrast border */
-.no-beam .tile-beam {
-  display: none;
-}
-.no-beam .tile.is-active .tile-ring {
-  border: 2px solid var(--text);
+  outline: 2px solid var(--text);
+  outline-offset: 6px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .tile-beam,
-  .tile-sheen {
-    display: none;
-  }
-  .tile.is-active .tile-ring {
-    border: 2px solid var(--text);
-  }
+  .tile.is-active { transform: none; }
 }
 
 /* ---------- Tile artwork ---------- */

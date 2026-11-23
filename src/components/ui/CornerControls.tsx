@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } fr
 import { Annoyed, Bell, Drum, LayoutGrid, Megaphone, MessageCircle, Music2, PartyPopper, Send, ThumbsDown, Trophy, Volume, Volume1, Volume2, VolumeX, type LucideIcon } from "lucide-react";
 import { preloadBoardClips, sendBoardSound, useSoundboardListener, type BoardId } from "../../lib/soundboard";
 import { useRoom } from "../../lib/room";
-import { CHAT_MAX, useChat } from "../../lib/chat";
+import { CHAT_FEED_MS, CHAT_MAX, useChat, type ChatMessage } from "../../lib/chat";
 import { isSfxEnabled, playSfx, subscribeSfx } from "../../lib/sfx";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 
@@ -201,29 +201,15 @@ export function CornerControls({ docked = false }: { docked?: boolean }) {
       {room && !chatOpen && feed.length > 0 && (
         <ul className="chat-feed" aria-label="New chat messages">
           {feed.map((m) => (
-            <li key={m.key} className="chat-feed-item">
-              <button
-                type="button"
-                className="chat-feed-btn"
-                aria-label={`${m.n} says: ${m.t}. Open chat`}
-                onClick={() => {
-                  dismiss(m.key);
-                  setPanel("chat");
-                }}
-              >
-                <span className="chat-feed-avatar" aria-hidden="true">
-                  {m.n.trim().charAt(0).toUpperCase() || "?"}
-                </span>
-                <span className="chat-feed-body">
-                  <strong className="chat-name">{m.n}</strong>
-                  <span className="chat-text">{m.t}</span>
-                </span>
-                <span className="chat-feed-hint" aria-hidden="true">
-                  <MessageCircle size={14} strokeWidth={2} />
-                </span>
-                <span className="chat-feed-timer" aria-hidden="true" />
-              </button>
-            </li>
+            <ChatFeedItem
+              key={m.key}
+              m={m}
+              onTimeout={() => dismiss(m.key)}
+              onOpen={() => {
+                dismiss(m.key);
+                setPanel("chat");
+              }}
+            />
           ))}
         </ul>
       )}
@@ -302,5 +288,56 @@ function ChatPanel({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * One chat pop-up. It leaves after CHAT_FEED_MS, but the countdown pauses
+ * while the pointer rests on it or it has focus, so a message is never pulled
+ * away mid-read.
+ */
+function ChatFeedItem({ m, onTimeout, onOpen }: { m: ChatMessage; onTimeout: () => void; onOpen: () => void }) {
+  const [paused, setPaused] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const remaining = useRef(CHAT_FEED_MS);
+  const started = useRef(0);
+  const done = useRef(onTimeout);
+  done.current = onTimeout;
+  useEffect(() => {
+    if (paused || leaving) return;
+    started.current = performance.now();
+    const id = window.setTimeout(() => setLeaving(true), remaining.current);
+    return () => {
+      window.clearTimeout(id);
+      remaining.current = Math.max(0, remaining.current - (performance.now() - started.current));
+    };
+  }, [paused, leaving]);
+  useEffect(() => {
+    if (!leaving) return;
+    const id = window.setTimeout(() => done.current(), 320);
+    return () => window.clearTimeout(id);
+  }, [leaving]);
+  return (
+    <li
+      className={`chat-feed-item${paused ? " is-paused" : ""}${leaving ? " is-leaving" : ""}`}
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <button type="button" className="chat-feed-btn" aria-label={`${m.n} says: ${m.t}. Open chat`} onClick={onOpen}>
+        <span className="chat-feed-avatar" aria-hidden="true">
+          {m.n.trim().charAt(0).toUpperCase() || "?"}
+        </span>
+        <span className="chat-feed-body">
+          <strong className="chat-name">{m.n}</strong>
+          <span className="chat-text">{m.t}</span>
+        </span>
+        <span className="chat-feed-hint" aria-hidden="true">
+          <MessageCircle size={14} strokeWidth={2} />
+        </span>
+        <span className="chat-feed-timer" aria-hidden="true" />
+      </button>
+    </li>
   );
 }

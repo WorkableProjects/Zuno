@@ -5,6 +5,8 @@ import { ZunoLogo } from "../brand/Logo";
 import type { Device } from "../../app/storage";
 import "./intro.css";
 
+const BOOTED_KEY = "zuno.booted";
+
 /**
  * Shown at every start. The logo plays in, then Zuno waits for a click or a
  * key press. That gesture is what lets the browser play music, so hovering a
@@ -12,6 +14,16 @@ import "./intro.css";
  */
 export function StartupIntro() {
   const [phase, setPhase] = useState<"waiting" | "leaving" | "gone">("waiting");
+  // After the first boot, the intro plays in its short form.
+  const [quick] = useState(() => {
+    try {
+      const seen = localStorage.getItem(BOOTED_KEY) === "1";
+      localStorage.setItem(BOOTED_KEY, "1");
+      return seen;
+    } catch {
+      return false;
+    }
+  });
   useEffect(() => {
     if (phase === "gone") {
       document.documentElement.classList.remove("intro-playing");
@@ -36,12 +48,12 @@ export function StartupIntro() {
   }, [phase]);
   useEffect(() => {
     if (phase !== "leaving") return;
-    const t = window.setTimeout(() => setPhase("gone"), 450);
+    const t = window.setTimeout(() => setPhase("gone"), 340);
     return () => window.clearTimeout(t);
   }, [phase]);
   if (phase === "gone") return null;
   return (
-    <div className={`intro${phase === "leaving" ? " is-leaving" : ""}`} role="dialog" aria-modal="true" aria-label="Start Zuno">
+    <div className={`intro${quick ? " is-quick" : ""}${phase === "leaving" ? " is-leaving" : ""}`} role="dialog" aria-modal="true" aria-label="Start Zuno">
       <div className="intro-mark">
         <ZunoLogo />
       </div>

@@ -64,7 +64,7 @@ export function LiarOnlinePlay({
   return (
     <div className="liar-online">
       <section className="card liar-online-main" aria-live="polite">
-        <p className="meta">
+        <p key={`${game.round}-${teller}`} className="meta ru-pill ru-turn liar-round-pill">
           Round {game.round + 1} of {game.rounds} · {tellerName} is the
           storyteller
         </p>
@@ -86,7 +86,7 @@ export function LiarOnlinePlay({
               }
             />
           ) : (
-            <div className="liar-wait">
+            <div className="liar-wait ru-turn">
               <PenLine size={28} strokeWidth={1.5} />
               <h1 className="page-title liar-online-title">
                 {tellerName} is writing
@@ -96,7 +96,7 @@ export function LiarOnlinePlay({
           )
         ) : (
           <>
-            <h1 className="page-title liar-online-title">
+            <h1 key={game.phase} className="page-title liar-online-title ru-reveal">
               {game.phase === "discuss"
                 ? "Ask questions"
                 : game.phase === "vote"
@@ -125,7 +125,8 @@ export function LiarOnlinePlay({
                   return (
                     <li
                       key={i}
-                      className={`liar-card card${game.phase === "reveal" && isLie ? " is-lie" : ""}`}
+                      className={`liar-card card ${game.phase === "reveal" ? "ru-flip" : "ru-deal"}${game.phase === "reveal" && isLie ? " is-lie" : ""}`}
+                      style={{ "--i": i } as React.CSSProperties}
                     >
                       <span className="liar-num">{i + 1}</span>
                       <div className="liar-grow">
@@ -138,7 +139,8 @@ export function LiarOnlinePlay({
                         {game.phase === "reveal" && (
                           <>
                             <p
-                              className={`liar-badge ${isLie ? "is-lie" : "is-truth"}`}
+                              className={`liar-badge ru-badge ru-reveal ${isLie ? "is-lie" : "is-truth"}`}
+                              style={{ "--i": i + 2 } as React.CSSProperties}
                             >
                               {isLie ? "The lie" : "True"}
                             </p>
@@ -208,7 +210,7 @@ export function LiarOnlinePlay({
                   <Check size={16} strokeWidth={2} className="liar-voted" />
                 )}
                 {game.scoring && (
-                  <strong className="liar-online-score">
+                  <strong key={game.scores[p.id] ?? 0} className="liar-online-score ru-reveal">
                     {game.scores[p.id] ?? 0}
                   </strong>
                 )}
@@ -290,11 +292,11 @@ function Over({
       : [];
   return (
     <div className="liar-phase">
-      <h1 className="page-title">
+      <h1 className="page-title ru-reveal">
         {game.endedEarly ? "Game ended" : "Game over"}
       </h1>
       {game.scoring && (
-        <p className="liar-h">
+        <p className="liar-h ru-win">
           {win.length === 0
             ? "No points scored."
             : win.length > 1
@@ -304,7 +306,7 @@ function Over({
       )}
       <ol className="liar-recap">
         {game.recap.map((r, i) => (
-          <li key={i} className="card">
+          <li key={i} className="card ru-deal" style={{ "--i": i } as React.CSSProperties}>
             <p className="liar-h">{nameOf(r.storytellerId)}</p>
             <ul>
               {r.turn.statements.map((s, k) => (

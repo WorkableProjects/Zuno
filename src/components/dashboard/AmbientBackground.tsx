@@ -90,8 +90,6 @@ export function AmbientBackground({ spec, dim }: { spec: BackdropSpec; dim: bool
         ))}
       </div>
       <div className="backdrop-drift" />
-      <div className="backdrop-glitter" />
-      <div className="backdrop-glitter is-slow" />
       <div className="backdrop-grain" />
       <div className="backdrop-scrim" />
       <div className="backdrop-dim" />

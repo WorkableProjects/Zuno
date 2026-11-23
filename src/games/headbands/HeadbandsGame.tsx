@@ -12,6 +12,7 @@ import { PhoneGame } from "./PhoneGame";
 import { ActivityLog } from "./ActivityLog";
 import { Notepad } from "../../components/notepad/Notepad";
 import { useHeadbandsSounds } from "./useHeadbandsSounds";
+import { playSfx } from "../../lib/sfx";
 import { moveToAction, playerId, publishGame, watchLobby, watchMoves, type LobbyState, type OnlineGame, type PlayerMove } from "./lobby";
 import {
   activePlayers,
@@ -311,7 +312,7 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
             That question was already asked. Ask something new.
           </p>
         )}
-        <div className="hb-turn-head">
+        <div className="hb-turn-head ru-turn" key={`${state.turn}-${current.id}`}>
           <p className="meta">
             Turn {state.turn} · Player {index} of {total}
           </p>
@@ -329,7 +330,7 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
               </button>
             </div>
           ) : feedback?.correct ? (
-            <div className="hb-feedback is-right" role="status">
+            <div className="hb-feedback is-right ru-win" role="status">
               <p className="hb-feedback-title">
                 <CircleCheck size={22} strokeWidth={1.5} />
                 {current.name} got it{current.byHost ? ", accepted by the host" : ""}
@@ -348,7 +349,7 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
               </div>
             </div>
           ) : feedback ? (
-            <div className="hb-feedback is-wrong" role="status">
+            <div className="hb-feedback is-wrong ru-reveal" role="status">
               <p className="hb-feedback-title">
                 <X size={22} strokeWidth={1.5} />
                 Not quite
@@ -379,7 +380,7 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
               </button>
             </div>
           ) : (
-            <div className="hb-shown">
+            <div className="hb-shown ru-flip" key={current.id}>
               {identity && <IdentityCard identity={identity} mode={state.mode} />}
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => dispatch({ type: "hideCard" })}>
                 <EyeOff size={16} strokeWidth={1.5} />
@@ -391,7 +392,7 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
 
         <div className="hb-ask card">
           {waiting && (
-            <p className="hb-pending" role="status">
+            <p className="hb-pending ru-reveal" role="status" key={pending ?? ""}>
               <span className="meta">{current.name} asks</span>
               <span className="hb-pending-q">{pending ? `“${pending}”` : "Out loud"}</span>
             </p>
@@ -479,7 +480,7 @@ function Turn({ file, state, current, dispatch, notesId, onGuess }: { file: Head
             <ol className="hb-history">
               {mine.map((h, i) => (
                 <li key={i}>
-                  <span className={`hb-pill hb-pill-${h.answer}`}>{answerLabel(h.answer)}</span>
+                  <span className={`hb-pill ru-badge hb-pill-${h.answer}`}>{answerLabel(h.answer)}</span>
                   <span className="hb-history-q">{h.question || "Asked out loud"}</span>
                 </li>
               ))}
@@ -623,17 +624,17 @@ function Recap({ file, state, onReveal, onAgain, onExit }: { file: HeadbandsFile
     <div className="hb-recap">
       <div className="hb-recap-head">
         <p className="meta">{file.metadata.title}</p>
-        <h1 className="page-title">{everyone ? "Everyone solved" : state.endedEarly ? "Game ended" : "Game over"}</h1>
+        <h1 className={`page-title ru-reveal${everyone ? " ru-win" : ""}`}>{everyone ? "Everyone solved" : state.endedEarly ? "Game ended" : "Game over"}</h1>
         <p className="page-lede">
           {players.filter((p) => p.solved).length} of {players.length} players found their identity.
         </p>
       </div>
       <ol className="hb-recap-list">
-        {players.map((p) => {
+        {players.map((p, i) => {
           const identity = deck.get(p.identityId);
           const show = p.solved || state.revealed;
           return (
-            <li key={p.id} className={`hb-recap-row card${p.solved ? " is-solved" : ""}`}>
+            <li key={p.id} className={`hb-recap-row card ru-deal${p.solved ? " is-solved" : ""}`} style={{ "--i": i } as React.CSSProperties}>
               <div className="hb-recap-who">
                 <p className="hb-recap-name">{p.name}</p>
                 <p className="hb-recap-status">
@@ -651,7 +652,7 @@ function Recap({ file, state, onReveal, onAgain, onExit }: { file: HeadbandsFile
                   {p.questions} {p.questions === 1 ? "question" : "questions"} · {p.guesses} {p.guesses === 1 ? "guess" : "guesses"}
                 </p>
               </div>
-              <div className="hb-recap-card">{show && identity ? <IdentityCard identity={identity} mode={state.mode} size="sm" /> : <span className="hb-recap-hidden">Hidden</span>}</div>
+              <div className="hb-recap-card">{show && identity ? <div className="ru-flip" key="shown"><IdentityCard identity={identity} mode={state.mode} size="sm" /></div> : <span className="hb-recap-hidden">Hidden</span>}</div>
             </li>
           );
         })}
@@ -664,7 +665,7 @@ function Recap({ file, state, onReveal, onAgain, onExit }: { file: HeadbandsFile
       )}
       <div className="hb-recap-actions" data-nav-row="1">
         {hidden && (
-          <button type="button" className="btn btn-secondary" onClick={onReveal}>
+          <button type="button" className="btn btn-secondary" onClick={() => { playSfx("reveal"); onReveal(); }}>
             <Eye size={18} strokeWidth={1.5} />
             Reveal identities
           </button>
