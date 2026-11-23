@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useRegisterSoundboard } from "../../lib/soundboard";
+import { useRegisterRoom } from "../../lib/room";
 import { ArrowLeft, Flag, RotateCcw, UserMinus } from "lucide-react";
 import type { RpgFile, RpgSettings } from "../../game-files/schema/rpg";
 import { ConfirmDialog } from "../../components/ui/Dialog";
@@ -23,7 +23,7 @@ interface Props {
 /** The host's device: runs the game clock and the rules, publishes the table, and plays like everyone else. */
 export function RpgOnlineGame({ file, code, players, settings, onAgain, onExit }: Props) {
   const me = useMemo(() => playerId(), []);
-  useRegisterSoundboard(`rpg/${code}`);
+  useRegisterRoom(`rpg/${code}`, "Host");
   const [state, dispatch] = useReducer(rpgReducer, undefined, () => createSession(players, settings));
   const [lobby, setLobby] = useState<RpgLobbyState | null>(null);
   const [confirm, setConfirm] = useState<null | "exit" | "end">(null);

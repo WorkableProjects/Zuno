@@ -12,7 +12,7 @@ import { ImportScreen } from "../components/import/ImportScreen";
 import type { LoadedGame } from "../components/import/loadGame";
 import { useSpatialNav } from "../components/navigation/spatialNav";
 import { DevicePrompt, StartupIntro } from "../components/intro/Intro";
-import { SoundToggle } from "../components/ui/SoundToggle";
+import { CornerControls } from "../components/ui/CornerControls";
 import { installHoverSounds, setSoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
@@ -413,7 +413,7 @@ export function App() {
         (screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
 
       {pending && <ConfirmDialog title={pending.title} text={pending.text} confirmLabel={pending.label} danger onConfirm={pending.run} onClose={() => setPending(null)} />}
-      <SoundToggle />
+      <CornerControls />
       <StartupIntro />
       {device === null && <DevicePrompt onChoose={chooseDevice} />}
       {settingsOpen && <SettingsPanel theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} onClose={() => setSettingsOpen(false)} />}

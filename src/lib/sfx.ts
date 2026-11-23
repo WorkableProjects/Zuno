@@ -387,11 +387,11 @@ export function installClickSounds(): () => void {
     const el = (e.target as Element | null)?.closest?.(INTERACTIVE) ?? null;
     if (el === hovered) return;
     hovered = el;
-    if (el && !(el as HTMLButtonElement).disabled && !el.closest(".sound-control")) playSfx("hover");
+    if (el && !(el as HTMLButtonElement).disabled && !el.closest(".corner")) playSfx("hover");
   };
   const onClick = (e: MouseEvent) => {
     const el = (e.target as Element | null)?.closest?.(INTERACTIVE);
-    if (!el || (el as HTMLButtonElement).disabled || el.closest(".sound-control")) return;
+    if (!el || (el as HTMLButtonElement).disabled || el.closest(".corner")) return;
     // Let any game sound from this click win.
     window.setTimeout(() => playSfx(isBack(el) ? "back" : "click"), 0);
   };

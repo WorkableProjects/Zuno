@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useRegisterSoundboard } from "../../lib/soundboard";
+import { useRegisterRoom } from "../../lib/room";
 import { ArrowLeft, CircleAlert, CircleCheck, EyeOff, LogIn } from "lucide-react";
 import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
 import { IdentityImageField } from "../../components/builder/IdentityImageField";
@@ -47,7 +47,7 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEscape(onExit);
-  useRegisterSoundboard(joined ? `hb/${joined}` : null);
+  useRegisterRoom(joined ? `hb/${joined}` : null, name.trim() || seatAtLoad?.name || "Player");
   useHeadbandsSounds(lobby?.game);
   useJoinSound(lobby ? Object.keys(lobby.players).length : 0);
 

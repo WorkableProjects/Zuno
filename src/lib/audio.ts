@@ -213,7 +213,7 @@ export function installHoverSounds(): () => void {
     if (e.pointerType !== "mouse") return;
     const target = e.target as Element | null;
     // Adjusting the volume keeps the music going so the level can be heard.
-    if (target?.closest?.(".sound-control")) {
+    if (target?.closest?.(".corner")) {
       window.clearTimeout(leaveTimer);
       return;
     }

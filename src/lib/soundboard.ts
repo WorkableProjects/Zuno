@@ -1,4 +1,5 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect } from "react";
+import { getRoom, subscribeRoom } from "./room";
 import { getSfxContext, playSfx, playSfxBuffer, type Sfx } from "./sfx";
 
 /**
@@ -57,39 +58,35 @@ export function cooldownReady(lastAt: number, now: number, ms = BOARD_COOLDOWN_M
 /** How long a sent sound stays in the database before its sender removes it. */
 const KEEP_MS = 30_000;
 
-let room: string | null = null;
 let lastSent = -Infinity;
 let stop: (() => void) | null = null;
-const listeners = new Set<() => void>();
+let listening: string | null = null;
 
-const subscribe = (fn: () => void) => {
-  listeners.add(fn);
-  return () => void listeners.delete(fn);
-};
-
-/** Registers (or clears) the online room, e.g. "rpg/ABCDE". */
-export function setSoundboardRoom(path: string | null): void {
-  if (path === room) return;
+/** Starts or stops the board listener to follow the registered room. */
+function syncListener(): void {
+  const path = getRoom()?.path ?? null;
+  if (path === listening) return;
   stop?.();
   stop = null;
-  room = path;
-  listeners.forEach((fn) => fn());
+  listening = path;
   if (path) stop = listen(path);
 }
 
-export function useSoundboardRoom(): string | null {
-  return useSyncExternalStore(subscribe, () => room, () => null);
-}
-
-/** Registers the room for as long as the calling screen is mounted. */
-export function useRegisterSoundboard(path: string | null): void {
+/** Keeps the soundboard listener in step with the room store; mount once. */
+export function useSoundboardListener(): void {
   useEffect(() => {
-    setSoundboardRoom(path);
-    return () => setSoundboardRoom(null);
-  }, [path]);
+    const un = subscribeRoom(syncListener);
+    syncListener();
+    return () => {
+      un();
+      stop?.();
+      stop = null;
+      listening = null;
+    };
+  }, []);
 }
 
-async function backend() {
+export async function backend() {
   const [{ lobbiesAvailable, database }, db] = await Promise.all([import("../games/headbands/lobby"), import("firebase/database")]);
   return lobbiesAvailable() ? { d: database(), db } : null;
 }
@@ -129,7 +126,7 @@ export function sendBoardSound(id: BoardId, by?: string): boolean {
   const now = Date.now();
   if (!cooldownReady(lastSent, now)) return false;
   lastSent = now;
-  const path = room;
+  const path = getRoom()?.path ?? null;
   if (!path) {
     playBoardSound(id);
     return true;

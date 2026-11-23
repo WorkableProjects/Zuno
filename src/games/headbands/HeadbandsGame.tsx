@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useRegisterSoundboard } from "../../lib/soundboard";
+import { useRegisterRoom } from "../../lib/room";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleCheck, Eye, EyeOff, Flag, Pause, Play, RotateCcw, SkipForward, Undo2, UserMinus, Users, X } from "lucide-react";
 import type { HeadbandsFile } from "../../game-files/schema/headbands";
 import { ZunoMark } from "../../components/brand/Logo";
@@ -97,7 +97,7 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
   const stage = useRef<HTMLDivElement>(null);
   /** Online, the host is a regular player on this device. */
   const me = useMemo(() => playerId(), []);
-  useRegisterSoundboard(lobbyCode ? `hb/${lobbyCode}` : null);
+  useRegisterRoom(lobbyCode ? `hb/${lobbyCode}` : null, "Host");
   const [lobby, setLobby] = useState<LobbyState | null>(null);
   useEffect(() => {
     if (!lobbyCode) return;

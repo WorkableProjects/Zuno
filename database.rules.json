@@ -97,6 +97,23 @@
             }
           }
         },
+        "chat": {
+          "$id": {
+            ".validate": "newData.hasChildren(['n', 't', 'at'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24"
+            },
+            "t": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
         "$other": {
           ".validate": false
         }
@@ -164,6 +181,23 @@
             },
             "by": {
               ".validate": "newData.isString() && newData.val().length <= 24"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "chat": {
+          "$id": {
+            ".validate": "newData.hasChildren(['n', 't', 'at'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24"
+            },
+            "t": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
             },
             "$other": {
               ".validate": false
@@ -251,6 +285,23 @@
             },
             "by": {
               ".validate": "newData.isString() && newData.val().length <= 24"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "chat": {
+          "$id": {
+            ".validate": "newData.hasChildren(['n', 't', 'at'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24"
+            },
+            "t": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
             },
             "$other": {
               ".validate": false
