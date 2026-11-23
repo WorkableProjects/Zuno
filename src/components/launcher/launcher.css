@@ -32,17 +32,23 @@
   backdrop-filter: blur(18px) saturate(1.2);
   box-shadow: var(--top-light), 0 20px 50px rgb(0 0 0 / 0.35);
 }
+/* The Zuno mark sits in the rail itself: no tile, just the sun and a soft glow. */
 .lx-mark {
   display: grid;
   place-items: center;
   width: 46px;
   height: 46px;
-  border-radius: 16px;
-  font: 800 24px / 1 var(--font-display);
-  color: #fff;
-  background: linear-gradient(135deg, var(--sunset-1), var(--sunset-2) 55%, var(--sunset-3));
-  box-shadow: 0 8px 22px color-mix(in oklab, var(--sunset-2) 45%, transparent);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--sunset-2) 40%, transparent));
+  transition: transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
 }
+.lx-mark:hover { transform: scale(1.06); filter: drop-shadow(0 8px 22px color-mix(in oklab, var(--sunset-2) 55%, transparent)); }
+.lx-mark:active { transform: scale(0.96); transition-duration: var(--t-press); }
+.lx-mark:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
 .lx-nav { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
 .lx-nav-btn {
   position: relative;
@@ -255,7 +261,8 @@
 /* ---------- Phones: the sidebar becomes a round bottom bar ---------- */
 @media (max-width: 760px) {
   .lx-side { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; height: 68px; flex-direction: row; padding: 0 12px; gap: 10px; border-radius: 999px; }
-  .lx-mark { width: 40px; height: 40px; font-size: 20px; }
+  .lx-mark { width: 40px; height: 40px; }
+  .lx-mark svg { width: 34px; height: 34px; }
   .lx-nav { flex-direction: row; justify-content: center; }
   .lx-nav-label { display: none; }
   .lx-main { padding-left: var(--page-x); padding-bottom: 96px; }

@@ -1,3 +1,4 @@
+import { ZunoMark } from "../brand/Logo";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { House, LayoutGrid, LogIn, Plus, Search, Settings, X } from "lucide-react";
 import { getEngine } from "../../games/registry";
@@ -18,9 +19,9 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
   return (
     <div className="launcher game-scope" style={{ "--game": accent } as React.CSSProperties}>
       <aside className="lx-side" aria-label="Zuno">
-        <span className="lx-mark" aria-label="Zuno">
-          Z
-        </span>
+        <button type="button" className="lx-mark" aria-label="Zuno home" title="Home" onClick={() => onSection("home")}>
+          <ZunoMark size={40} />
+        </button>
         <nav className="lx-nav" data-nav-row="0" aria-label="Sections">
           {nav.map(({ id, label, Icon }) => (
             <button key={id} type="button" className={`lx-nav-btn${section === id ? " is-on" : ""}`} aria-current={section === id ? "page" : undefined} aria-label={label} title={label} onClick={() => onSection(id)}>
