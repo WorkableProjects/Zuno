@@ -28,17 +28,21 @@ export function preloadBoardClips(): Promise<void> {
   if (loading) return loading;
   const ac = getSfxContext();
   if (!ac || typeof fetch === "undefined") return Promise.resolve();
+  let failed = false;
   loading = Promise.all(
     (Object.entries(BOARD_CLIPS) as [BoardId, string][]).map(async ([id, file]) => {
       try {
         const res = await fetch(`${import.meta.env.BASE_URL}sounds/board/${file}`);
-        if (!res.ok) return;
+        if (!res.ok) throw new Error(String(res.status));
         clips.set(id, await ac.decodeAudioData(await res.arrayBuffer()));
       } catch {
-        /* falls back to the synthesized sound */
+        // Falls back to the synthesized sound; the next preload retries.
+        failed = true;
       }
     }),
-  ).then(() => undefined);
+  ).then(() => {
+    if (failed) loading = null;
+  });
   return loading;
 }
 
@@ -125,12 +129,19 @@ function listen(path: string): () => void {
       const q = query(ref(b.d, `${path}/board`), orderByKey(), limitToLast(BOARD_WINDOW));
       let ready = false;
       const seen = new Set<string>();
+      let newest = "";
       const unChild = onChildAdded(q, (snap) => {
         const key = snap.key;
         if (!key || seen.has(key)) return;
         seen.add(key);
-        // The first batch is whatever was already there: skip it.
-        if (!ready) return;
+        // The first batch is whatever was already there: skip it. Push keys
+        // sort by time, so an older entry sliding into the window after a
+        // delete never replays.
+        if (!ready || key <= newest) {
+          if (!ready && key > newest) newest = key;
+          return;
+        }
+        newest = key;
         if (played.has(key)) return;
         const id = (snap.val() as { s?: unknown } | null)?.s;
         if (isBoardId(id)) playBoardSound(id);
