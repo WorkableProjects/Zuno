@@ -69,8 +69,8 @@ export function useChat(room: Room | null, panelOpen: boolean) {
     open.current = panelOpen;
     roomRef.current = room;
     if (panelOpen) {
-      setUnread(0);
-      setFeed([]);
+      setUnread((u) => (u === 0 ? u : 0));
+      setFeed((f) => (f.length === 0 ? f : []));
     }
   });
 
