@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRegisterRoom } from "../../lib/room";
 import { ArrowLeft, CircleAlert, CircleCheck, EyeOff, LogIn } from "lucide-react";
 import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
 import { IdentityImageField } from "../../components/builder/IdentityImageField";
@@ -46,6 +47,9 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEscape(onExit);
+  // A kicked player gives up the room's chat identity.
+  const removed = joined && lobby && !(me in lobby.players);
+  useRegisterRoom(joined && !removed ? `hb/${joined}` : null, (seatAtLoad?.name ?? name).trim() || "Player");
   useHeadbandsSounds(lobby?.game);
   useJoinSound(lobby ? Object.keys(lobby.players).length : 0);
 
@@ -108,7 +112,6 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
   const inCircle = lobby ? lobby.circle.indexOf(me) : -1;
   const target = lobby && inCircle !== -1 && lobby.circle.length >= 2 ? lobby.circle[(inCircle + 1) % lobby.circle.length] : null;
   const targetName = target && lobby ? (lobby.players[target]?.name ?? "the next player") : null;
-  const removed = joined && lobby && !(me in lobby.players);
 
   return (
     <main className="screen game-scope" style={{ "--game": "#FFB454" } as React.CSSProperties}>

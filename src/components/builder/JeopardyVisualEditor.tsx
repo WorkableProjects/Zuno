@@ -20,7 +20,7 @@ interface Props {
 }
 
 const SWATCHES = ["#79B8FF", "#6FD3C1", "#9BD772", "#FFD166", "#FFB36B", "#F06A9A", "#C58BFF", "#8266E8"];
-const PRESET_LABELS: Record<BackgroundPreset, string> = { aurora: "Aurora", horizon: "Horizon", tide: "Tide", spotlight: "Spotlight" };
+const PRESET_LABELS: Record<BackgroundPreset, string> = { aurora: "Aurora", horizon: "Horizon", tide: "Tide", spotlight: "Spotlight", vegas: "Vegas" };
 const FINAL = "final";
 const FINAL_MODE_LABELS: Record<FinalMode, string> = { always: "Always play it at the end", tiebreaker: "Only to break a tie for first" };
 

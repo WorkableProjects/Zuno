@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRegisterRoom } from "../../lib/room";
+import { sanitizeChatName } from "../../lib/chat";
 import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Play, RotateCcw, Shuffle, UserMinus } from "lucide-react";
 import type { HeadbandsFile, HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
@@ -70,6 +72,9 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
   const [rules, setRules] = useState<Rules>({ continueAfterYes: base.settings.continueAfterYes, unlimitedGuesses: base.settings.unlimitedGuesses });
   const created = useRef(false);
   useEscape(() => setConfirmLeave(true), !confirmLeave);
+  // The host's chat name carries their player name when they also play.
+  const hostChatName = name.trim() ? sanitizeChatName(`Host (${name.trim()})`) : "Host";
+  useRegisterRoom(code ? `hb/${code}` : null, hostChatName);
 
   // Open a lobby once, or reuse the one we came back to.
   useEffect(() => {

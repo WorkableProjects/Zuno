@@ -26,7 +26,13 @@ export type Sfx =
   | "timeUp"
   | "win"
   | "pause"
-  | "skip";
+  | "skip"
+  | "airhorn"
+  | "drumroll"
+  | "sadTrombone"
+  | "applause"
+  | "boing"
+  | "rimshot";
 
 interface Bus {
   ac: AudioContext;
@@ -264,6 +270,46 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
   skip: (c) => {
     air(c, 0, 0.18, 3500, 600, 0.2, 1.2, 0.02);
   },
+  airhorn: (c) => {
+    [N(-14), N(-10), N(-7)].forEach((f) => {
+      pluck(c, f, 0, 0.9, 0.22, "sawtooth");
+      pluck(c, f * 2, 0.01, 0.9, 0.1, "square");
+    });
+    air(c, 0, 0.12, 1500, 900, 0.2, 0.8, 0.01);
+    thump(c, 160, 90, 0, 0.3, 0.3);
+  },
+  drumroll: (c) => {
+    for (let i = 0; i < 18; i++) {
+      const at = i * 0.055 - i * i * 0.0007;
+      air(c, at, 0.05, 2200, 1400, 0.12 + i * 0.01, 2);
+      thump(c, 200, 110, at, 0.05, 0.12);
+    }
+    thump(c, 110, 50, 0.95, 0.4, 0.5);
+    air(c, 0.95, 0.9, 7000, 5000, 0.12, 0.6, 0.01);
+  },
+  sadTrombone: (c) => {
+    [[-14, 0, 0.4], [-15, 0.45, 0.4], [-16, 0.9, 0.4], [-17, 1.35, 1.1]].forEach(([semi, at, len]) => {
+      pluck(c, N(semi), at, len, 0.3, "sawtooth");
+      pluck(c, N(semi) * 2, at, len, 0.08, "triangle");
+    });
+  },
+  applause: (c) => {
+    air(c, 0, 1.8, 2500, 3500, 0.14, 0.5, 0.3);
+    for (let i = 0; i < 40; i++) air(c, Math.random() * 1.7, 0.03 + Math.random() * 0.03, 1800 + Math.random() * 3500, 1500 + Math.random() * 2500, 0.1 + Math.random() * 0.1, 1.5);
+  },
+  boing: (c) => {
+    thump(c, 140, 520, 0, 0.14, 0.45);
+    thump(c, 520, 160, 0.14, 0.45, 0.4);
+    bell(c, 330, 0.02, 0.5, 0.15, 2.5);
+  },
+  rimshot: (c) => {
+    air(c, 0, 0.1, 3000, 2000, 0.3, 1.5);
+    thump(c, 220, 110, 0, 0.12, 0.45);
+    air(c, 0.16, 0.1, 3000, 2000, 0.3, 1.5);
+    thump(c, 140, 70, 0.16, 0.14, 0.45);
+    air(c, 0.4, 0.9, 7500, 5500, 0.18, 0.6, 0.005);
+    thump(c, 90, 45, 0.4, 0.3, 0.4);
+  },
 };
 
 const last = new Map<Sfx, number>();
@@ -279,6 +325,33 @@ let sfxOn = (() => {
 /** Sound effects can be switched off on their own, leaving the music playing. */
 export function setSfxEnabled(on: boolean) {
   sfxOn = on;
+  sfxListeners.forEach((l) => l());
+}
+const sfxListeners = new Set<() => void>();
+export const isSfxEnabled = () => sfxOn;
+export function subscribeSfx(l: () => void): () => void {
+  sfxListeners.add(l);
+  return () => void sfxListeners.delete(l);
+}
+
+/**
+ * Creates and resumes the audio context. Call from inside a user gesture:
+ * iOS Safari and Android Chrome keep it suspended otherwise. Plays one silent
+ * sample, which iOS needs before it will output anything. Returns true once running.
+ */
+export function unlockSfx(): boolean {
+  const b = getBus();
+  if (!b) return false;
+  try {
+    if (b.ac.state === "suspended") void b.ac.resume().catch(() => undefined);
+    const src = b.ac.createBufferSource();
+    src.buffer = b.ac.createBuffer(1, 1, 22050);
+    src.connect(b.ac.destination);
+    src.start(0);
+  } catch {
+    /* optional */
+  }
+  return b.ac.state === "running";
 }
 
 export function playSfx(name: Sfx): void {
@@ -302,6 +375,31 @@ export function playSfx(name: Sfx): void {
   }
 }
 
+/** The shared audio context, for decoding recorded clips that play through the same bus. */
+export function getSfxContext(): AudioContext | null {
+  return getBus()?.ac ?? null;
+}
+
+/** Plays a decoded recorded clip through the sfx bus, honoring mute and volume. */
+export function playSfxBuffer(buf: AudioBuffer): boolean {
+  if (!sfxOn || isMuted() || getVolume() <= 0) return true;
+  const b = getBus();
+  if (!b) return false;
+  try {
+    const out = b.ac.createGain();
+    out.gain.value = 0.9 * getVolume();
+    out.connect(b.input);
+    const src = b.ac.createBufferSource();
+    src.buffer = buf;
+    src.connect(out);
+    src.onended = () => out.disconnect();
+    src.start();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const INTERACTIVE = "button, [role=button], [role=tab], [role=radio], a[href], .tile, summary";
 const isBack = (el: Element) => /^(back|exit|leave|close|cancel)/i.test(el.getAttribute("aria-label") ?? (el as HTMLElement).innerText ?? "");
 
@@ -316,11 +414,11 @@ export function installClickSounds(): () => void {
     const el = (e.target as Element | null)?.closest?.(INTERACTIVE) ?? null;
     if (el === hovered) return;
     hovered = el;
-    if (el && !(el as HTMLButtonElement).disabled && !el.closest(".sound-control")) playSfx("hover");
+    if (el && !(el as HTMLButtonElement).disabled && !el.closest(".corner")) playSfx("hover");
   };
   const onClick = (e: MouseEvent) => {
     const el = (e.target as Element | null)?.closest?.(INTERACTIVE);
-    if (!el || (el as HTMLButtonElement).disabled || el.closest(".sound-control")) return;
+    if (!el || (el as HTMLButtonElement).disabled || el.closest(".corner")) return;
     // Let any game sound from this click win.
     window.setTimeout(() => playSfx(isBack(el) ? "back" : "click"), 0);
   };
@@ -336,11 +434,22 @@ export function installClickSounds(): () => void {
     dialogs = n;
   });
   observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["open"] });
+  // The first touch or key press unlocks audio so sounds from the room can play later.
+  let unlocked = false;
+  const onGesture = () => {
+    if (unlocked) return;
+    unlocked = unlockSfx();
+    if (unlocked) {
+      for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.removeEventListener(t, onGesture, true);
+    }
+  };
+  for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.addEventListener(t, onGesture, true);
   document.addEventListener("pointerover", onOver, { passive: true });
   document.addEventListener("click", onClick, true);
   document.addEventListener("change", onChange, true);
   return () => {
     observer.disconnect();
+    for (const t of ["pointerdown", "touchend", "click", "keydown"]) document.removeEventListener(t, onGesture, true);
     document.removeEventListener("pointerover", onOver);
     document.removeEventListener("click", onClick, true);
     document.removeEventListener("change", onChange, true);

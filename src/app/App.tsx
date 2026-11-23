@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BuilderHome } from "../components/builder/BuilderHome";
 import { HeadbandsAIGuide } from "../components/builder/HeadbandsAIGuide";
 import { HeadbandsVisualEditor } from "../components/builder/HeadbandsVisualEditor";
-import { GauntletAIGuide } from "../components/builder/GauntletAIGuide";
-import { GauntletVisualEditor } from "../components/builder/GauntletVisualEditor";
 import { JeopardyAIGuide } from "../components/builder/JeopardyAIGuide";
 import { JeopardyVisualEditor } from "../components/builder/JeopardyVisualEditor";
 import { AmbientBackground, type BackdropSpec } from "../components/dashboard/AmbientBackground";
@@ -14,12 +12,14 @@ import { ImportScreen } from "../components/import/ImportScreen";
 import type { LoadedGame } from "../components/import/loadGame";
 import { useSpatialNav } from "../components/navigation/spatialNav";
 import { DevicePrompt, StartupIntro } from "../components/intro/Intro";
-import { SoundToggle } from "../components/ui/SoundToggle";
+import { CornerControls } from "../components/ui/CornerControls";
 import { installHoverSounds, setSoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
+import { RPG_TYPE, blankRpgFile, type RpgFile } from "../game-files/schema/rpg";
+import type { RpgSettings } from "../game-files/schema/rpg";
 import { HEADBANDS_TYPE, blankHeadbandsFile, type HeadbandsFile } from "../game-files/schema/headbands";
 import { JEOPARDY_TYPE, type JeopardyFile } from "../game-files/schema/jeopardy";
 import { HeadbandsGame } from "../games/headbands/HeadbandsGame";
@@ -34,15 +34,11 @@ import { LiarJoin } from "../games/liar/LiarJoin";
 import { LiarLobby } from "../games/liar/LiarLobby";
 import { LiarOnlineGame } from "../games/liar/LiarOnlineGame";
 import { closeLiarLobby, liarCodeFromHash, liarLobbyExists } from "../games/liar/liarLobby";
-import { GAUNTLET_TYPE, type GauntletFile } from "../game-files/schema/gauntlet";
-import { GauntletGame } from "../games/gauntlet/GauntletGame";
-import { GauntletSetup } from "../games/gauntlet/GauntletSetup";
-import { GauntletLobby } from "../games/gauntlet/GauntletLobby";
-import { GauntletJoin } from "../games/gauntlet/GauntletJoin";
-import { clearHost, closeGauntletLobby, gauntletCodeFromHash, gauntletLobbyExists, loadHost, type HostSave } from "../games/gauntlet/gauntletLobby";
-import type { GauntletState } from "../games/gauntlet/gauntletEngine";
+import { RpgJoin } from "../games/rpg/RpgJoin";
+import { RpgLobby } from "../games/rpg/RpgLobby";
+import { RpgOnlineGame } from "../games/rpg/RpgOnlineGame";
+import { closeRpgLobby, rpgCodeFromHash, rpgLobbyExists } from "../games/rpg/rpgLobby";
 import { ConfirmDialog } from "../components/ui/Dialog";
-import type { Options as GauntletOptions, TeamSetup as GauntletTeamSetup } from "../games/gauntlet/gauntletEngine";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
@@ -59,15 +55,13 @@ type Screen =
   | { name: "hbLobby"; base: HeadbandsFile; code: string | null }
   | { name: "hbJoin"; code: string | null }
   | { name: "liarSetup"; game: LoadedGame<LiarFile> }
-  | { name: "glSetup"; game: LoadedGame<GauntletFile> }
-  | { name: "glPlay"; game: LoadedGame<GauntletFile>; teams: GauntletTeamSetup[]; options: GauntletOptions }
-  | { name: "glLobby"; file: GauntletFile; teamNames: string[]; options: GauntletOptions; code: string | null }
-  | { name: "glOnline"; file: GauntletFile; teams: GauntletTeamSetup[]; options: GauntletOptions; code: string; teamMap: Record<number, string>; initial?: GauntletState }
-  | { name: "glJoin"; code: string | null; playerName?: string }
   | { name: "liarPlay"; game: LoadedGame<LiarFile>; names: string[]; options: LiarOptions }
   | { name: "liarLobby"; file: LiarFile; code: string | null; defaults?: Partial<LiarOptions> }
   | { name: "liarOnline"; file: LiarFile; code: string; players: LiarPlayer[]; options: LiarOptions }
   | { name: "liarJoin"; code: string | null; playerName?: string }
+  | { name: "rpgLobby"; file: RpgFile; code: string | null }
+  | { name: "rpgOnline"; file: RpgFile; code: string; players: Array<{ id: string; name: string }>; settings: RpgSettings }
+  | { name: "rpgJoin"; code: string | null; playerName?: string }
   | { name: "builder" }
   | { name: "editor"; gameType: string }
   | { name: "ai"; gameType: string };
@@ -85,8 +79,8 @@ function backdropForGame(game: LoadedGame): BackdropSpec {
 
 /** Each game's screens use its own track; everything else uses the Headbands track. */
 function backdropTheme(screen: Screen, tileGameType: string): "jeopardy" | "headbands" | "liar" {
-  if (screen.name === "dashboard") return tileGameType === "jeopardy" || tileGameType === GAUNTLET_TYPE ? "jeopardy" : tileGameType === "liar" ? "liar" : "headbands";
-  if (screen.name === "setup" || screen.name === "play" || screen.name.startsWith("gl")) return "jeopardy";
+  if (screen.name === "dashboard") return tileGameType === "jeopardy" ? "jeopardy" : tileGameType === "liar" ? "liar" : "headbands";
+  if (screen.name === "setup" || screen.name === "play") return "jeopardy";
   if (screen.name.startsWith("liar")) return "liar";
   return "headbands";
 }
@@ -100,24 +94,18 @@ export function App() {
     // A phone opened from a lobby's QR code or link goes straight to joining.
     const code = lobbiesAvailable() ? codeFromHash(window.location.hash) : null;
     const liarCode = lobbiesAvailable() ? liarCodeFromHash(window.location.hash) : null;
-    const glCode = lobbiesAvailable() ? gauntletCodeFromHash(window.location.hash) : null;
-    if (glCode) {
-      history.replaceState(null, "", window.location.pathname + window.location.search);
-      return [{ name: "dashboard" }, { name: "glJoin", code: glCode }];
-    }
-    if (code || liarCode) history.replaceState(null, "", window.location.pathname + window.location.search);
+    const rpgCode = lobbiesAvailable() ? rpgCodeFromHash(window.location.hash) : null;
+    if (code || liarCode || rpgCode) history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (rpgCode) return [{ name: "dashboard" }, { name: "rpgJoin", code: rpgCode }];
     if (liarCode) return [{ name: "dashboard" }, { name: "liarJoin", code: liarCode }];
     return code ? [{ name: "dashboard" }, { name: "hbJoin", code }] : [{ name: "dashboard" }];
   });
   /** The online lobby this device is hosting, closed when the host goes home. */
   const hostedLobby = useRef<string | null>(null);
   const hostedLiar = useRef<string | null>(null);
-  const hostedGauntlet = useRef<string | null>(null);
-  const resumeChosen = useRef(false);
+  const hostedRpg = useRef<string | null>(null);
   /** A destructive navigation waiting for confirmation. */
   const [pending, setPending] = useState<{ title: string; text: string; label: string; run: () => void } | null>(null);
-  /** A Gauntlet room this device was hosting before a refresh. */
-  const [resumeHost, setResumeHost] = useState<HostSave | null>(() => (lobbiesAvailable() ? loadHost() : null));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState<LoadedGame | null>(null);
   const [draftBackdrop, setDraftBackdrop] = useState<BackdropSpec | null>(null);
@@ -138,9 +126,8 @@ export function App() {
     hostedLobby.current = null;
     if (hostedLiar.current) void closeLiarLobby(hostedLiar.current).catch(() => undefined);
     hostedLiar.current = null;
-    if (hostedGauntlet.current) void closeGauntletLobby(hostedGauntlet.current).catch(() => undefined);
-    hostedGauntlet.current = null;
-    clearHost();
+    if (hostedRpg.current) void closeRpgLobby(hostedRpg.current).catch(() => undefined);
+    hostedRpg.current = null;
     setLoaded(null);
     setStack([{ name: "dashboard" }]);
   }, []);
@@ -205,7 +192,7 @@ export function App() {
       });
       setRecent(list);
       setLoaded(game);
-      if (file.gameType === GAUNTLET_TYPE) push({ name: "glSetup", game: game as LoadedGame<GauntletFile> });
+      if (file.gameType === RPG_TYPE) push({ name: "rpgLobby", file: file as RpgFile, code: null });
       else if (file.gameType === LIAR_TYPE) push({ name: "liarSetup", game: game as LoadedGame<LiarFile> });
       else if (file.gameType === HEADBANDS_TYPE) push({ name: "hbSetup", game: game as LoadedGame<HeadbandsFile> });
       else push({ name: "setup", game: game as LoadedGame<JeopardyFile> });
@@ -250,8 +237,9 @@ export function App() {
   if (screen.name === "editor") backdrop = draftBackdrop ?? buildBackdrop;
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
-  else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay" || screen.name === "glSetup" || screen.name === "glPlay") backdrop = backdropForGame(screen.game);
-  else if (screen.name === "glLobby" || screen.name === "glOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
+  else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "rpgJoin") backdrop = backdropForGame({ file: blankRpgFile(), filename: "lobby", text: "", warnings: [] });
+  else if (screen.name === "rpgLobby" || screen.name === "rpgOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "liarLobby" || screen.name === "liarOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "hbLobby") backdrop = backdropForGame({ file: screen.base, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
@@ -274,7 +262,6 @@ export function App() {
   /** Asks before leaving a game in progress. */
   const guard = (title: string, text: string, label: string, run: () => void) => () => setPending({ title, text, label, run });
   const exitGame = guard("Leave this game?", "The match in progress ends and scores are lost.", "Leave game", home);
-  const restartGame = guard("Restart?", "Scores reset and the match starts again from setup.", "Restart", pop);
 
   return (
     <>
@@ -288,6 +275,8 @@ export function App() {
           onLoad={(gameType) => push({ name: "import", gameType })}
           onBuild={toBuilder}
           onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
+          onHostOnline={lobbiesAvailable() ? () => push({ name: "rpgLobby", file: blankRpgFile(), code: null }) : undefined}
+          onJoinOnline={lobbiesAvailable() ? () => push({ name: "rpgJoin", code: null }) : undefined}
           onOpenRecent={openRecent}
           onForgetRecent={forgetRecent}
           onSettings={() => setSettingsOpen(true)}
@@ -304,7 +293,7 @@ export function App() {
           onLoaded={setLoaded}
           onLobby={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbLobby", base: blankHeadbandsFile(), code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarLobby", file: blankLiarFile(), code: null }) : undefined}
           onlineText={screen.gameType === LIAR_TYPE ? "Players join on their phones, write their statements privately and vote from their own device." : undefined}
-          onJoin={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbJoin", code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarJoin", code: null }) : screen.gameType === GAUNTLET_TYPE ? () => push({ name: "glJoin", code: null }) : undefined}
+          onJoin={!lobbiesAvailable() ? undefined : screen.gameType === HEADBANDS_TYPE ? () => push({ name: "hbJoin", code: null }) : screen.gameType === LIAR_TYPE ? () => push({ name: "liarJoin", code: null }) : undefined}
         />
       )}
       {screen.name === "setup" && (
@@ -350,14 +339,32 @@ export function App() {
               setStack((s) => [...s.slice(0, -1), { name: "liarJoin", code, playerName }]);
               return true;
             }
-            if (await gauntletLobbyExists(code)) {
-              setStack((s) => [...s.slice(0, -1), { name: "glJoin", code, playerName }]);
+            if (await rpgLobbyExists(code)) {
+              setStack((s) => [...s.slice(0, -1), { name: "rpgJoin", code, playerName }]);
               return true;
             }
             return false;
           }}
         />
       )}
+      {screen.name === "rpgJoin" && <RpgJoin code={screen.code} name={screen.playerName} onExit={home} />}
+      {screen.name === "rpgLobby" && (
+        <RpgLobby
+          key={stack.length}
+          file={screen.file}
+          code={screen.code}
+          onCode={(code) => {
+            hostedRpg.current = code;
+            setStack((s) => s.map((x, i) => (i === s.length - 1 && x.name === "rpgLobby" ? { ...x, code } : x)));
+          }}
+          onBack={() => {
+            hostedRpg.current = null;
+            pop();
+          }}
+          onStart={(players, settings) => screen.code && push({ name: "rpgOnline", file: screen.file, code: screen.code, players, settings })}
+        />
+      )}
+      {screen.name === "rpgOnline" && <RpgOnlineGame key={stack.length} file={screen.file} code={screen.code} players={screen.players} settings={screen.settings} onAgain={pop} onExit={home} />}
       {screen.name === "liarJoin" && <LiarJoin code={screen.code} name={screen.playerName} onExit={home} />}
       {screen.name === "liarLobby" && (
         <LiarLobby
@@ -387,38 +394,6 @@ export function App() {
         />
       )}
       {screen.name === "liarPlay" && <LiarGame key={stack.length} file={screen.game.file} names={screen.names} options={screen.options} onAgain={pop} onExit={exitGame} />}
-      {screen.name === "glSetup" && (
-        <GauntletSetup
-          game={screen.game}
-          onBack={pop}
-          onStart={(teams, options) => push({ name: "glPlay", game: screen.game, teams, options })}
-          onLobby={lobbiesAvailable() ? (teamNames, options) => push({ name: "glLobby", file: screen.game.file, teamNames, options, code: null }) : undefined}
-        />
-      )}
-      {screen.name === "glPlay" && <GauntletGame key={stack.length} file={screen.game.file} teams={screen.teams} options={screen.options} onAgain={restartGame} onExit={exitGame} />}
-      {screen.name === "glLobby" && (
-        <GauntletLobby
-          key={stack.length}
-          file={screen.file}
-          teamNames={screen.teamNames}
-          options={screen.options}
-          code={screen.code}
-          onCode={(code) => {
-            hostedGauntlet.current = code;
-            setStack((s) => s.map((x, i) => (i === s.length - 1 && x.name === "glLobby" ? { ...x, code } : x)));
-          }}
-          onBack={() => {
-            if (hostedGauntlet.current) void closeGauntletLobby(hostedGauntlet.current).catch(() => undefined);
-            hostedGauntlet.current = null;
-            pop();
-          }}
-          onStart={(teams, teamMap) => screen.code && push({ name: "glOnline", file: screen.file, teams, options: screen.options, code: screen.code, teamMap })}
-        />
-      )}
-      {screen.name === "glOnline" && (
-        <GauntletGame key={stack.length} file={screen.file} teams={screen.teams} options={screen.options} online={{ code: screen.code, teamMap: screen.teamMap, initial: screen.initial }} onAgain={exitGame} onExit={exitGame} />
-      )}
-      {screen.name === "glJoin" && <GauntletJoin code={screen.code} name={screen.playerName} onExit={home} />}
       {screen.name === "builder" && (
         <BuilderHome
           gameType={buildType}
@@ -429,41 +404,16 @@ export function App() {
         />
       )}
       {screen.name === "editor" &&
-        (screen.gameType === GAUNTLET_TYPE ? (
-          <GauntletVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: GAUNTLET_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
-        ) : screen.gameType === HEADBANDS_TYPE ? (
+        (screen.gameType === HEADBANDS_TYPE ? (
           <HeadbandsVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: HEADBANDS_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
         ) : (
           <JeopardyVisualEditor onBack={pop} onHost={(text, filename) => push({ name: "import", gameType: JEOPARDY_TYPE, seed: { filename, text } })} onAppearance={onDraftAppearance} />
         ))}
       {screen.name === "ai" &&
-        (screen.gameType === GAUNTLET_TYPE ? <GauntletAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
+        (screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
 
       {pending && <ConfirmDialog title={pending.title} text={pending.text} confirmLabel={pending.label} danger onConfirm={pending.run} onClose={() => setPending(null)} />}
-      {resumeHost && screen.name === "dashboard" && (
-        <ConfirmDialog
-          title={`Resume room ${resumeHost.code}?`}
-          text={`You were hosting "${resumeHost.file.metadata.title}". Players can carry on where they left off. Cancel closes the room.`}
-          confirmLabel="Resume"
-          onConfirm={() => {
-            const r = resumeHost;
-            resumeChosen.current = true;
-            hostedGauntlet.current = r.code;
-            const teamMap = Object.fromEntries(Object.entries(r.seats).map(([k, v]) => [Number(k), v]));
-            push({ name: "glOnline", file: r.file, teams: [], options: r.state.options, code: r.code, teamMap, initial: r.state });
-          }}
-          onClose={() => {
-            setResumeHost((r) => {
-              if (r && !resumeChosen.current) {
-                void closeGauntletLobby(r.code).catch(() => undefined);
-                clearHost();
-              }
-              return null;
-            });
-          }}
-        />
-      )}
-      <SoundToggle />
+      <CornerControls />
       <StartupIntro />
       {device === null && <DevicePrompt onChoose={chooseDevice} />}
       {settingsOpen && <SettingsPanel theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} onClose={() => setSettingsOpen(false)} />}

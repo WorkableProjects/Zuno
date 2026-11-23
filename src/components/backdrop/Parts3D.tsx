@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import "./parts3d.css";
 
-export type PartsKind = "board" | "cards" | "statements";
+export type PartsKind = "board" | "cards" | "statements" | "hands";
 const BOARD_VALUES = [100, 200, 300, 400, 500];
 /** Cells the host "picks" in turn, as [row, column]. One lights up every few seconds. */
 const BOARD_PICKS: Array<[number, number]> = [
@@ -102,6 +102,53 @@ function StatementsArt() {
   );
 }
 
+const HANDS = ["rock", "paper", "scissors"] as const;
+const HAND_PATHS: Record<(typeof HANDS)[number], string> = {
+  // Simple filled silhouettes: fist, open palm, two-finger scissors.
+  rock: "M20 34c0-6 4-10 9-10h20c6 0 11 4 11 10v14c0 10-8 18-18 18h-4c-10 0-18-8-18-18zM26 24v-6a5 5 0 0 1 10 0v6M38 24v-8a5 5 0 0 1 10 0v8",
+  paper: "M18 44V22a4 4 0 0 1 8 0v14V14a4 4 0 0 1 8 0v22V10a4 4 0 0 1 8 0v26V16a4 4 0 0 1 8 0v34c0 10-8 18-18 18s-14-6-18-14z",
+  scissors: "M30 40 20 12a4 4 0 0 1 8-3l9 28 9-28a4 4 0 0 1 8 3L44 40c8 2 12 8 12 14 0 8-6 12-14 12s-12-6-12-14c0-4 0-8 0-12z",
+};
+/** [shape, chip?, left %, top %, size px, depth px, delay s] — generic floaters. */
+const FLOATERS: Array<[number, boolean, number, number, number, number, number]> = [
+  [0, false, 68, 12, 120, 60, 0],
+  [1, false, 78, 58, 150, -40, -6],
+  [2, false, 60, 70, 110, 90, -11],
+  [0, true, 70, 20, 64, 120, -3],
+  [1, true, 88, 30, 48, -60, -9],
+  [2, true, 56, 44, 56, 30, -14],
+  [0, true, 84, 80, 72, 70, -5],
+  [1, true, 66, 88, 44, -20, -17],
+];
+
+/** Rock, paper and scissors hands and casino chips drifting slowly. */
+function HandsArt() {
+  return (
+    <div className="art-hands" aria-hidden="true">
+      {FLOATERS.map(([shape, chip, x, y, size, z, delay], i) => (
+        <span
+          key={i}
+          className={`art-float${chip ? " is-chip" : " is-hand"} tone-${(i % 3) + 1}`}
+          style={{ left: `${x}%`, top: `${y}%`, width: size, height: size, "--z": `${z}px`, "--d": `${delay}s`, "--i": i } as CSSProperties}
+        >
+          {chip ? (
+            <svg viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="29" className="chip-body" />
+              <circle cx="32" cy="32" r="29" className="chip-edge" />
+              <circle cx="32" cy="32" r="17" className="chip-inner" />
+              <text x="32" y="38" textAnchor="middle" className="chip-mark">{["R", "P", "S"][shape]}</text>
+            </svg>
+          ) : (
+            <svg viewBox="0 0 72 72">
+              <path d={HAND_PATHS[HANDS[shape]]} />
+            </svg>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /**
  * 3D parts system: engine artwork (board, headband cards, statements) on a
  * stage that fills the right side of the screen and slowly orbits in 3D.
@@ -113,6 +160,7 @@ export function Parts3D({ kind, palette }: { kind: PartsKind; palette: CSSProper
         {kind === "board" && <BoardArt />}
         {kind === "cards" && <CardsArt />}
         {kind === "statements" && <StatementsArt />}
+        {kind === "hands" && <HandsArt />}
       </div>
     </div>
   );

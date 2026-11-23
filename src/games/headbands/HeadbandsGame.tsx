@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useRegisterRoom } from "../../lib/room";
+import { sanitizeChatName } from "../../lib/chat";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleCheck, Eye, EyeOff, Flag, Pause, Play, RotateCcw, SkipForward, Undo2, UserMinus, Users, X } from "lucide-react";
 import type { HeadbandsFile } from "../../game-files/schema/headbands";
 import { ZunoMark } from "../../components/brand/Logo";
@@ -101,6 +103,9 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
     if (!lobbyCode) return;
     return watchLobby(lobbyCode, setLobby, () => undefined);
   }, [lobbyCode]);
+  // When the host also plays, the chat shows their player name too.
+  const hostPlayerName = lobby?.players[me]?.name?.trim();
+  useRegisterRoom(lobbyCode ? `hb/${lobbyCode}` : null, hostPlayerName ? sanitizeChatName(`Host (${hostPlayerName})`) : "Host");
   const onHostMove = useCallback(
     (move: PlayerMove) => {
       const action = moveToAction(move, me);

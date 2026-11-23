@@ -1,7 +1,7 @@
 import type { BackgroundPreset, GameFile, ValidationResult } from "../game-files/schema/common";
 import { HEADBANDS_TYPE, eligibleIdentities, validateHeadbands, type HeadbandsFile } from "../game-files/schema/headbands";
 import { LIAR_TYPE, validateLiar, type LiarFile } from "../game-files/schema/liar";
-import { GAUNTLET_TYPE, countGauntletItems, validateGauntlet, type GauntletFile } from "../game-files/schema/gauntlet";
+import { RPG_TYPE, formatCoins, validateRpg, type RpgFile } from "../game-files/schema/rpg";
 import { JEOPARDY_TYPE, countClues, validateJeopardy, type JeopardyFile } from "../game-files/schema/jeopardy";
 
 /**
@@ -18,7 +18,9 @@ export interface GameEngine {
   appearance: { accentColor: string; backgroundPreset: BackgroundPreset };
   validate: (raw: Record<string, unknown>) => ValidationResult<GameFile>;
   /** Decorative scene drawn behind the dashboard for this engine. */
-  artwork: "board" | "cards" | "statements" | null;
+  artwork: "board" | "cards" | "statements" | "hands" | null;
+  /** Runs only in online lobbies. The dashboard offers Host lobby and Join instead of Load. */
+  onlineOnly?: boolean;
   /** A sample in public/samples that the importer can load. */
   sampleFile: string;
   /** What a game file holds, for the import screen. */
@@ -115,25 +117,28 @@ const engines: GameEngine[] = [
     listing: () => null,
   },
   {
-    gameType: GAUNTLET_TYPE,
-    title: "Trivia Gauntlet",
-    description: "Teams race through Quickfire, Puzzle and Wild lanes, gamble in the Choice round, survive Chaos and climb the Final Gauntlet. Hosted from one shared screen.",
+    gameType: RPG_TYPE,
+    title: "Rock Paper Gamble",
+    description: "Rock paper scissors duels with money on the line. Challenge a rival, let everyone else bet on the winner, and take the whole pot.",
     schemaVersions: [1],
-    hasBuilder: true,
-    appearance: { accentColor: "#7EE0B5", backgroundPreset: "horizon" },
-    validate: validateGauntlet as GameEngine["validate"],
-    artwork: "board",
-    sampleFile: "trivia-gauntlet.zuno.json",
-    fileHolds: "the lanes, puzzles, wild cards and final round",
-    buildTitle: "Build a Trivia Gauntlet deck",
-    summarize: (f) => `${countGauntletItems(f as GauntletFile)} challenges · 3 lanes`,
+    hasBuilder: false,
+    appearance: { accentColor: "#7C3AED", backgroundPreset: "vegas" },
+    validate: validateRpg as GameEngine["validate"],
+    artwork: "hands",
+    onlineOnly: true,
+    sampleFile: "rock-paper-gamble.zuno.json",
+    fileHolds: "the starting money and the timers",
+    buildTitle: "Build a Rock Paper Gamble game",
+    summarize: (f) => {
+      const file = f as RpgFile;
+      return `${formatCoins(file.settings.startingMoney)} each · up to ${file.settings.maxPlayers} players`;
+    },
     stats: (f) => {
-      const c = (f as GauntletFile).content;
+      const file = f as RpgFile;
       return [
-        ["Quickfire", c.lanes.quickfire.length],
-        ["Puzzles", c.lanes.puzzle.length],
-        ["Wild cards", c.lanes.wild.length],
-        ["Climb questions", c.final.climb.length],
+        ["Starting money", formatCoins(file.settings.startingMoney)],
+        ["Players", `2 to ${file.settings.maxPlayers}`],
+        ["Round timer", `${file.settings.roundSeconds}s`],
       ];
     },
     listing: () => null,

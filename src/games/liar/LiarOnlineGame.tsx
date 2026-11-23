@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRegisterRoom } from "../../lib/room";
 import {
   ArrowLeft,
   Flag,
@@ -59,6 +60,7 @@ export function LiarOnlineGame({
   onExit,
 }: Props) {
   const me = useMemo(() => playerId(), []);
+  useRegisterRoom(`liar/${code}`, "Host");
   const [state, dispatch] = useReducer(liarReducer, undefined, () =>
     createSessionWith(players, options),
   );

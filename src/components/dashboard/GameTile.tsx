@@ -55,6 +55,21 @@ function LiarCover() {
   );
 }
 
+/** Cover for Rock Paper Gamble: a fist and an open hand facing off over a coin. */
+function RpgCover() {
+  return (
+    <svg className="tile-img" viewBox="0 0 120 120" aria-hidden="true">
+      <rect width="120" height="120" className="cover-bg" />
+      <rect x="14" y="44" width="32" height="40" rx="9" className="cover-cell" transform="rotate(-8 30 64)" />
+      <rect x="74" y="44" width="32" height="40" rx="9" className="cover-cell" transform="rotate(8 90 64)" />
+      <rect x="20" y="54" width="20" height="4" rx="2" className="cover-head" transform="rotate(-8 30 64)" />
+      <rect x="80" y="54" width="20" height="4" rx="2" className="cover-head" transform="rotate(8 90 64)" />
+      <circle cx="60" cy="58" r="17" className="cover-lit" />
+      <text x="60" y="65" textAnchor="middle" className="cover-mark">$</text>
+    </svg>
+  );
+}
+
 function FileCover({ item }: { item: RailItem }) {
   const [failed, setFailed] = useState(false);
   const cover = item.backdrop.cover;
@@ -119,7 +134,7 @@ export function GameTile({ item, active, onSelect, onActivate }: Props) {
     >
       <span className="tile-shadow" />
       <span className="tile-art">
-        {item.kind === "engine" && (item.gameType === "headbands" ? <CardsCover /> : item.gameType === "liar" ? <LiarCover /> : <BoardCover />)}
+        {item.kind === "engine" && (item.gameType === "headbands" ? <CardsCover /> : item.gameType === "liar" ? <LiarCover /> : item.gameType === "rpg" ? <RpgCover /> : <BoardCover />)}
         {item.kind === "file" && <FileCover item={item} />}
         {item.kind === "build" && (
           <span className="tile-img tile-create">

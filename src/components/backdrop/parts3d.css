@@ -365,3 +365,59 @@
 .p3d .art-statement {
   transform: translateZ(calc(var(--i) * 28px));
 }
+
+/* ---------- Engine artwork: Rock Paper Gamble hands and chips ---------- */
+.art-hands {
+  position: absolute;
+  inset: 0;
+}
+.art-float {
+  --tone: #7c3aed;
+  position: absolute;
+  display: block;
+  transform: translateZ(var(--z, 0px));
+  animation: hands-float 16s ease-in-out infinite alternate;
+  animation-delay: var(--d, 0s);
+  will-change: transform;
+}
+.art-float.tone-1 { --tone: #7c3aed; }
+.art-float.tone-2 { --tone: #06b6d4; }
+.art-float.tone-3 { --tone: #f59e0b; }
+.art-float svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 14px 24px rgb(0 0 0 / 0.3));
+}
+.art-float.is-hand path {
+  fill: color-mix(in oklab, var(--tone) 55%, transparent);
+  stroke: var(--tone);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.art-float .chip-body { fill: color-mix(in oklab, var(--tone) 70%, #101018); }
+.art-float .chip-edge {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.8);
+  stroke-width: 6;
+  stroke-dasharray: 8 8;
+}
+.art-float .chip-inner { fill: none; stroke: rgb(255 255 255 / 0.55); stroke-width: 1.5; }
+.art-float .chip-mark { fill: rgb(255 255 255 / 0.85); font: 700 16px var(--font-display, sans-serif); }
+.art-float.is-chip { animation-name: chip-float; animation-duration: 20s; }
+@keyframes hands-float {
+  from { transform: translate3d(0, 10px, var(--z, 0px)) rotate(calc(var(--i) * 17deg - 12deg)); }
+  to { transform: translate3d(14px, -18px, var(--z, 0px)) rotate(calc(var(--i) * 17deg + 10deg)); }
+}
+@keyframes chip-float {
+  from { transform: translate3d(-8px, 14px, var(--z, 0px)) rotateX(30deg) rotateZ(0deg); }
+  to { transform: translate3d(12px, -22px, var(--z, 0px)) rotateX(50deg) rotateZ(40deg); }
+}
+@media (max-width: 900px) {
+  .art-hands { opacity: 0.55; }
+  .art-float { left: calc(var(--i) * 12% + 4%) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .art-float { animation: none; }
+}

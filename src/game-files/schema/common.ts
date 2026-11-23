@@ -3,7 +3,7 @@
 export const SUPPORTED_SCHEMA_VERSIONS = [1] as const;
 export const CURRENT_SCHEMA_VERSION = 1;
 
-export const BACKGROUND_PRESETS = ["aurora", "horizon", "tide", "spotlight"] as const;
+export const BACKGROUND_PRESETS = ["aurora", "horizon", "tide", "spotlight", "vegas"] as const;
 export type BackgroundPreset = (typeof BACKGROUND_PRESETS)[number];
 
 /** Size limits. Change them here; messages read from these values. */

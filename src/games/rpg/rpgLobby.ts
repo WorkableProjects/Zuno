@@ -1,0 +1,439 @@
+import {
+  get,
+  onChildAdded,
+  onDisconnect,
+  onValue,
+  push,
+  ref,
+  remove,
+  runTransaction,
+  serverTimestamp,
+  set,
+  update,
+} from "firebase/database";
+import { ITEM_IDS, type ItemId } from "../../game-files/schema/rpg";
+import { parseAvatar, type AvatarSpec } from "../../components/avatar/avatarData";
+import { database, makeCode } from "../headbands/lobby";
+import {
+  WIRES,
+  isChoice,
+  itemsOf,
+  poolOf,
+  type Choice,
+  type GameEvent,
+  type NukeVote,
+  type Phase,
+  type RoundOutcome,
+  type RpgAction,
+  type RpgPlayer,
+  type RpgState,
+  type Settlement,
+  type Stake,
+} from "./rpgEngine";
+
+/**
+ * Online Rock Paper Gamble, kept in Firebase Realtime Database under /rpg/{code}.
+ * The host's device runs the game and publishes what everyone may see under
+ * /game. Picks are held on the host until both duelists are in. Phones send
+ * their moves to /actions/{playerId}/..., and the host takes the sender from
+ * that key, never from anything inside the message.
+ */
+
+export interface RpgLobbyPlayer {
+  name: string;
+  joinedAt: number;
+  avatar: AvatarSpec | null;
+  ready: boolean;
+}
+
+export interface RpgLobbyState {
+  phase: "lobby" | "playing";
+  createdAt: number;
+  players: Record<string, RpgLobbyPlayer>;
+  /** Turn order chosen by the host. Ids that are not in the room are ignored. */
+  order: string[];
+  startingMoney: number | null;
+  game: RpgOnline | null;
+}
+
+/** The duel as everyone may see it: who has picked, but never what. */
+export interface RpgOnlineDuel {
+  challenger: string;
+  challengee: string;
+  wager: number;
+  stakes: Stake[];
+  pool: number;
+  score: Record<string, number>;
+  round: number;
+  picked: string[];
+  last: RoundOutcome | null;
+  overlay: number;
+  doubleMisses: number;
+  /** How many hidden Landmines and Interceptors are in play. Never which. */
+  traps: number;
+}
+
+/** The nuke as everyone may see it: who voted, never how. */
+export interface RpgOnlineNuke {
+  by: string;
+  stage: "vote" | "duel";
+  voted: string[];
+  target: string | null;
+  picked: string[];
+  ties: number;
+  last: RoundOutcome | null;
+}
+
+/** What only one player may see: what they hold and what they hid. */
+export interface RpgPrivate {
+  items: ItemId[];
+  mine: Choice | null;
+  intercept: string | null;
+}
+
+export const EMPTY_PRIVATE: RpgPrivate = { items: [], mine: null, intercept: null };
+
+/** What every device sees. */
+export interface RpgOnline {
+  phase: Phase;
+  timeLeft: number;
+  match: number;
+  activeId: string | null;
+  players: RpgPlayer[];
+  startingMoney: number;
+  duel: RpgOnlineDuel | null;
+  result: Settlement | null;
+  log: string[];
+  endedEarly: boolean;
+  itemsOn: boolean;
+  itemCosts: Record<ItemId, number>;
+  /** How many items each player holds. Which ones stay private. */
+  itemCounts: Record<string, number>;
+  /** The defusing wire is never here. */
+  bomb: { by: string; target: string } | null;
+  nuke: RpgOnlineNuke | null;
+  event: GameEvent | null;
+  /** State revision; phones ignore updates older than what they hold. */
+  revision: number;
+}
+
+/** True when an incoming broadcast is older than the one already shown. */
+export function isStaleOnline(current: RpgOnline | null, incoming: RpgOnline): boolean {
+  return !!current && (incoming.revision ?? 0) < (current.revision ?? 0);
+}
+
+export type RpgMove =
+  | { type: "challenge"; target: string; wager?: number }
+  | { type: "bet"; target: string; amount: number }
+  | { type: "pick"; choice: Choice }
+  | { type: "gift"; target: string; amount: number }
+  | { type: "buy"; item: ItemId }
+  | { type: "bomb"; target: string }
+  | { type: "nuke" }
+  | { type: "mine"; choice: Choice }
+  | { type: "intercept"; target: string }
+  | { type: "wire"; wire: number }
+  | { type: "vote"; vote: NukeVote };
+
+export function toRpgOnline(s: RpgState): RpgOnline {
+  const d = s.duel;
+  return {
+    phase: s.phase,
+    timeLeft: s.timeLeft,
+    match: s.match,
+    activeId: s.phase === "select" ? (s.players[s.active]?.id ?? null) : null,
+    players: s.players,
+    startingMoney: s.settings.startingMoney,
+    duel: d
+      ? {
+          challenger: d.challenger,
+          challengee: d.challengee,
+          wager: d.wager,
+          stakes: d.stakes,
+          pool: poolOf(d),
+          score: d.score,
+          round: d.round,
+          picked: Object.keys(d.picks),
+          last: d.last,
+          overlay: d.overlay,
+          doubleMisses: d.doubleMisses,
+          traps: d.mines.length + d.intercepts.length,
+        }
+      : null,
+    result: s.result,
+    log: s.log,
+    endedEarly: s.endedEarly,
+    itemsOn: s.settings.items,
+    itemCosts: s.settings.itemCosts,
+    itemCounts: Object.fromEntries(s.players.map((p) => [p.id, itemsOf(s, p.id).length])),
+    bomb: s.bomb ? { by: s.bomb.by, target: s.bomb.target } : null,
+    nuke: s.nuke ? { by: s.nuke.by, stage: s.nuke.stage, voted: Object.keys(s.nuke.votes), target: s.nuke.target, picked: Object.keys(s.nuke.picks), ties: s.nuke.ties, last: s.nuke.last } : null,
+    event: s.event,
+    revision: s.revision,
+  };
+}
+
+/** What one player may know that the table may not. */
+export function rpgPrivate(s: RpgState, id: string): RpgPrivate {
+  const d = s.duel;
+  return {
+    items: itemsOf(s, id),
+    mine: d?.mines.find((m) => m.by === id)?.symbol ?? null,
+    intercept: d?.intercepts.find((i) => i.by === id)?.winner ?? null,
+  };
+}
+
+export function readRpgPrivate(raw: unknown): RpgPrivate {
+  if (typeof raw !== "string") return EMPTY_PRIVATE;
+  try {
+    const p = JSON.parse(raw) as Partial<RpgPrivate>;
+    return {
+      items: Array.isArray(p.items) ? p.items.filter((i): i is ItemId => ITEM_IDS.includes(i as ItemId)) : [],
+      mine: isChoice(p.mine) ? p.mine : null,
+      intercept: typeof p.intercept === "string" ? p.intercept : null,
+    };
+  } catch {
+    return EMPTY_PRIVATE;
+  }
+}
+
+/**
+ * Turns a phone's move into an engine action. `from` is the database key the
+ * move arrived under. Nothing the phone wrote can change who it is.
+ */
+export function rpgMoveToAction(move: unknown, from: string): RpgAction | null {
+  if (!move || typeof move !== "object") return null;
+  const m = move as Record<string, unknown>;
+  const target = typeof m.target === "string" ? m.target : "";
+  switch (m.type) {
+    case "challenge": {
+      const wager = m.wager === undefined || m.wager === null ? 0 : Number(m.wager);
+      return target ? { type: "challenge", by: from, target, wager } : null;
+    }
+    case "bet":
+      return target ? { type: "bet", by: from, target, amount: Number(m.amount) } : null;
+    case "gift":
+      return target ? { type: "gift", by: from, target, amount: Number(m.amount) } : null;
+    case "pick":
+      return isChoice(m.choice) ? { type: "pick", by: from, choice: m.choice } : null;
+    case "buy":
+      return ITEM_IDS.includes(m.item as ItemId) ? { type: "buy", by: from, item: m.item as ItemId } : null;
+    case "bomb":
+      // The defusing wire is rolled here on the host, never taken from the phone.
+      return target ? { type: "useBomb", by: from, target, wire: Math.floor(Math.random() * WIRES) } : null;
+    case "nuke":
+      return { type: "useNuke", by: from };
+    case "mine":
+      return isChoice(m.choice) ? { type: "useMine", by: from, symbol: m.choice } : null;
+    case "intercept":
+      return target ? { type: "useIntercept", by: from, winner: target } : null;
+    case "wire":
+      return typeof m.wire === "number" ? { type: "cutWire", by: from, wire: m.wire } : null;
+    case "vote":
+      return m.vote === "allow" || m.vote === "block" ? { type: "vote", by: from, vote: m.vote } : null;
+    default:
+      return null;
+  }
+}
+
+/** Players in the host's turn order, with anyone not yet placed added in join order. */
+export function orderedPlayers(lobby: Pick<RpgLobbyState, "players" | "order">): Array<{ id: string } & RpgLobbyPlayer> {
+  const all = Object.entries(lobby.players)
+    .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
+    .map(([id, p]) => ({ id, ...p }));
+  const placed = lobby.order.map((id) => all.find((p) => p.id === id)).filter((p): p is (typeof all)[number] => !!p);
+  const seen = new Set(placed.map((p) => p.id));
+  return [...placed, ...all.filter((p) => !seen.has(p.id))];
+}
+
+/** Moves one entry up or down. Returns the new id order. */
+export function moveInOrder(ids: string[], id: string, by: -1 | 1): string[] {
+  const i = ids.indexOf(id);
+  const j = i + by;
+  if (i < 0 || j < 0 || j >= ids.length) return ids;
+  const next = ids.slice();
+  [next[i], next[j]] = [next[j], next[i]];
+  return next;
+}
+
+/** The host can start once two or more are in and everyone except the host is ready. */
+export function canStart(players: Array<{ id: string; ready: boolean }>, hostId: string, minPlayers = 2, maxPlayers = 12): boolean {
+  return players.length >= minPlayers && players.length <= maxPlayers && players.some((p) => p.id === hostId) && players.every((p) => p.id === hostId || p.ready);
+}
+
+const path = (code: string, ...rest: string[]) => ["rpg", code, ...rest].join("/");
+
+function readGame(raw: unknown): RpgOnline | null {
+  if (typeof raw !== "string") return null;
+  try {
+    const g = JSON.parse(raw) as RpgOnline;
+    return g && Array.isArray(g.players) && typeof g.phase === "string" ? g : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readRpgLobby(raw: unknown): RpgLobbyState | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (r.phase !== "lobby" && r.phase !== "playing") return null;
+  const players: Record<string, RpgLobbyPlayer> = {};
+  if (r.players && typeof r.players === "object") {
+    for (const [id, p] of Object.entries(r.players as Record<string, unknown>)) {
+      const x = p as Record<string, unknown> | null;
+      if (x && typeof x.name === "string")
+        players[id] = { name: x.name, joinedAt: Number(x.joinedAt) || 0, avatar: parseAvatar(x.avatar), ready: x.ready === true };
+    }
+  }
+  let order: string[] = [];
+  if (typeof r.order === "string") {
+    try {
+      const parsed = JSON.parse(r.order) as unknown;
+      if (Array.isArray(parsed)) order = parsed.filter((x): x is string => typeof x === "string");
+    } catch {
+      /* ignore a damaged order */
+    }
+  }
+  const money = Number(r.startingMoney);
+  return {
+    phase: r.phase,
+    createdAt: Number(r.createdAt) || 0,
+    players,
+    order,
+    startingMoney: Number.isFinite(money) && money > 0 ? money : null,
+    game: readGame(r.game),
+  };
+}
+
+export async function createRpgLobby(): Promise<string> {
+  const d = database();
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const code = makeCode();
+    const result = await runTransaction(ref(d, path(code)), (current) => (current === null ? { phase: "lobby", createdAt: Date.now() } : undefined));
+    if (result.committed) {
+      await onDisconnect(ref(d, path(code))).remove();
+      return code;
+    }
+  }
+  throw new Error("Could not find a free room code. Try again.");
+}
+
+export function watchRpgLobby(code: string, onChange: (s: RpgLobbyState | null) => void, onError: (message: string) => void): () => void {
+  return onValue(
+    ref(database(), path(code)),
+    (snap) => onChange(readRpgLobby(snap.val())),
+    () => onError("Lost the connection to the room."),
+  );
+}
+
+export async function rpgLobbyExists(code: string): Promise<boolean> {
+  return (await get(ref(database(), path(code, "phase")))).exists();
+}
+
+/**
+ * Takes a seat. Before the game starts anyone may join. Once it has started
+ * only a player who already holds a seat can come back to it.
+ */
+export async function joinRpgLobby(code: string, id: string, name: string, avatar: AvatarSpec | null): Promise<void> {
+  const d = database();
+  const phase = (await get(ref(d, path(code, "phase")))).val();
+  const seated = (await get(ref(d, path(code, "players", id)))).exists();
+  if (phase === "playing" && !seated) throw new Error("That game has already started.");
+  const clean = name.trim().slice(0, 24);
+  if (seated && phase === "playing") {
+    // Coming back mid-game: keep the seat, only refresh the picture.
+    if (avatar) await update(ref(d, path(code, "players", id)), { avatar: JSON.stringify(avatar) });
+    await onDisconnect(ref(d, path(code, "players", id))).cancel();
+    return;
+  }
+  await set(ref(d, path(code, "players", id)), {
+    name: clean,
+    joinedAt: serverTimestamp(),
+    ready: false,
+    ...(avatar ? { avatar: JSON.stringify(avatar) } : {}),
+  });
+  await onDisconnect(ref(d, path(code, "players", id))).remove();
+}
+
+/** Once the game starts a dropped connection no longer gives up the seat. */
+export function keepRpgSeat(code: string, id: string): Promise<void> {
+  return onDisconnect(ref(database(), path(code, "players", id))).cancel();
+}
+
+/** Back in the lobby: a dropped connection gives up the seat again. */
+export function releaseRpgSeat(code: string, id: string): Promise<void> {
+  return onDisconnect(ref(database(), path(code, "players", id))).remove();
+}
+
+export function leaveRpgLobby(code: string, id: string): Promise<void> {
+  return remove(ref(database(), path(code, "players", id)));
+}
+
+export function setRpgReady(code: string, id: string, ready: boolean): Promise<void> {
+  return update(ref(database(), path(code, "players", id)), { ready });
+}
+
+export function setRpgLobby(
+  code: string,
+  change: { phase?: "lobby" | "playing"; game?: null; actions?: null; private?: null; startingMoney?: number; order?: string },
+): Promise<void> {
+  return update(ref(database(), path(code)), change);
+}
+
+export function setRpgOrder(code: string, ids: string[]): Promise<void> {
+  return setRpgLobby(code, { order: JSON.stringify(ids) });
+}
+
+/** Clears every player's ready flag, for a new game in the same room. */
+export function clearRpgReady(code: string, ids: string[]): Promise<void> {
+  const patch: Record<string, boolean> = {};
+  for (const id of ids) patch[`players/${id}/ready`] = false;
+  return update(ref(database(), path(code)), patch);
+}
+
+export function publishRpgGame(code: string, game: RpgOnline): Promise<void> {
+  return set(ref(database(), path(code, "game")), JSON.stringify(game));
+}
+
+/** Each player's own view: what they hold and what they hid. Written by the host, read by that player. */
+export function publishRpgPrivate(code: string, id: string, view: RpgPrivate): Promise<void> {
+  return set(ref(database(), path(code, "private", id)), JSON.stringify(view));
+}
+
+export function watchRpgPrivate(code: string, id: string, onChange: (p: RpgPrivate) => void): () => void {
+  return onValue(ref(database(), path(code, "private", id)), (snap) => onChange(readRpgPrivate(snap.val())), () => undefined);
+}
+
+export async function sendRpgMove(code: string, by: string, move: RpgMove): Promise<void> {
+  await push(ref(database(), path(code, "actions", by)), move);
+}
+
+/**
+ * The host listens to each seated player's own inbox. The sender is the inbox
+ * the move came from.
+ */
+export function watchRpgMoves(code: string, playerIds: string[], onMove: (by: string, move: unknown) => void): () => void {
+  const stops = playerIds.map((id) =>
+    onChildAdded(ref(database(), path(code, "actions", id)), (snap) => {
+      const v = snap.val() as unknown;
+      void remove(snap.ref);
+      if (v && typeof v === "object") onMove(id, v);
+    }),
+  );
+  return () => stops.forEach((stop) => stop());
+}
+
+export function closeRpgLobby(code: string): Promise<void> {
+  return remove(ref(database(), path(code)));
+}
+
+export function rpgJoinLink(code: string): string {
+  const url = new URL(window.location.href);
+  url.hash = `rpg=${code}`;
+  return url.toString();
+}
+
+export function rpgCodeFromHash(hash: string): string | null {
+  const m = /rpg=([a-z0-9]{5})/i.exec(hash);
+  return m ? m[1].toUpperCase() : null;
+}

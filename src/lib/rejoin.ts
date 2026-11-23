@@ -3,7 +3,7 @@ export interface SavedSeat {
   code: string;
   name: string;
   savedAt: number;
-  /** Game-specific extra, such as the Gauntlet team id. */
+  /** Game-specific extra, such as a team id. */
   extra?: string;
 }
 

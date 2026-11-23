@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, LogIn, PencilRuler, Play, Settings, Sticker, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, CornerDownLeft, FolderOpen, LogIn, PencilRuler, Play, Radio, Settings, Sticker, Trash2 } from "lucide-react";
 import { ZunoLogo } from "../brand/Logo";
 import { getEngine } from "../../games/registry";
 import { GameTile } from "./GameTile";
@@ -16,6 +16,10 @@ interface Props {
   onOpenRecent: (item: RailItem) => void;
   /** Join an online Headbands lobby. Absent when lobbies are not set up. */
   onJoin?: () => void;
+  /** Host an online lobby for a game that only runs online. */
+  onHostOnline?: (gameType: string) => void;
+  /** Join an online room of a game that only runs online. */
+  onJoinOnline?: (gameType: string) => void;
   onForgetRecent: (item: RailItem) => void;
   onSettings: () => void;
 }
@@ -31,12 +35,13 @@ export function Dashboard(props: Props) {
   }, []);
 
   const activate = (item: RailItem) => {
-    if (item.kind === "engine") props.onLoad(item.gameType);
+    if (item.kind === "engine") onlineOnly(item.gameType) ? props.onHostOnline?.(item.gameType) : props.onLoad(item.gameType);
     else if (item.kind === "build") props.onBuild();
     else if (item.kind === "file") props.onOpenRecent(item);
     // "soon" tiles have no action yet.
   };
 
+  const onlineOnly = (gameType: string) => !!getEngine(gameType)?.onlineOnly;
   const hasFiles = items.some((i) => i.kind === "file");
 
   return (
@@ -92,7 +97,20 @@ export function Dashboard(props: Props) {
         <h1 className="hero-title">{selected.title}</h1>
         <p className="hero-desc">{selected.description}</p>
         <div className="hero-actions" data-nav-row="2">
-          {selected.kind === "engine" && (
+          {selected.kind === "engine" && onlineOnly(selected.gameType) && (
+            <>
+              <button type="button" className="btn btn-primary" data-nav-default="" disabled={!props.onHostOnline} onClick={() => props.onHostOnline?.(selected.gameType)}>
+                <Radio size={18} strokeWidth={1.5} />
+                Host lobby
+              </button>
+              <button type="button" className="btn btn-secondary" disabled={!props.onJoinOnline} onClick={() => props.onJoinOnline?.(selected.gameType)}>
+                <LogIn size={18} strokeWidth={1.5} />
+                Join a game
+              </button>
+              {!props.onHostOnline && <p className="meta">Online lobbies are not set up for this site.</p>}
+            </>
+          )}
+          {selected.kind === "engine" && !onlineOnly(selected.gameType) && (
             <>
               <button type="button" className="btn btn-primary" data-nav-default="" onClick={() => props.onLoad(selected.gameType)}>
                 <FolderOpen size={18} strokeWidth={1.5} />
