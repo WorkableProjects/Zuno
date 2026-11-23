@@ -51,7 +51,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
               </span>
             </p>
           )}
-          <h1 className="lx-big" aria-label={engine.title}>
+          <h1 className="lx-big" aria-label={engine.title} style={{ "--len": Math.max(4, ...engine.title.split(" ").map((w) => w.length)) } as React.CSSProperties}>
             {engine.title.split(" ").map((w, i) => (
               <span key={i} className="lx-big-word" style={{ "--i": i } as React.CSSProperties}>
                 {w}

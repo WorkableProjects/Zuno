@@ -19,7 +19,7 @@
   border-top: 6px solid var(--game);
 }
 .id-text {
-  font: 600 clamp(36px, 6.4vw, 88px) / 1.05 var(--font-display);
+  font: 600 clamp(36px, 6.4vw, 88px) / 1.05 var(--font-ui);
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
   hyphens: auto;
@@ -54,7 +54,7 @@
   font-size: 14px;
 }
 .id-subtext {
-  font: 600 clamp(24px, 3.4vw, 44px) / 1.1 var(--font-display);
+  font: 600 clamp(24px, 3.4vw, 44px) / 1.1 var(--font-ui);
   overflow-wrap: anywhere;
 }
 .id-card-md.id-card-text {
@@ -229,7 +229,7 @@
   text-align: center;
 }
 .hb-name {
-  font: 600 clamp(28px, 4vw, 48px) / 1.1 var(--font-display);
+  font: 600 clamp(23.8px, 3.4vw, 40.8px) / 1.1 var(--font-display);
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
@@ -266,7 +266,7 @@
 }
 .hb-cover-title {
   color: var(--text);
-  font: 600 clamp(20px, 2.4vw, 28px) / 1.2 var(--font-display);
+  font: 600 clamp(17px, 2vw, 23.8px) / 1.2 var(--font-display);
   max-width: 24ch;
 }
 .hb-cover-text {
@@ -276,7 +276,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font: 600 clamp(20px, 2.4vw, 28px) / 1.2 var(--font-display);
+  font: 600 clamp(17px, 2vw, 23.8px) / 1.2 var(--font-display);
 }
 .hb-feedback.is-right .hb-feedback-title {
   color: var(--positive);
@@ -553,7 +553,7 @@
   min-width: 0;
 }
 .hb-code {
-  font: 600 clamp(44px, 6vw, 72px) / 1 var(--font-display);
+  font: 600 clamp(37.4px, 5.1vw, 61.2px) / 1 var(--font-display);
   letter-spacing: 0.12em;
   color: var(--game);
 }
@@ -662,7 +662,7 @@
   justify-items: start;
 }
 .hb-question-text {
-  font: 500 clamp(20px, 5vw, 26px) / 1.25 var(--font-display);
+  font: 600 clamp(20px, 5vw, 26px) / 1.25 var(--font-ui);
   overflow-wrap: anywhere;
 }
 .hb-phone-answers {
@@ -727,7 +727,7 @@
   gap: 4px;
 }
 .hb-pending-q {
-  font: 500 20px / 1.3 var(--font-display);
+  font: 600 20px / 1.3 var(--font-ui);
   overflow-wrap: anywhere;
 }
 .hb-log {

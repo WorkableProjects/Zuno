@@ -14,12 +14,12 @@
 .feud-tile.is-open .feud-flip { transform: rotateX(180deg); }
 .feud-face { position: absolute; inset: 0; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; backface-visibility: hidden; }
 .feud-front { justify-content: center; background: linear-gradient(180deg, #2563eb, #1d4ed8); border: 2px solid #93c5fd; color: #fff; }
-.feud-num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #172554; border: 2px solid #facc15; font: 800 18px / 1 var(--font-display); }
+.feud-num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #172554; border: 2px solid #facc15; font: 800 18px / 1 var(--font-ui); }
 .feud-secret { flex: 1; color: rgba(255, 255, 255, 0.65); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .feud-judge-btn { flex: none; animation: rpg-pop-big 360ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
 .feud-back { transform: rotateX(180deg); background: linear-gradient(180deg, #fef9c3, #fde68a); color: #172554; border: 2px solid #facc15; flex-wrap: wrap; }
-.feud-answer { flex: 1; font: 700 18px / 1.1 var(--font-display); text-transform: uppercase; overflow-wrap: anywhere; }
-.feud-points { display: inline-grid; place-items: center; min-width: 44px; height: 36px; padding: 0 8px; border-radius: var(--r-key); background: #172554; color: #facc15; font: 800 20px / 1 var(--font-display); }
+.feud-answer { flex: 1; font: 700 18px / 1.1 var(--font-ui); text-transform: uppercase; overflow-wrap: anywhere; }
+.feud-points { display: inline-grid; place-items: center; min-width: 44px; height: 36px; padding: 0 8px; border-radius: var(--r-key); background: #172554; color: #facc15; font: 800 20px / 1 var(--font-ui); }
 .feud-by { width: 100%; font-size: 12px; opacity: 0.75; margin-top: -6px; }
 .feud-tile.is-open .feud-back { min-height: 58px; position: relative; }
 

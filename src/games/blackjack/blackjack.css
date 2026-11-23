@@ -6,7 +6,7 @@
 .bj-card {
   position: relative; display: inline-grid; place-items: center; width: 64px; height: 90px; margin-left: -22px; border-radius: 9px;
   background: #fbfbf8; color: #111827; border: 1px solid rgba(0, 0, 0, 0.18); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
-  font: 700 16px / 1 var(--font-display); animation: bj-deal 420ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms);
+  font: 700 16px / 1 var(--font-ui); animation: bj-deal 420ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms);
 }
 .bj-card.is-red { color: #c81e1e; }
 .bj-corner { position: absolute; top: 6px; left: 7px; text-align: center; font-size: 15px; line-height: 1.05; }
@@ -38,7 +38,7 @@
 .bj-betbox { display: grid; gap: 12px; padding: 16px; }
 .bj-chips { display: flex; flex-wrap: wrap; gap: 10px; }
 .bj-chip {
-  width: 58px; height: 58px; border-radius: 50%; cursor: pointer; font: 700 14px / 1 var(--font-display); color: #fff;
+  width: 58px; height: 58px; border-radius: 50%; cursor: pointer; font: 700 14px / 1 var(--font-ui); color: #fff;
   background: radial-gradient(circle, var(--game) 52%, #fff 53% 60%, var(--game) 61%); border: 3px dashed rgba(255, 255, 255, 0.75);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }

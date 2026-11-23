@@ -2,7 +2,7 @@
 /* Draw It: a big white canvas, a toolbar everyone sees, and a guess chat. */
 .draw-main { gap: 12px; }
 .draw-top { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
-.draw-word { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 6px; min-height: 40px; font: 700 clamp(20px, 3vw, 28px) / 1 var(--font-display); }
+.draw-word { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 6px; min-height: 40px; font: 700 clamp(17px, 2.5vw, 23.8px) / 1 var(--font-display); }
 .draw-word-full { color: var(--rpg-green-ink); letter-spacing: 0.04em; animation: rpg-pop-big 400ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
 .draw-letter { display: inline-grid; place-items: end center; width: 0.9em; height: 1.2em; text-transform: lowercase; }
 .draw-letter.is-blank { border-bottom: 3px solid var(--text-2); }
@@ -35,7 +35,7 @@
 .draw-overlay { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 16px; border-radius: var(--r-card); text-align: center; background: color-mix(in oklab, var(--surface) 90%, transparent); backdrop-filter: blur(6px); animation: rpg-pop 0.35s var(--ease) backwards; }
 .draw-choices { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .draw-choice { min-width: 130px; font-size: 18px; text-transform: capitalize; }
-.draw-reveal { margin: 0; font: 800 clamp(30px, 6vw, 52px) / 1 var(--font-display); color: var(--rpg-amber-ink); text-transform: capitalize; }
+.draw-reveal { margin: 0; font: 800 clamp(25.5px, 5.1vw, 44.2px) / 1 var(--font-display); color: var(--rpg-amber-ink); text-transform: capitalize; }
 .draw-gains { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; min-width: min(280px, 80vw); }
 .draw-gains li { display: flex; justify-content: space-between; gap: 12px; }
 
