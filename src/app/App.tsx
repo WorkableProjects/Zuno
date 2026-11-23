@@ -5,7 +5,8 @@ import { HeadbandsVisualEditor } from "../components/builder/HeadbandsVisualEdit
 import { JeopardyAIGuide } from "../components/builder/JeopardyAIGuide";
 import { JeopardyVisualEditor } from "../components/builder/JeopardyVisualEditor";
 import { AmbientBackground, type BackdropSpec } from "../components/dashboard/AmbientBackground";
-import { Dashboard } from "../components/dashboard/Dashboard";
+import { GameDetail } from "../components/launcher/GameDetail";
+import { LauncherHome, LauncherShell, type Section } from "../components/launcher/Launcher";
 import { BUILD_TILE_ID, buildRailItems, type RailItem } from "../components/dashboard/railItems";
 import type { ImportSeed } from "../components/import/GameImporter";
 import { ImportScreen } from "../components/import/ImportScreen";
@@ -13,7 +14,7 @@ import type { LoadedGame } from "../components/import/loadGame";
 import { useSpatialNav } from "../components/navigation/spatialNav";
 import { DevicePrompt, StartupIntro } from "../components/intro/Intro";
 import { CornerControls } from "../components/ui/CornerControls";
-import { installHoverSounds, setSoundTheme } from "../lib/audio";
+import { installHoverSounds, isSoundTheme, setSoundTheme, type SoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
@@ -53,6 +54,7 @@ import { forgetGame, loadDevice, loadLastTile, loadRecent, loadTheme, rememberGa
 
 type Screen =
   | { name: "dashboard" }
+  | { name: "game"; gameType: string }
   | { name: "import"; gameType: string; seed?: ImportSeed }
   | { name: "setup"; game: LoadedGame<JeopardyFile> }
   | { name: "play"; game: LoadedGame<JeopardyFile>; teams: TeamSetup[]; allowNegativeScores: boolean; timeLimitSeconds: number }
@@ -86,11 +88,15 @@ function backdropForGame(game: LoadedGame): BackdropSpec {
   };
 }
 
-/** Each game's screens use its own track; everything else uses the Headbands track. */
-function backdropTheme(screen: Screen, tileGameType: string): "jeopardy" | "headbands" | "liar" {
-  if (screen.name === "dashboard") return tileGameType === "jeopardy" ? "jeopardy" : tileGameType === "liar" ? "liar" : "headbands";
+/** Each game's screens use its own track; anything else uses the Headbands track. */
+function backdropTheme(screen: Screen, tileGameType: string): SoundTheme {
+  const pick = (t: string): SoundTheme => (isSoundTheme(t) ? t : "headbands");
+  if (screen.name === "dashboard") return pick(tileGameType);
+  if (screen.name === "game") return pick(screen.gameType);
   if (screen.name === "setup" || screen.name === "play") return "jeopardy";
   if (screen.name.startsWith("liar")) return "liar";
+  if (screen.name.startsWith("rpg")) return "rpg";
+  if (screen.name.startsWith("party")) return pick(partyByKind((screen as { kind: PartyKind }).kind).gameType);
   return "headbands";
 }
 
@@ -122,6 +128,7 @@ export function App() {
   const [loaded, setLoaded] = useState<LoadedGame | null>(null);
   const [draftBackdrop, setDraftBackdrop] = useState<BackdropSpec | null>(null);
   const [buildType, setBuildType] = useState(JEOPARDY_TYPE);
+  const [section, setSection] = useState<Section>("home");
 
   const items = useMemo(() => buildRailItems(recent), [recent]);
   const [selectedId, setSelectedId] = useState(() => {
@@ -231,7 +238,7 @@ export function App() {
       const index = Math.min(items.indexOf(item), next.length - 1);
       select(next[index].id);
       // Keep a visible cursor after the tile disappears.
-      requestAnimationFrame(() => document.querySelector<HTMLElement>(".tile.is-active")?.focus({ preventScroll: true }));
+      requestAnimationFrame(() => document.querySelector<HTMLElement>(".lib-tile.is-active")?.focus({ preventScroll: true }));
     },
     [items, select],
   );
@@ -248,7 +255,8 @@ export function App() {
 
   const buildBackdrop = items.find((i) => i.id === BUILD_TILE_ID)!.backdrop;
   let backdrop: BackdropSpec = selected.backdrop;
-  if (screen.name === "editor") backdrop = draftBackdrop ?? buildBackdrop;
+  if (screen.name === "game") backdrop = items.find((i) => i.kind === "engine" && i.gameType === screen.gameType)?.backdrop ?? selected.backdrop;
+  else if (screen.name === "editor") backdrop = draftBackdrop ?? buildBackdrop;
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
   else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay") backdrop = backdropForGame(screen.game);
@@ -282,36 +290,59 @@ export function App() {
 
   return (
     <>
-      <AmbientBackground spec={backdrop} dim={screen.name !== "dashboard"} />
+      <AmbientBackground spec={backdrop} dim={screen.name !== "game"} />
 
-      {screen.name === "dashboard" && (
-        <Dashboard
-          items={items}
-          selectedId={selected.id}
-          onSelect={select}
-          onLoad={(gameType) => push({ name: "import", gameType })}
-          onBuild={toBuilder}
-          onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
-          onHostOnline={
-            lobbiesAvailable()
-              ? (gameType) => {
-                  const def = partyByType(gameType);
-                  push(def ? { name: "partyLobby", kind: def.kind, code: null } : { name: "rpgLobby", file: blankRpgFile(), code: null });
-                }
-              : undefined
-          }
-          onJoinOnline={
-            lobbiesAvailable()
-              ? (gameType) => {
-                  const def = partyByType(gameType);
-                  push(def ? { name: "partyJoin", kind: def.kind, code: null } : { name: "rpgJoin", code: null });
-                }
-              : undefined
-          }
-          onOpenRecent={openRecent}
-          onForgetRecent={forgetRecent}
+      {(screen.name === "dashboard" || screen.name === "game") && (
+        <LauncherShell
+          section={screen.name === "dashboard" ? section : null}
+          accent={screen.name === "game" ? (getEngine(screen.gameType)?.appearance.accentColor ?? selected.backdrop.accent) : selected.backdrop.accent}
+          onSection={(next) => {
+            setSection(next);
+            if (screen.name !== "dashboard") setStack([{ name: "dashboard" }]);
+          }}
           onSettings={() => setSettingsOpen(true)}
-        />
+        >
+          {screen.name === "dashboard" ? (
+            <LauncherHome
+              section={section}
+              items={items}
+              selectedId={selected.id}
+              onSelect={select}
+              onOpen={(item) => {
+                if (item.kind === "engine") push({ name: "game", gameType: item.gameType });
+                else if (item.kind === "build") toBuilder();
+                else if (item.kind === "file") openRecent(item);
+              }}
+              onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
+              onForget={forgetRecent}
+            />
+          ) : (
+            <GameDetail
+              key={screen.gameType}
+              gameType={screen.gameType}
+              onBack={pop}
+              onLoad={(gameType) => push({ name: "import", gameType })}
+              onBuild={(gameType) => toBuilder(gameType)}
+              onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
+              onHostOnline={
+                lobbiesAvailable()
+                  ? (gameType) => {
+                      const def = partyByType(gameType);
+                      push(def ? { name: "partyLobby", kind: def.kind, code: null } : { name: "rpgLobby", file: blankRpgFile(), code: null });
+                    }
+                  : undefined
+              }
+              onJoinOnline={
+                lobbiesAvailable()
+                  ? (gameType) => {
+                      const def = partyByType(gameType);
+                      push(def ? { name: "partyJoin", kind: def.kind, code: null } : { name: "rpgJoin", code: null });
+                    }
+                  : undefined
+              }
+            />
+          )}
+        </LauncherShell>
       )}
       {screen.name === "import" && (
         <ImportScreen
@@ -467,7 +498,7 @@ export function App() {
         (screen.gameType === HEADBANDS_TYPE ? <HeadbandsAIGuide onBack={back} onHost={host} onLoaded={setLoaded} /> : <JeopardyAIGuide onBack={back} onHost={host} onLoaded={setLoaded} />)}
 
       {pending && <ConfirmDialog title={pending.title} text={pending.text} confirmLabel={pending.label} danger onConfirm={pending.run} onClose={() => setPending(null)} />}
-      <CornerControls />
+      <CornerControls docked={screen.name === "dashboard" || screen.name === "game"} />
       <StartupIntro />
       {device === null && <DevicePrompt onChoose={chooseDevice} />}
       {settingsOpen && <SettingsPanel theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} onClose={() => setSettingsOpen(false)} />}

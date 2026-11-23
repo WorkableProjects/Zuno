@@ -108,6 +108,11 @@ function SurveyCover() {
   );
 }
 
+/** The drawn cover art for a game type. */
+export function TileCover({ gameType }: { gameType: string }) {
+  return gameType === "headbands" ? <CardsCover /> : gameType === "liar" ? <LiarCover /> : gameType === "rpg" ? <RpgCover /> : gameType === "blackjack" ? <DeckCover /> : gameType === "drawit" ? <SketchCover /> : gameType === "feud" ? <SurveyCover /> : <BoardCover />;
+}
+
 function FileCover({ item }: { item: RailItem }) {
   const [failed, setFailed] = useState(false);
   const cover = item.backdrop.cover;
