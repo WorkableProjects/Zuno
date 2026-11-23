@@ -17,6 +17,7 @@ import { CornerControls } from "../components/ui/CornerControls";
 import { installHoverSounds, isSoundTheme, setSoundTheme, type SoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
 import { withScreenTransition } from "../lib/screenTransition";
+import { installRipples } from "../lib/ripple";
 import { SettingsPage } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
@@ -205,6 +206,7 @@ export function App() {
 
   useEffect(() => installHoverSounds(), []);
   useEffect(() => installClickSounds(), []);
+  useEffect(() => installRipples(), []);
   // A soft transition whenever the screen changes.
   const screenName = stack[stack.length - 1].name;
   const firstScreen = useRef(true);

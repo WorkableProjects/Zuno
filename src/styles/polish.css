@@ -1,0 +1,159 @@
+/* ==========================================================================
+   Polish layer: press springs, ripples, focus rings, dialogs and controls.
+   Only transform, opacity, filter and clip-path move. Everything here falls
+   back to the reduced-motion / "Still" rules in motion.css.
+   ========================================================================== */
+
+/* ---------- Buttons: a lift on hover, a squish on press, a spring on release ---------- */
+html .btn { position: relative; isolation: isolate; overflow: hidden; }
+html .btn {
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    opacity var(--t-fast) var(--ease),
+    box-shadow var(--t-med) var(--ease),
+    transform 420ms var(--ease-pop);
+}
+html .btn:hover:not(:disabled) { transform: translateY(-1px); }
+html .btn:active:not(:disabled) { transform: scale(0.95); transition-duration: var(--t-fast), var(--t-fast), var(--t-fast), var(--t-fast), var(--t-fast), 90ms; transition-timing-function: var(--ease); }
+html .btn svg { transition: transform 420ms var(--ease-pop); }
+html .btn:hover:not(:disabled) svg { transform: scale(1.1); }
+html .btn-primary:hover:not(:disabled) { box-shadow: 0 10px 26px color-mix(in oklab, var(--btn-bg) 30%, transparent); }
+
+/* Ink ripple from the press point (see lib/ripple.ts). */
+html .zuno-ripple {
+  position: absolute;
+  left: var(--rx);
+  top: var(--ry);
+  width: var(--rs);
+  height: var(--rs);
+  margin: calc(var(--rs) / -2) 0 0 calc(var(--rs) / -2);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.12) 60%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+  animation: zuno-ripple 620ms var(--ease-out-expo) forwards;
+}
+html[data-theme="light"] .btn-secondary .zuno-ripple, html[data-theme="light"] .btn-quiet .zuno-ripple, html[data-theme="light"] .lx-tab .zuno-ripple { background: radial-gradient(circle, rgb(0 0 0 / 0.14), transparent 70%); }
+@keyframes zuno-ripple { from { transform: scale(0); opacity: 1; } to { transform: scale(1); opacity: 0; } }
+
+/* ---------- Focus: the ring draws in rather than appearing ---------- */
+html :where(.btn, html .lx-tab, html .segment, html .lx-back, html input, html select, html textarea):focus-visible {
+  animation: focus-in 260ms var(--ease-pop);
+}
+@keyframes focus-in { from { outline-offset: 8px; outline-color: transparent; } }
+
+/* ---------- Library filter tabs and segmented controls ---------- */
+html .lx-tab { position: relative; overflow: hidden; isolation: isolate; transition: background-color var(--t-med) var(--ease), color var(--t-med) var(--ease), border-color var(--t-med) var(--ease), transform 420ms var(--ease-pop); }
+html .lx-tab:hover { transform: translateY(-1px); }
+html .lx-tab:active { transform: scale(0.94); transition-duration: 90ms; }
+html .lx-tab.is-on { animation: tab-on 460ms var(--ease-pop); }
+@keyframes tab-on { 0% { transform: scale(0.9); } 60% { transform: scale(1.06); } }
+
+/* One highlight slides between segments instead of each segment lighting up. */
+html .segmented { position: relative; isolation: isolate; --seg-n: 2; --seg-i: 0; }
+html .segmented:has(> .segment:nth-child(3):last-child) { --seg-n: 3; }
+html .segmented:has(> .segment:nth-child(4):last-child) { --seg-n: 4; }
+html .segmented:has(> .segment:nth-child(2).is-on) { --seg-i: 1; }
+html .segmented:has(> .segment:nth-child(3).is-on) { --seg-i: 2; }
+html .segmented:has(> .segment:nth-child(4).is-on) { --seg-i: 3; }
+html .segmented:has(> .segment.is-on)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px - (var(--seg-n) - 1) * 4px) / var(--seg-n));
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--top-light), 0 0 0 1px var(--border), 0 6px 16px rgb(0 0 0 / 0.18);
+  transform: translateX(calc(var(--seg-i) * (100% + 4px)));
+  transition: transform 480ms var(--ease-pop);
+}
+html[data-theme="dark"] .segmented::before { background: var(--surface-3); }
+html .segmented:has(> .segment.is-on) > .segment.is-on { background: transparent; box-shadow: none; }
+
+/* Switches: the knob overshoots and stretches a touch as it travels. */
+html .st-switch-dot { transition: transform 460ms var(--ease-pop), background-color var(--t-fast) var(--ease), width var(--t-fast) var(--ease); }
+html .st-switch:active .st-switch-dot { width: 26px; }
+html .st-switch.is-on:active .st-switch-dot { transform: translateX(12px); }
+html .st-switch-track { transition: background-color var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease); }
+html .st-switch.is-on .st-switch-track { box-shadow: 0 0 18px color-mix(in oklab, var(--game, #5cc98a) 45%, transparent); }
+html .switch-track::after { transition: transform 460ms var(--ease-pop), background-color var(--t-fast) var(--ease) !important; }
+
+/* Range inputs pick up the accent and grow their thumb on grab. */
+html .settings-range input { accent-color: var(--game, var(--text)); transition: filter var(--t-fast) var(--ease); }
+html .settings-range input:active { filter: drop-shadow(0 0 8px color-mix(in oklab, var(--game, #fff) 50%, transparent)); }
+
+/* Settings cards cascade in. */
+html .st-card { animation: card-in 560ms var(--ease-out-expo) backwards; }
+html .st-card:nth-child(1) { animation-delay: 40ms; }
+html .st-card:nth-child(2) { animation-delay: 100ms; }
+html .st-card:nth-child(3) { animation-delay: 160ms; }
+html .st-card:nth-child(4) { animation-delay: 220ms; }
+html .st-card:nth-child(5) { animation-delay: 280ms; }
+html .st-card:nth-child(n + 6) { animation-delay: 340ms; }
+@keyframes card-in { from { opacity: 0; transform: translateY(22px) scale(0.97); filter: blur(4px); } }
+
+/* ---------- Dialogs and sheets: spring in, blur the world behind ---------- */
+html .dialog-backdrop { animation: backdrop-in 320ms var(--ease) both; backdrop-filter: blur(8px); }
+@keyframes backdrop-in { from { opacity: 0; backdrop-filter: blur(0); } }
+html .dialog { animation: dialog-pop 460ms var(--ease-pop) both; transform-origin: 50% 60%; }
+@keyframes dialog-pop { from { opacity: 0; transform: translateY(18px) scale(0.9); filter: blur(6px); } 60% { opacity: 1; filter: none; } }
+html .dialog > * { animation: dialog-child 420ms var(--ease-out-expo) backwards; }
+html .dialog > :nth-child(1) { animation-delay: 60ms; }
+html .dialog > :nth-child(2) { animation-delay: 110ms; }
+html .dialog > :nth-child(3) { animation-delay: 160ms; }
+html .dialog > :nth-child(n + 4) { animation-delay: 210ms; }
+@keyframes dialog-child { from { opacity: 0; transform: translateY(8px); } }
+html .sheet { animation: sheet-slide 520ms var(--ease-out-expo) both; }
+@keyframes sheet-slide { from { opacity: 0; transform: translateX(60px); filter: blur(6px); } }
+html .dialog-layer.is-closing .dialog { animation: dialog-out 160ms var(--ease-in-quick) both; }
+html .dialog-layer.is-closing .sheet { animation: sheet-out 160ms var(--ease-in-quick) both; }
+html .dialog-layer.is-closing .dialog-backdrop { animation: fade-out 180ms var(--ease) both; }
+@keyframes dialog-out { to { opacity: 0; transform: scale(0.94); filter: blur(4px); } }
+@keyframes sheet-out { to { opacity: 0; transform: translateX(40px); } }
+
+/* ---------- Home cards ---------- */
+html .hm-feature { animation: card-in 640ms var(--ease-out-expo) backwards; }
+html .hm-feature-art { transition: transform 600ms var(--ease-pop); }
+html .hm-feature:hover .hm-feature-art { transform: rotate(-3deg) scale(1.04); }
+html .hm-feature-art .tile-img { animation: float-y 6s ease-in-out infinite; }
+@keyframes float-y { 50% { transform: translateY(-6px) rotate(1deg); } }
+html .hm-action { animation: card-in 560ms var(--ease-out-expo) backwards; }
+html .hm-action:nth-child(1) { animation-delay: 120ms; }
+html .hm-action:nth-child(2) { animation-delay: 170ms; }
+html .hm-action:nth-child(3) { animation-delay: 220ms; }
+html .hm-action-icon { transition: transform 460ms var(--ease-pop), background-color var(--t-med) var(--ease); }
+html .hm-action:hover .hm-action-icon { transform: scale(1.12) rotate(-8deg); background: color-mix(in oklab, var(--game) 36%, transparent); }
+html .hm-chipcard, html .hm-recent-card { transition: transform 420ms var(--ease-pop), border-color var(--t-fast) var(--ease), box-shadow var(--t-med) var(--ease) !important; }
+html .hm-chipcard:hover, html .hm-recent-card:hover { transform: translateY(-4px) scale(1.02) !important; box-shadow: 0 16px 36px rgb(0 0 0 / 0.35), 0 0 24px color-mix(in oklab, var(--game) 22%, transparent); }
+html .hm-chipcard:active, html .hm-recent-card:active { transform: scale(0.97) !important; transition-duration: 90ms !important; }
+html .hm-recent-go { transition: transform 420ms var(--ease-pop); }
+html .hm-recent-card:hover .hm-recent-go { transform: translateX(5px); }
+
+/* ---------- Game page extras ---------- */
+html .lx-chip { animation: chip-in 500ms var(--ease-pop) backwards; }
+html .lx-chip:nth-child(2) { animation-delay: 60ms; }
+html .lx-chip:nth-child(3) { animation-delay: 120ms; }
+@keyframes chip-in { from { opacity: 0; transform: translateY(10px) scale(0.8); } }
+html .lx-rule { animation: card-in 600ms var(--ease-out-expo) backwards; animation-timeline: view(); animation-range: entry 0% entry 60%; transition: transform 420ms var(--ease-pop), border-color var(--t-fast) var(--ease); }
+html .lx-rule:hover { transform: translateY(-4px); border-color: color-mix(in oklab, var(--game) 45%, var(--hairline)); }
+html .lx-rule-num { transition: transform 520ms var(--ease-pop); }
+html .lx-rule:hover .lx-rule-num { transform: rotate(-12deg) scale(1.12); }
+html .lx-back svg { transition: transform 420ms var(--ease-pop); }
+html .lx-back:hover svg { transform: translateX(-4px); }
+
+/* ---------- Shared screens ---------- */
+html .screen { animation: screen-rise 520ms var(--ease-out-expo) both; }
+@keyframes screen-rise { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
+html .screen-bar { animation: bar-in 520ms var(--ease-out-expo) 60ms backwards; }
+@keyframes bar-in { from { opacity: 0; transform: translateY(-12px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html .hm-feature-art .tile-img { animation: none; }
+  html .lx-rule { animation: none; }
+}
+html[data-motion="off"] .hm-feature-art .tile-img { animation: none !important; }

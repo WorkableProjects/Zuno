@@ -1,5 +1,5 @@
 /* Home: greeting, a featured game, quick actions, recents and room-type strips. */
-.hm { display: grid; gap: 8px; }
+.hm { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .hm-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .hm-hello { display: flex; align-items: center; gap: 14px; }
 .hm-name { margin: 0; font: 700 clamp(30px, 3.6vw, 46px) / 1.05 var(--font-display); letter-spacing: -0.01em; }
@@ -70,7 +70,7 @@
 .hm-recent-text small { color: var(--text-3); font: 400 13px var(--font-ui); }
 .hm-recent-go { color: var(--text-3); }
 
-.hm-strip { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 14px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.hm-strip { display: flex; gap: 14px; overflow-x: auto; padding: 12px 6px 18px; margin: -8px -6px 0; scroll-snap-type: x proximity; scrollbar-width: thin; }
 .hm-chipcard {
   flex: 0 0 auto; width: 200px; display: grid; gap: 4px; padding: 10px 10px 14px; border-radius: var(--r-round); scroll-snap-align: start;
   border: 1px solid var(--hairline); background: color-mix(in oklab, var(--surface) 72%, transparent); color: var(--text); text-align: left; cursor: pointer;
