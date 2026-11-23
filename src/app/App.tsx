@@ -18,6 +18,8 @@ import { installClickSounds, playSfx } from "../lib/sfx";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
+import { RPG_TYPE, blankRpgFile, type RpgFile } from "../game-files/schema/rpg";
+import type { RpgSettings } from "../game-files/schema/rpg";
 import { HEADBANDS_TYPE, blankHeadbandsFile, type HeadbandsFile } from "../game-files/schema/headbands";
 import { JEOPARDY_TYPE, type JeopardyFile } from "../game-files/schema/jeopardy";
 import { HeadbandsGame } from "../games/headbands/HeadbandsGame";
@@ -32,6 +34,10 @@ import { LiarJoin } from "../games/liar/LiarJoin";
 import { LiarLobby } from "../games/liar/LiarLobby";
 import { LiarOnlineGame } from "../games/liar/LiarOnlineGame";
 import { closeLiarLobby, liarCodeFromHash, liarLobbyExists } from "../games/liar/liarLobby";
+import { RpgJoin } from "../games/rpg/RpgJoin";
+import { RpgLobby } from "../games/rpg/RpgLobby";
+import { RpgOnlineGame } from "../games/rpg/RpgOnlineGame";
+import { closeRpgLobby, rpgCodeFromHash, rpgLobbyExists } from "../games/rpg/rpgLobby";
 import { ConfirmDialog } from "../components/ui/Dialog";
 import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
@@ -53,6 +59,9 @@ type Screen =
   | { name: "liarLobby"; file: LiarFile; code: string | null; defaults?: Partial<LiarOptions> }
   | { name: "liarOnline"; file: LiarFile; code: string; players: LiarPlayer[]; options: LiarOptions }
   | { name: "liarJoin"; code: string | null; playerName?: string }
+  | { name: "rpgLobby"; file: RpgFile; code: string | null }
+  | { name: "rpgOnline"; file: RpgFile; code: string; players: Array<{ id: string; name: string }>; settings: RpgSettings }
+  | { name: "rpgJoin"; code: string | null; playerName?: string }
   | { name: "builder" }
   | { name: "editor"; gameType: string }
   | { name: "ai"; gameType: string };
@@ -85,13 +94,16 @@ export function App() {
     // A phone opened from a lobby's QR code or link goes straight to joining.
     const code = lobbiesAvailable() ? codeFromHash(window.location.hash) : null;
     const liarCode = lobbiesAvailable() ? liarCodeFromHash(window.location.hash) : null;
-    if (code || liarCode) history.replaceState(null, "", window.location.pathname + window.location.search);
+    const rpgCode = lobbiesAvailable() ? rpgCodeFromHash(window.location.hash) : null;
+    if (code || liarCode || rpgCode) history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (rpgCode) return [{ name: "dashboard" }, { name: "rpgJoin", code: rpgCode }];
     if (liarCode) return [{ name: "dashboard" }, { name: "liarJoin", code: liarCode }];
     return code ? [{ name: "dashboard" }, { name: "hbJoin", code }] : [{ name: "dashboard" }];
   });
   /** The online lobby this device is hosting, closed when the host goes home. */
   const hostedLobby = useRef<string | null>(null);
   const hostedLiar = useRef<string | null>(null);
+  const hostedRpg = useRef<string | null>(null);
   /** A destructive navigation waiting for confirmation. */
   const [pending, setPending] = useState<{ title: string; text: string; label: string; run: () => void } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -114,6 +126,8 @@ export function App() {
     hostedLobby.current = null;
     if (hostedLiar.current) void closeLiarLobby(hostedLiar.current).catch(() => undefined);
     hostedLiar.current = null;
+    if (hostedRpg.current) void closeRpgLobby(hostedRpg.current).catch(() => undefined);
+    hostedRpg.current = null;
     setLoaded(null);
     setStack([{ name: "dashboard" }]);
   }, []);
@@ -178,7 +192,8 @@ export function App() {
       });
       setRecent(list);
       setLoaded(game);
-      if (file.gameType === LIAR_TYPE) push({ name: "liarSetup", game: game as LoadedGame<LiarFile> });
+      if (file.gameType === RPG_TYPE) push({ name: "rpgLobby", file: file as RpgFile, code: null });
+      else if (file.gameType === LIAR_TYPE) push({ name: "liarSetup", game: game as LoadedGame<LiarFile> });
       else if (file.gameType === HEADBANDS_TYPE) push({ name: "hbSetup", game: game as LoadedGame<HeadbandsFile> });
       else push({ name: "setup", game: game as LoadedGame<JeopardyFile> });
     },
@@ -223,6 +238,7 @@ export function App() {
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
   else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "rpgLobby" || screen.name === "rpgOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "liarLobby" || screen.name === "liarOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "hbLobby") backdrop = backdropForGame({ file: screen.base, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "import" && loaded) backdrop = backdropForGame(loaded);
@@ -258,6 +274,8 @@ export function App() {
           onLoad={(gameType) => push({ name: "import", gameType })}
           onBuild={toBuilder}
           onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
+          onHostOnline={lobbiesAvailable() ? () => push({ name: "rpgLobby", file: blankRpgFile(), code: null }) : undefined}
+          onJoinOnline={lobbiesAvailable() ? () => push({ name: "rpgJoin", code: null }) : undefined}
           onOpenRecent={openRecent}
           onForgetRecent={forgetRecent}
           onSettings={() => setSettingsOpen(true)}
@@ -320,10 +338,32 @@ export function App() {
               setStack((s) => [...s.slice(0, -1), { name: "liarJoin", code, playerName }]);
               return true;
             }
+            if (await rpgLobbyExists(code)) {
+              setStack((s) => [...s.slice(0, -1), { name: "rpgJoin", code, playerName }]);
+              return true;
+            }
             return false;
           }}
         />
       )}
+      {screen.name === "rpgJoin" && <RpgJoin code={screen.code} name={screen.playerName} onExit={home} />}
+      {screen.name === "rpgLobby" && (
+        <RpgLobby
+          key={stack.length}
+          file={screen.file}
+          code={screen.code}
+          onCode={(code) => {
+            hostedRpg.current = code;
+            setStack((s) => s.map((x, i) => (i === s.length - 1 && x.name === "rpgLobby" ? { ...x, code } : x)));
+          }}
+          onBack={() => {
+            hostedRpg.current = null;
+            pop();
+          }}
+          onStart={(players, settings) => screen.code && push({ name: "rpgOnline", file: screen.file, code: screen.code, players, settings })}
+        />
+      )}
+      {screen.name === "rpgOnline" && <RpgOnlineGame key={stack.length} file={screen.file} code={screen.code} players={screen.players} settings={screen.settings} onAgain={pop} onExit={home} />}
       {screen.name === "liarJoin" && <LiarJoin code={screen.code} name={screen.playerName} onExit={home} />}
       {screen.name === "liarLobby" && (
         <LiarLobby

@@ -141,7 +141,7 @@
         }
       }
     },
-    "gauntlet": {
+    "rpg": {
       "$code": {
         ".read": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
         ".write": "$code.matches(/^[A-HJ-NP-Z2-9]{5}$/)",
@@ -152,11 +152,11 @@
         "createdAt": {
           ".validate": "newData.isNumber()"
         },
-        "hostAway": {
-          ".validate": "newData.isNumber() || newData.isBoolean()"
+        "startingMoney": {
+          ".validate": "newData.isNumber() && newData.val() >= 100 && newData.val() <= 1000000"
         },
-        "teams": {
-          ".validate": "newData.isString() && newData.val().length <= 4000"
+        "order": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
         },
         "players": {
           "$player": {
@@ -167,8 +167,11 @@
             "joinedAt": {
               ".validate": "newData.isNumber()"
             },
-            "team": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 16"
+            "ready": {
+              ".validate": "newData.isBoolean()"
+            },
+            "avatar": {
+              ".validate": "newData.isString() && newData.val().length <= 21000"
             },
             "$other": {
               ".validate": false
@@ -179,19 +182,27 @@
           ".validate": "newData.isString() && newData.val().length <= 200000"
         },
         "actions": {
-          "$move": {
-            ".validate": "newData.hasChildren(['by', 'type'])",
-            "by": {
-              ".validate": "newData.isString() && newData.val().length <= 40"
-            },
-            "type": {
-              ".validate": "newData.isString() && newData.val().matches(/^(answer|lane|choice|ready)$/)"
-            },
-            "value": {
-              ".validate": "newData.isString() && newData.val().length <= 200"
-            },
-            "$other": {
-              ".validate": false
+          "$player": {
+            "$move": {
+              ".validate": "newData.hasChildren(['type']) && root.child('rpg').child($code).child('players').child($player).exists()",
+              "type": {
+                ".validate": "newData.isString() && newData.val().matches(/^(challenge|bet|pick|gift)$/)"
+              },
+              "target": {
+                ".validate": "newData.isString() && newData.val().length <= 40"
+              },
+              "amount": {
+                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000000000000"
+              },
+              "wager": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000000"
+              },
+              "choice": {
+                ".validate": "newData.isString() && newData.val().matches(/^(rock|paper|scissors)$/)"
+              },
+              "$other": {
+                ".validate": false
+              }
             }
           }
         },

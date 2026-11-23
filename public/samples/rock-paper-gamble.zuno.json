@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "gameType": "rpg",
+  "metadata": {
+    "title": "High Rollers",
+    "description": "Rock paper scissors duels with a bigger bankroll and quicker timers.",
+    "author": "Zuno",
+    "coverImage": null
+  },
+  "appearance": { "accentColor": "#7C3AED", "backgroundPreset": "aurora" },
+  "content": {},
+  "settings": {
+    "startingMoney": 50000,
+    "maxPlayers": 8,
+    "selectSeconds": 15,
+    "bettingSeconds": 20,
+    "roundSeconds": 12,
+    "resultsSeconds": 8
+  }
+}

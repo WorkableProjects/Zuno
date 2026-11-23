@@ -1,6 +1,7 @@
 import type { BackgroundPreset, GameFile, ValidationResult } from "../game-files/schema/common";
 import { HEADBANDS_TYPE, eligibleIdentities, validateHeadbands, type HeadbandsFile } from "../game-files/schema/headbands";
 import { LIAR_TYPE, validateLiar, type LiarFile } from "../game-files/schema/liar";
+import { RPG_TYPE, formatCoins, validateRpg, type RpgFile } from "../game-files/schema/rpg";
 import { JEOPARDY_TYPE, countClues, validateJeopardy, type JeopardyFile } from "../game-files/schema/jeopardy";
 
 /**
@@ -18,6 +19,8 @@ export interface GameEngine {
   validate: (raw: Record<string, unknown>) => ValidationResult<GameFile>;
   /** Decorative scene drawn behind the dashboard for this engine. */
   artwork: "board" | "cards" | "statements" | null;
+  /** Runs only in online lobbies. The dashboard offers Host lobby and Join instead of Load. */
+  onlineOnly?: boolean;
   /** A sample in public/samples that the importer can load. */
   sampleFile: string;
   /** What a game file holds, for the import screen. */
@@ -109,6 +112,33 @@ const engines: GameEngine[] = [
         ["Question prompts", file.content.questionPrompts.length],
         ["Players", `${file.settings.minPlayers} to ${file.settings.maxPlayers}`],
         ["Scoring", file.settings.scoringEnabled ? "On" : "Off"],
+      ];
+    },
+    listing: () => null,
+  },
+  {
+    gameType: RPG_TYPE,
+    title: "Rock Paper Gamble",
+    description: "Rock paper scissors duels with money on the line. Challenge a rival, let everyone else bet on the winner, and take the whole pot.",
+    schemaVersions: [1],
+    hasBuilder: false,
+    appearance: { accentColor: "#7C3AED", backgroundPreset: "aurora" },
+    validate: validateRpg as GameEngine["validate"],
+    artwork: null,
+    onlineOnly: true,
+    sampleFile: "rock-paper-gamble.zuno.json",
+    fileHolds: "the starting money and the timers",
+    buildTitle: "Build a Rock Paper Gamble game",
+    summarize: (f) => {
+      const file = f as RpgFile;
+      return `${formatCoins(file.settings.startingMoney)} each · up to ${file.settings.maxPlayers} players`;
+    },
+    stats: (f) => {
+      const file = f as RpgFile;
+      return [
+        ["Starting money", formatCoins(file.settings.startingMoney)],
+        ["Players", `2 to ${file.settings.maxPlayers}`],
+        ["Round timer", `${file.settings.roundSeconds}s`],
       ];
     },
     listing: () => null,
