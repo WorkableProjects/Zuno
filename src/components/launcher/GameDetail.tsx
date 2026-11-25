@@ -84,7 +84,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
           <div className="lx-actions" data-nav-row="2">
             {online ? (
               <>
-                <PlayButton className="btn btn-primary lx-play" data-nav-default="" title={engine.title} disabled={!onHostOnline} onOpen={() => onHostOnline?.(gameType)}>
+                <PlayButton gameType={gameType} className="btn btn-primary lx-play" data-nav-default="" title={engine.title} disabled={!onHostOnline} onOpen={() => onHostOnline?.(gameType)}>
                   <Play size={20} strokeWidth={2} fill="currentColor" />
                   Play
                 </PlayButton>
@@ -95,7 +95,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
               </>
             ) : (
               <>
-                <PlayButton className="btn btn-primary lx-play" data-nav-default="" title={engine.title} onOpen={() => onLoad(gameType)}>
+                <PlayButton gameType={gameType} className="btn btn-primary lx-play" data-nav-default="" title={engine.title} onOpen={() => onLoad(gameType)}>
                   <Play size={20} strokeWidth={2} fill="currentColor" />
                   Play
                 </PlayButton>
@@ -154,7 +154,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
             ))}
           </div>
           <div className="lx-actions lx-actions-end">
-            <PlayButton className="btn btn-primary lx-play" title={engine.title} onOpen={() => (online ? onHostOnline?.(gameType) : onLoad(gameType))} disabled={online && !onHostOnline}>
+            <PlayButton gameType={gameType} className="btn btn-primary lx-play" title={engine.title} onOpen={() => (online ? onHostOnline?.(gameType) : onLoad(gameType))} disabled={online && !onHostOnline}>
               <Play size={20} strokeWidth={2} fill="currentColor" />
               Play {engine.title}
             </PlayButton>

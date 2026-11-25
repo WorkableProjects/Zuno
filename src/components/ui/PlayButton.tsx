@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, type ButtonHTMLAttributes, type CSSProperties } from "react";
-import { playSfx } from "../../lib/sfx";
+import { playSfx, type Sfx } from "../../lib/sfx";
 import "./playButton.css";
 
 interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "title"> {
@@ -9,7 +9,21 @@ interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" 
   accent?: string;
   /** Kept for existing callers; the effect no longer shows a title card. */
   title?: string;
+  /** Picks the game's own launch effect and sound; unknown or missing uses the default energy charge. */
+  gameType?: string;
 }
+
+interface Style { sfx: Sfx; fx: number; openAt: number }
+/** Each game's launch: its sound, effect length and when the screen changes. Visuals live in playButton.css under [data-fx]. */
+const STYLES: Record<string, Style> = {
+  blackjack: { sfx: "launchBlackjack", fx: 820, openAt: 760 },
+  drawit: { sfx: "launchDrawit", fx: 720, openAt: 660 },
+  jeopardy: { sfx: "launchJeopardy", fx: 760, openAt: 700 },
+  headbands: { sfx: "launchHeadbands", fx: 720, openAt: 660 },
+  liar: { sfx: "launchLiar", fx: 760, openAt: 700 },
+  rpg: { sfx: "launchRpg", fx: 720, openAt: 660 },
+  feud: { sfx: "launchFeud", fx: 720, openAt: 660 },
+};
 
 /** Whole effect, and the moment the screen changes. */
 const FX_MS = 700;
@@ -32,7 +46,7 @@ const SPARK_STYLES: CSSProperties[] = Array.from({ length: SPARKS }, (_, i) => {
  * three shockwave rings and a short spark burst around it, and a squash-and-pop press. Then onOpen runs.
  * Animates transform and opacity only.
  */
-export function PlayButton({ onOpen, accent, title: _title, className = "", children, disabled, style, ...rest }: Props) {
+export function PlayButton({ onOpen, accent, title: _title, gameType, className = "", children, disabled, style, ...rest }: Props) {
   const btn = useRef<HTMLButtonElement>(null);
   const timers = useRef<number[]>([]);
   const busy = useRef(false);
@@ -56,20 +70,21 @@ export function PlayButton({ onOpen, accent, title: _title, className = "", chil
       void el.offsetWidth; // restart the animations
       el.setAttribute("data-firing", "");
     }
-    playSfx("launch");
+    const st = (gameType && STYLES[gameType]) || null;
+    playSfx(st?.sfx ?? "launch");
     timers.current.push(
-      window.setTimeout(() => open.current(), calm ? CALM_MS : OPEN_AT_MS),
+      window.setTimeout(() => open.current(), calm ? CALM_MS : (st?.openAt ?? OPEN_AT_MS)),
       window.setTimeout(() => {
         el?.removeAttribute("data-firing");
         busy.current = false;
-      }, calm ? CALM_MS + 40 : FX_MS + 40),
+      }, calm ? CALM_MS + 40 : (st?.fx ?? FX_MS) + 40),
     );
-  }, []);
+  }, [gameType]);
 
   const wrapStyle = accent ? ({ "--game": accent } as CSSProperties) : undefined;
 
   return (
-    <span className="pb" style={wrapStyle}>
+    <span className="pb" style={wrapStyle} data-fx={gameType && STYLES[gameType] ? gameType : undefined}>
       <button ref={btn} type="button" className={`${className} pb-btn`} disabled={disabled} style={style} onClick={click} {...rest}>
         <i className="pb-invert" aria-hidden="true" />
         {children}

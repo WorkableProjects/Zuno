@@ -67,3 +67,76 @@ html[data-theme="light"] .pb { --pb-inv-bg: #000; --pb-inv-fg: #fff; }
   @keyframes pb-press { 40% { transform: scale(0.96); } }
   @keyframes pb-glow-calm { 0% { opacity: 0; } 50% { opacity: 0.7; } 100% { opacity: 0.3; } }
 }
+
+/* ── Per-game launches ([data-fx] on .pb). Each overrides the press, the inner layers, and the rings/sparks. ── */
+
+/* Blackjack: formal. No squash; a slow gold sheen, one thin ring, sparks off. */
+.pb[data-fx="blackjack"] .pb-btn[data-firing] { animation: pbj-press 820ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.pb[data-fx="blackjack"] .pb-btn[data-firing] .pb-sweep { animation: pbj-sheen 700ms ease-in-out both; }
+.pb[data-fx="blackjack"] .pb-sweep { background: linear-gradient(105deg, transparent 42%, rgb(255 236 180 / 0.85) 50%, transparent 58%); mix-blend-mode: normal; }
+.pb[data-fx="blackjack"] .pb-btn[data-firing] .pb-glow { animation: pb-glow 820ms ease-out both; opacity: 0.6; }
+.pb[data-fx="blackjack"] .pb-ring { border: 1px solid #e8c873; box-shadow: none; }
+.pb[data-fx="blackjack"] .pb-ring:nth-child(n + 2), .pb[data-fx="blackjack"] .pb-spark { display: none; }
+.pb[data-fx="blackjack"]:has(.pb-btn[data-firing]) .pb-ring { animation: pbj-ring 760ms cubic-bezier(0.2, 0.6, 0.2, 1) 120ms both; }
+@keyframes pbj-press { 0% { transform: scale(1); } 20% { transform: scale(0.97); } 55% { transform: scale(1.03); } 100% { transform: scale(1); } }
+@keyframes pbj-sheen { 0% { opacity: 0; transform: translateX(-30%); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateX(30%); } }
+@keyframes pbj-ring { 0% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.35, 1.6); } }
+
+/* Draw It: friendly. Big rubbery bounce, colourful round confetti. */
+.pb[data-fx="drawit"] .pb-btn[data-firing] { animation: pbd-bounce 720ms cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.pb[data-fx="drawit"] .pb-ring { display: none; }
+.pb[data-fx="drawit"] .pb-spark { width: 9px; height: 9px; margin: -4.5px; border-radius: 50%; box-shadow: none; }
+.pb[data-fx="drawit"] .pb-spark:nth-child(4n) { background: #ff5d8f; }
+.pb[data-fx="drawit"] .pb-spark:nth-child(4n + 1) { background: #ffd23f; }
+.pb[data-fx="drawit"] .pb-spark:nth-child(4n + 2) { background: #3ddc97; }
+.pb[data-fx="drawit"] .pb-spark:nth-child(4n + 3) { background: #4cc9f0; }
+.pb[data-fx="drawit"]:has(.pb-btn[data-firing]) .pb-spark { animation: pbd-confetti 640ms cubic-bezier(0.2, 0.9, 0.4, 1) calc(var(--sd, 0ms) + 220ms) both; }
+@keyframes pbd-bounce { 0% { transform: scale(1) rotate(0); } 18% { transform: scale(1.18, 0.8) rotate(-3deg); } 38% { transform: scale(0.88, 1.18) rotate(3deg); } 58% { transform: scale(1.08, 0.94) rotate(-1deg); } 78% { transform: scale(0.98, 1.03); } 100% { transform: scale(1); } }
+@keyframes pbd-confetti { 0% { opacity: 1; transform: translate(0, 0) scale(0.4); } 60% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1.1); } 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 24px)) scale(0.8); } }
+
+/* Jeopardy: game-show flip, like a board tile turning over, with a bright burst. */
+.pb[data-fx="jeopardy"] .pb-btn[data-firing] { animation: pbjp-flip 760ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+.pb[data-fx="jeopardy"]:has(.pb-btn[data-firing]) .pb-ring { animation-delay: 380ms; }
+.pb[data-fx="jeopardy"]:has(.pb-btn[data-firing]) .pb-ring:nth-child(2) { animation-delay: 450ms; }
+.pb[data-fx="jeopardy"]:has(.pb-btn[data-firing]) .pb-ring:nth-child(3) { animation-delay: 520ms; }
+.pb[data-fx="jeopardy"]:has(.pb-btn[data-firing]) .pb-spark { animation-delay: calc(var(--sd, 0ms) + 400ms); }
+@keyframes pbjp-flip { 0% { transform: perspective(400px) rotateX(0); } 45% { transform: perspective(400px) rotateX(-180deg) scale(1.05); } 50% { transform: perspective(400px) rotateX(-180deg) scale(1.08); } 100% { transform: perspective(400px) rotateX(-360deg) scale(1); } }
+
+/* Headbands: silly wobble side to side, with a pop. */
+.pb[data-fx="headbands"] .pb-btn[data-firing] { animation: pbh-wobble 720ms ease-in-out both; }
+.pb[data-fx="headbands"] .pb-ring:nth-child(n + 2) { display: none; }
+.pb[data-fx="headbands"]:has(.pb-btn[data-firing]) .pb-ring, .pb[data-fx="headbands"]:has(.pb-btn[data-firing]) .pb-spark { animation-delay: 420ms; }
+@keyframes pbh-wobble { 0%, 100% { transform: rotate(0) scale(1); } 15% { transform: rotate(-8deg) scale(1.04); } 30% { transform: rotate(7deg); } 45% { transform: rotate(-5deg); } 60% { transform: rotate(3deg) scale(1.1); } 80% { transform: rotate(-1deg) scale(0.98); } }
+
+/* LIAR: suspicious. Two heartbeat thumps, then a glitchy jitter; no sparks. */
+.pb[data-fx="liar"] .pb-btn[data-firing] { animation: pbl-glitch 760ms steps(1, end) both; }
+.pb[data-fx="liar"] .pb-spark { display: none; }
+.pb[data-fx="liar"] .pb-ring { border-color: var(--game, #e5484d); border-width: 1px; }
+.pb[data-fx="liar"]:has(.pb-btn[data-firing]) .pb-ring { animation: pbl-ring 520ms ease-out 420ms both; }
+.pb[data-fx="liar"]:has(.pb-btn[data-firing]) .pb-ring:nth-child(2) { animation-delay: 480ms; }
+.pb[data-fx="liar"]:has(.pb-btn[data-firing]) .pb-ring:nth-child(3) { animation-delay: 540ms; }
+@keyframes pbl-glitch {
+  0% { transform: scale(1); } 6% { transform: scale(1.06); } 14% { transform: scale(1); } 26% { transform: scale(1.05); } 34% { transform: scale(1); }
+  56% { transform: translate(-3px, 1px) skewX(-6deg); } 62% { transform: translate(3px, -1px) skewX(5deg); } 68% { transform: translate(-2px, 0); } 74% { transform: translate(2px, 1px) skewX(-3deg); } 82% { transform: none; } 100% { transform: none; }
+}
+@keyframes pbl-ring { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(1.8, 1.6); } }
+
+/* Rock Paper Gamble: three fist-pump dips, then a slam with sparks. */
+.pb[data-fx="rpg"] .pb-btn[data-firing] { animation: pbr-pump 720ms ease-out both; }
+.pb[data-fx="rpg"]:has(.pb-btn[data-firing]) .pb-ring, .pb[data-fx="rpg"]:has(.pb-btn[data-firing]) .pb-ring:nth-child(n) { animation-delay: 440ms; }
+.pb[data-fx="rpg"]:has(.pb-btn[data-firing]) .pb-spark { animation-delay: calc(var(--sd, 0ms) + 440ms); }
+@keyframes pbr-pump { 0%, 12%, 30%, 50% { transform: translateY(0); } 6%, 24%, 42% { transform: translateY(5px) scale(0.97); } 62% { transform: scale(1.12, 0.88); } 78% { transform: scale(0.97, 1.04); } 100% { transform: none; } }
+
+/* Survey Feud: two "ding" pulses and a wide burst. */
+.pb[data-fx="feud"] .pb-btn[data-firing] { animation: pbf-ding 720ms ease-out both; }
+.pb[data-fx="feud"]:has(.pb-btn[data-firing]) .pb-ring { animation-delay: 100ms; }
+.pb[data-fx="feud"]:has(.pb-btn[data-firing]) .pb-ring:nth-child(2) { animation-delay: 320ms; }
+.pb[data-fx="feud"]:has(.pb-btn[data-firing]) .pb-ring:nth-child(3) { animation-delay: 400ms; }
+.pb[data-fx="feud"]:has(.pb-btn[data-firing]) .pb-spark { animation-delay: calc(var(--sd, 0ms) + 320ms); }
+@keyframes pbf-ding { 0% { transform: scale(1); } 14% { transform: scale(1.08); } 28% { transform: scale(1); } 46% { transform: scale(1.12); } 64% { transform: scale(0.98); } 100% { transform: scale(1); } }
+
+/* Reduced motion keeps the plain press for every game. */
+@media (prefers-reduced-motion: reduce) {
+  .pb[data-fx] .pb-btn[data-firing] { animation: pb-press 280ms ease-out both; }
+  .pb[data-fx] .pb-fx { display: none; }
+}
