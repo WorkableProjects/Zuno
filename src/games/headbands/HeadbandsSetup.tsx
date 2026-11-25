@@ -15,6 +15,7 @@ import { deckHealth, deckOf, randomAssign, setupProblems, type PlayerSetup, type
 import "../jeopardy/jeopardy.css";
 import "../jeopardy/setup.css";
 import "./headbands.css";
+import { gameFontStyle } from "../gameFont";
 
 export interface HeadbandsStart {
   players: PlayerSetup[];
@@ -81,7 +82,7 @@ export function HeadbandsSetup({ game, onBack, onStart, onLobby }: Props) {
   const takenBy = (id: string, except: number) => assigned.some((a, j) => j !== except && a === id);
 
   return (
-    <main className="screen game-scope" ref={root} style={{ "--game": file.appearance.accentColor } as React.CSSProperties}>
+    <main className="screen game-scope" ref={root} style={{ "--game": file.appearance.accentColor, ...gameFontStyle("headbands") } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Back to file" onClick={onBack}>
           <ArrowLeft size={20} strokeWidth={1.5} />

@@ -7,6 +7,7 @@ import type { RailItem } from "../dashboard/railItems";
 import { GAME_INFO } from "./gameInfo";
 import type { Section } from "./Launcher";
 import "./home.css";
+import { PlayButton } from "../ui/PlayButton";
 
 interface Props {
   items: RailItem[];
@@ -140,10 +141,10 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
               </p>
             )}
             <div className="hm-feature-actions" data-nav-row="1">
-              <button type="button" className="btn btn-primary" data-nav-default="" onClick={() => onOpen(featured)}>
+              <PlayButton className="btn btn-primary" data-nav-default="" onOpen={() => onOpen(featured)}>
                 <Play size={18} strokeWidth={2} />
                 Play {featured.title}
-              </button>
+              </PlayButton>
               <button type="button" className="btn btn-secondary" onClick={surprise}>
                 <Shuffle size={18} strokeWidth={1.75} />
                 Surprise me

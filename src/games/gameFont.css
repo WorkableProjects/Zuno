@@ -1,0 +1,5 @@
+/* Per-game display type. The game root sets --game-font (and remaps --font-display) inline; see gameFont.ts.
+   Long body text stays Figtree: only controls, scores and cards are switched here. */
+.game-scope[style*="--game-font"] :is(h1, h2, h3, .btn, .eyebrow, .stepper-value, .score, [class*="score"], [class*="-card"], [class*="-cell"], [class*="-points"], [class*="-answer"], [class*="-rank"], [class*="-timer"]) {
+  font-family: var(--game-font, var(--font-display));
+}

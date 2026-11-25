@@ -1,0 +1,38 @@
+/* PlayButton: radiation rings around the button, then a full-screen accent flash. transform/opacity only. */
+.pb { position: relative; display: inline-flex; }
+.pb-fx { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.pb-ring, .pb-rays { position: absolute; inset: 0; display: block; opacity: 0; will-change: transform, opacity; }
+.pb-ring { border-radius: var(--r-ctl, 12px); border: 2px solid var(--game); }
+.pb-fx[data-on] .pb-ring { animation: pb-ring 760ms cubic-bezier(0.16, 0.7, 0.3, 1) both; }
+.pb-fx[data-on] .pb-ring:nth-child(2) { animation-delay: 110ms; }
+.pb-fx[data-on] .pb-ring:nth-child(3) { animation-delay: 220ms; border-width: 1px; }
+.pb-rays {
+  inset: -70% -25%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in oklab, var(--game) 70%, transparent) 0 6deg, transparent 6deg 20deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 38%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(closest-side, transparent 38%, #000 60%, transparent 100%);
+}
+.pb-fx[data-on] .pb-rays { animation: pb-rays 620ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes pb-ring { 0% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.9, 2.6); } }
+@keyframes pb-rays { 0% { opacity: 0; transform: scale(0.5) rotate(0deg); } 25% { opacity: 0.85; } 100% { opacity: 0; transform: scale(1.15) rotate(40deg); } }
+.pb-btn { position: relative; z-index: 1; }
+
+.pb-flash { position: fixed; inset: 0; z-index: 9000; pointer-events: none; overflow: hidden; animation: pb-flash-out 420ms ease 700ms both; }
+.pb-flash-disc {
+  position: absolute; left: var(--fx); top: var(--fy); width: 100vmax; height: 100vmax; margin: -50vmax 0 0 -50vmax; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, color-mix(in oklab, var(--game) 85%, #fff) 14%, var(--game) 40%, color-mix(in oklab, var(--game) 55%, #000) 100%);
+  transform: scale(0.02); will-change: transform; animation: pb-disc 520ms cubic-bezier(0.5, 0, 0.2, 1) both;
+}
+.pb-flash-rays {
+  position: absolute; left: var(--fx); top: var(--fy); width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; opacity: 0; will-change: transform, opacity;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.35) 0 4deg, transparent 4deg 15deg);
+  animation: pb-spin 900ms ease-out 120ms both;
+}
+@keyframes pb-disc { to { transform: scale(2.4); } }
+@keyframes pb-spin { 0% { opacity: 0; transform: rotate(0) scale(0.5); } 30% { opacity: 1; } 100% { opacity: 0; transform: rotate(35deg) scale(1); } }
+@keyframes pb-flash-out { to { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-fx, .pb-flash { display: none; }
+}

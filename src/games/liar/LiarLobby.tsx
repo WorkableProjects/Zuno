@@ -33,6 +33,7 @@ import {
 import "../jeopardy/setup.css";
 import "../headbands/headbands.css";
 import "./liar.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   file: LiarFile;
@@ -162,7 +163,7 @@ export function LiarLobby({
   return (
     <main
       className="screen game-scope"
-      style={{ "--game": file.appearance.accentColor } as React.CSSProperties}
+      style={{ "--game": file.appearance.accentColor, ...gameFontStyle("liar") } as React.CSSProperties}
     >
       <header className="screen-bar" data-nav-row="0">
         <button

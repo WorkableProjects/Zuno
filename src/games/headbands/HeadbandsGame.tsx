@@ -34,6 +34,7 @@ import {
 } from "./headbandsEngine";
 import "../jeopardy/jeopardy.css";
 import "./headbands.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   file: HeadbandsFile;
@@ -151,7 +152,7 @@ export function HeadbandsGame({ file, start, lobbyCode, onAgain, onExit }: Props
   );
 
   return (
-    <main className="screen game hb-game game-scope" style={{ "--game": file.appearance.accentColor } as React.CSSProperties}>
+    <main className="screen game hb-game game-scope" style={{ "--game": file.appearance.accentColor, ...gameFontStyle("headbands") } as React.CSSProperties}>
       <header className="screen-bar game-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Exit to dashboard" onClick={() => (state.phase === "over" ? onExit() : setConfirm("exit"))}>
           <ArrowLeft size={20} strokeWidth={1.5} />

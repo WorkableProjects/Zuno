@@ -4,6 +4,7 @@ import { getEngine } from "../../games/registry";
 import { holdMusic, isSoundTheme, releaseMusic } from "../../lib/audio";
 import { useEscape } from "../navigation/spatialNav";
 import { GAME_INFO } from "./gameInfo";
+import { PlayButton } from "../ui/PlayButton";
 
 interface Props {
   gameType: string;
@@ -62,10 +63,10 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
           <div className="lx-actions" data-nav-row="2">
             {online ? (
               <>
-                <button type="button" className="btn btn-primary lx-play" data-nav-default="" disabled={!onHostOnline} onClick={() => onHostOnline?.(gameType)}>
+                <PlayButton className="btn btn-primary lx-play" data-nav-default="" disabled={!onHostOnline} onOpen={() => onHostOnline?.(gameType)}>
                   <Play size={20} strokeWidth={2} fill="currentColor" />
                   Play
-                </button>
+                </PlayButton>
                 <button type="button" className="btn btn-secondary" disabled={!onJoinOnline} onClick={() => onJoinOnline?.(gameType)}>
                   <LogIn size={18} strokeWidth={1.75} />
                   Join a game
@@ -73,10 +74,10 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
               </>
             ) : (
               <>
-                <button type="button" className="btn btn-primary lx-play" data-nav-default="" onClick={() => onLoad(gameType)}>
+                <PlayButton className="btn btn-primary lx-play" data-nav-default="" onOpen={() => onLoad(gameType)}>
                   <Play size={20} strokeWidth={2} fill="currentColor" />
                   Play
-                </button>
+                </PlayButton>
                 {engine.hasBuilder && (
                   <button type="button" className="btn btn-secondary" onClick={() => onBuild(gameType)}>
                     <PencilRuler size={18} strokeWidth={1.75} />
@@ -132,10 +133,10 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
             ))}
           </div>
           <div className="lx-actions lx-actions-end">
-            <button type="button" className="btn btn-primary lx-play" onClick={() => (online ? onHostOnline?.(gameType) : onLoad(gameType))} disabled={online && !onHostOnline}>
+            <PlayButton className="btn btn-primary lx-play" onOpen={() => (online ? onHostOnline?.(gameType) : onLoad(gameType))} disabled={online && !onHostOnline}>
               <Play size={20} strokeWidth={2} fill="currentColor" />
               Play {engine.title}
-            </button>
+            </PlayButton>
           </div>
         </section>
       )}

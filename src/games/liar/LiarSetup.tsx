@@ -7,6 +7,7 @@ import type { LiarFile } from "../../game-files/schema/liar";
 import { LIAR_LIMITS } from "../../game-files/schema/liar";
 import { LIAR_PRESETS, estimateMinutes, scoreRulesFor, validateSetup, type Options } from "./liarEngine";
 import "./liar.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   game: LoadedGame<LiarFile>;
@@ -56,7 +57,7 @@ export function LiarSetup({ game, onBack, onStart, onLobby }: Props) {
     });
 
   return (
-    <main className="screen game-scope" ref={root} style={{ "--game": file.appearance.accentColor } as React.CSSProperties}>
+    <main className="screen game-scope" ref={root} style={{ "--game": file.appearance.accentColor, ...gameFontStyle("liar") } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Back to file" onClick={onBack}>
           <ArrowLeft size={20} strokeWidth={1.5} />
