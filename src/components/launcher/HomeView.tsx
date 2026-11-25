@@ -200,7 +200,7 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
               </p>
             )}
             <div className="hm-feature-actions" data-nav-row="1">
-              <PlayButton className="btn btn-primary" data-nav-default="" onOpen={() => onOpen(featured)}>
+              <PlayButton gameType={featured.gameType} className="btn btn-primary" data-nav-default="" onOpen={() => onOpen(featured)}>
                 <Play size={18} strokeWidth={2} />
                 Play {featured.title}
               </PlayButton>

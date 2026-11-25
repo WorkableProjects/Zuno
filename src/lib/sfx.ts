@@ -34,7 +34,14 @@ export type Sfx =
   | "applause"
   | "boing"
   | "rimshot"
-  | "launch";
+  | "launch"
+  | "launchBlackjack"
+  | "launchDrawit"
+  | "launchJeopardy"
+  | "launchHeadbands"
+  | "launchLiar"
+  | "launchRpg"
+  | "launchFeud";
 
 interface Bus {
   ac: BaseAudioContext;
@@ -479,6 +486,59 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
     [D3, A3, D4, Fs4].forEach((f) => pad(c, f, land, 1.0, 0.1, 0.02));
     [D5, A5, D6].forEach((f, i) => glass(c, f, land + i * 0.04, 1.0, 0.18, 1.8));
     nz(c, land, 0.7, 6500, 1200, 0.2, 0.6, "bandpass", 0.005);
+  },
+  // Per-game launch stingers: each lands around 0.45-0.55 s, when its button effect peaks.
+  launchBlackjack: (c) => {
+    // Formal: a card slid off the deck, two chips set down, then a warm, quiet major-seventh chord.
+    nz(c, 0, 0.16, 5200, 2600, 0.12, 0.9, "bandpass", 0.02);
+    wood(c, 2100, 0.22, 0.05, 0.22);
+    wood(c, 2350, 0.3, 0.05, 0.18);
+    [D3, A3, Fs4, N(4) /* C#5 */].forEach((f, i) => pad(c, f, 0.42 + i * 0.03, 1.3, 0.07, 0.12));
+    mallet(c, A5, 0.48, 0.9, 0.08);
+  },
+  launchDrawit: (c) => {
+    // Friendly: two quick marker scribbles, a springy pop, and a bouncy mallet run up the scale.
+    nz(c, 0, 0.09, 1800, 3600, 0.1, 3, "bandpass", 0.01);
+    nz(c, 0.1, 0.09, 2400, 1500, 0.1, 3, "bandpass", 0.01);
+    fm(c, 300, 0.22, 0.25, { ratio: 1, index: 0.6, peak: 0.22, glide: 2.4, idx: 0.8 });
+    [D5, E5, Fs5, A5, D6].forEach((f, i) => mallet(c, f, 0.3 + i * 0.055, 0.35, 0.22));
+  },
+  launchJeopardy: (c) => {
+    // Game show: a riser into a bright brass fanfare.
+    nz(c, 0, 0.4, 400, 5000, 0.12, 0.8, "bandpass", 0.35);
+    horn(c, A4, 0.4, 0.14, 0.14, { index: 2.6 });
+    [D4, Fs4, A4, D5].forEach((f) => horn(c, f, 0.55, 0.7, 0.09, { vibrato: 4, index: 2.4 }));
+    sub(c, 140, 45, 0.55, 0.5, 0.45);
+  },
+  launchHeadbands: (c) => {
+    // Silly: a rising slide whistle and a cheeky two-note boop.
+    fm(c, 420, 0, 0.42, { ratio: 1, index: 0.2, peak: 0.16, glide: 2.6, idx: 1, attack: 0.05 });
+    glass(c, Fs5, 0.45, 0.25, 0.2, 1);
+    glass(c, A5, 0.55, 0.45, 0.22, 1);
+    sub(c, 220, 90, 0.45, 0.2, 0.3);
+  },
+  launchLiar: (c) => {
+    // Suspicious: a low heartbeat, then a dissonant tritone sting with a dark tail.
+    sub(c, 90, 45, 0, 0.18, 0.5);
+    sub(c, 90, 45, 0.2, 0.18, 0.4);
+    [D3, N(-13) /* G#3 */, D4].forEach((f) => pad(c, f, 0.42, 1.1, 0.08, 0.02));
+    fm(c, N(-1), 0.42, 0.9, { ratio: 3.5, index: 2.2, peak: 0.09, glide: 0.94, idx: 0.6 });
+    nz(c, 0.42, 0.8, 900, 300, 0.12, 0.7, "bandpass", 0.01);
+  },
+  launchRpg: (c) => {
+    // Rock, paper... three fist-pump thumps, then a slam with a coin glint.
+    [0, 0.14, 0.28].forEach((at, i) => { wood(c, 180 - i * 15, at, 0.1, 0.4); sub(c, 120, 60, at, 0.12, 0.3); });
+    sub(c, 160, 40, 0.45, 0.5, 0.6);
+    nz(c, 0.45, 0.25, 3000, 900, 0.2, 0.8, "bandpass", 0.003);
+    glass(c, D6, 0.5, 0.6, 0.14, 2.2);
+    glass(c, A6, 0.56, 0.5, 0.1, 2.2);
+  },
+  launchFeud: (c) => {
+    // Survey says: two bright bells and a short crowd cheer.
+    glass(c, A5, 0.1, 0.5, 0.28, 1.2);
+    glass(c, D6, 0.32, 0.8, 0.3, 1.2);
+    for (let i = 0; i < 14; i++) nz(c, 0.32 + i * 0.03, 0.08, 1800 + (i % 4) * 500, 1200, 0.07, 2, "bandpass", 0.01);
+    nz(c, 0.32, 0.7, 2500, 1600, 0.08, 0.5, "bandpass", 0.1);
   },
 };
 
