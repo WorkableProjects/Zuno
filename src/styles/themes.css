@@ -107,15 +107,3 @@ html[data-skin="anthropical"] {
 }
 html[data-skin="anthropical"] body { background: var(--bg); }
 html[data-skin="anthropical"] ::selection { background: #b4532f; color: #fff; }
-
-/* Home hero card on the light palettes: a solid tint of the featured game's accent over the surface, never a transparent pink wash. */
-html[data-theme="light"] .hm-feature {
-  background:
-    radial-gradient(80% 110% at 0% 0%, color-mix(in oklab, var(--game) 20%, transparent), transparent 62%),
-    color-mix(in oklab, var(--game) 9%, var(--surface));
-  border-color: color-mix(in oklab, var(--game) 40%, var(--hairline));
-  color: var(--text);
-}
-html[data-theme="light"] .hm-feature-art { background: color-mix(in oklab, var(--game) 22%, var(--surface)); }
-html[data-theme="light"] .hm-feature-title { color: color-mix(in oklab, var(--game) 40%, #0b0f18); }
-html[data-theme="light"] .hm-feature-desc { color: var(--text-2); }

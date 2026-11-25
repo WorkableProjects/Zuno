@@ -148,8 +148,9 @@ html .screen-bar { animation: bar-in 520ms var(--ease-out-expo) 60ms backwards; 
 @keyframes bar-in { from { opacity: 0; transform: translateY(-12px); } }
 
 /* ---------- Lobbies ---------- */
-html .flip-code { display: inline-flex; perspective: 600px; }
-html .flip-char { display: inline-block; transform-origin: 50% 60%; animation: flip-char 700ms var(--ease-pop) backwards; animation-delay: calc(var(--i) * 70ms + 200ms); }
+/* Room codes: quick flip-in (done in ~0.5s, so a screenshot never catches half a code), roomy box so script faces like Caveat never clip. */
+html .flip-code { display: inline-flex; perspective: 600px; overflow: visible; line-height: 1.2; padding: 0.06em 0.12em 0.1em 0.06em; }
+html .flip-char { display: inline-block; transform-origin: 50% 60%; animation: flip-char 420ms var(--ease-pop) backwards; animation-delay: calc(var(--i) * 40ms + 60ms); overflow: visible; }
 @keyframes flip-char { from { opacity: 0; transform: rotateX(-95deg) translateY(-10px); } 60% { opacity: 1; } }
 html .hb-qr { animation: qr-in 700ms var(--ease-pop) 120ms backwards; }
 @keyframes qr-in { from { opacity: 0; transform: scale(0.7) rotate(-6deg); } }

@@ -16,7 +16,7 @@ interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" 
 const OPEN_AFTER_MS = 450;
 /** Total time before the overlay is removed (hold + fade out). */
 const CLEAN_UP_MS = 1350;
-const PARTICLES = 150;
+const PARTICLES = 110;
 const SPARK_MS = 1200;
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -33,12 +33,13 @@ function shakeRoot() {
 
 interface Burst {
   id: number;
+  font: string;
   x: number;
   y: number;
   color: string;
 }
 
-/** One self-terminating rAF loop of ~150 sparks and embers on a viewport-sized canvas. */
+/** One self-terminating rAF loop of ~110 sparks and embers on a viewport-sized canvas. */
 function runSparks(canvas: HTMLCanvasElement, x: number, y: number, color: string): () => void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return () => undefined;
@@ -141,7 +142,7 @@ export function PlayButton({ onOpen, accent, title, className = "", children, di
     el?.removeAttribute("data-charging");
     if (reduced() || !el) {
       if (el) {
-        setBurst({ id: Date.now(), x: 0, y: 0, color: "transparent" });
+        setBurst({ id: Date.now(), x: 0, y: 0, color: "transparent", font: "" });
         timers.current.push(
           window.setTimeout(() => open.current(), 0),
           window.setTimeout(() => {
@@ -157,7 +158,9 @@ export function PlayButton({ onOpen, accent, title, className = "", children, di
     }
     const r = el.getBoundingClientRect();
     const color = accent ?? (getComputedStyle(el).getPropertyValue("--game").trim() || "#79b8ff");
-    setBurst({ id: Date.now(), x: r.left + r.width / 2, y: r.top + r.height / 2, color });
+    // The overlay is portaled to <body>, outside the game scope, so carry the game's display face over by hand.
+    const font = getComputedStyle(el).getPropertyValue("--game-font").trim();
+    setBurst({ id: Date.now(), x: r.left + r.width / 2, y: r.top + r.height / 2, color, font });
     playSfx("launch");
     shakeRoot();
     timers.current.push(window.setTimeout(shakeRoot, OPEN_AFTER_MS - 30));
@@ -196,13 +199,12 @@ export function PlayButton({ onOpen, accent, title, className = "", children, di
             className={`pb-ov${burst.color === "transparent" ? " pb-ov-calm" : ""}`}
             key={burst.id}
             aria-hidden="true"
-            style={{ "--fx": `${burst.x}px`, "--fy": `${burst.y}px`, ...(burst.color === "transparent" ? {} : { "--game": burst.color }) } as CSSProperties}
+            style={{ "--fx": `${burst.x}px`, "--fy": `${burst.y}px`, ...(burst.color === "transparent" ? {} : { "--game": burst.color }), ...(burst.font ? { "--game-font": burst.font } : {}) } as CSSProperties}
           >
             <i className="pb-wipe" />
             <i className="pb-shine" />
             <i className="pb-rays" />
             <i className="pb-rays pb-rays2" />
-            <i className="pb-ring" />
             <i className="pb-ring" />
             <i className="pb-ring" />
             <i className="pb-ring" />

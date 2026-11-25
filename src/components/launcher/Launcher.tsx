@@ -27,7 +27,7 @@ function Tip({ children, keys }: { children: ReactNode; keys?: string }) {
 }
 
 /** The command rail shared by the home, library and game pages. */
-export function LauncherShell({ section, onSection, onSettings, children, accent }: { section: Section | null; onSection: (s: Section) => void; onSettings: () => void; children: ReactNode; accent: string }) {
+export function LauncherShell({ section, onSection, onSettings, onOpenGame, children, accent }: { section: Section | null; onSection: (s: Section) => void; onSettings: () => void; onOpenGame: (gameType: string) => void; children: ReactNode; accent: string }) {
   const nav: Array<{ id: Section; label: string; Icon: typeof House }> = [
     { id: "home", label: "Home", Icon: House },
     { id: "library", label: "Library", Icon: LayoutGrid },
@@ -95,14 +95,21 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
             </button>
           </nav>
           {recent.length > 0 ? (
-            <button type="button" className="lx-recent" aria-label="Recently played" onClick={() => onSection("home")}>
+            <div className="lx-recent" role="group" aria-label="Recently played">
               {recent.map((r, i) => (
-                <span key={r.id} className="lx-recent-ico" style={{ "--i": i, "--c": r.accentColor } as React.CSSProperties}>
+                <button
+                  key={r.id}
+                  type="button"
+                  className="lx-recent-ico"
+                  aria-label={`Open ${r.title}`}
+                  style={{ "--i": i, "--c": r.accentColor } as React.CSSProperties}
+                  onClick={() => onOpenGame(r.gameType)}
+                >
                   {r.coverImage ? <img src={r.coverImage} alt="" loading="lazy" /> : <b>{(r.title.trim()[0] ?? "?").toUpperCase()}</b>}
-                </span>
+                </button>
               ))}
               <Tip>{`Recent: ${recent[0].title}`}</Tip>
-            </button>
+            </div>
           ) : null}
           {/* The multi-action button (soundboard, chat, volume) docks here. */}
           <span className="lx-dock" aria-hidden="true" />

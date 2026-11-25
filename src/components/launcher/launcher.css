@@ -23,6 +23,9 @@
 }
 .corner.is-docked .corner-panel { right: auto; left: calc(100% + 14px); }
 .corner.is-docked .corner-main { border-radius: 50%; }
+/* The closed dock is taller than its button and sits over the recent-games icons: only the button itself takes clicks. */
+.corner.is-docked[data-open="false"] { pointer-events: none; }
+.corner.is-docked[data-open="false"] .corner-main { pointer-events: auto; }
 
 /* ---------- Page area ---------- */
 .lx-main { padding-left: calc(var(--side-w) + 32px); }
@@ -268,3 +271,9 @@
 .lib-slot:hover .lib-forget, .lib-forget:focus-visible { opacity: 1; }
 .lib-forget:hover { color: var(--negative); }
 @media (hover: none) { .lib-forget { opacity: 1; } }
+
+/* Light palettes: the accent word of a game title darkens instead of lightening, so it never washes out on the pale page. */
+html[data-theme="light"] .lx-big-word:last-child:not(:first-child) { color: color-mix(in oklab, var(--game) 62%, #0b0f18); }
+html[data-theme="light"] .lx-big-word:last-child:not(:first-child),
+html[data-theme="light"] .lx-big-word:only-child { background-image: linear-gradient(100deg, currentColor 40%, color-mix(in oklab, currentColor 55%, #fff) 50%, currentColor 60%); filter: none; }
+html[data-theme="light"] .lx-big { text-shadow: none; }

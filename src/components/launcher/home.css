@@ -13,22 +13,26 @@
 .hm-signin:active { transform: scale(0.98); }
 .hm-signin-sub { grid-column: 2; color: var(--text-3); font: 400 12px var(--font-ui); }
 
-/* Featured stage: full-bleed, always a dark "screen" tinted by the featured game, so it reads the same in every theme. */
+/* Featured stage: full-bleed and tinted by the featured game, mixed with the theme's own accent and background so it belongs to every theme.
+   Dark palettes get a deep ink with light type; light palettes get a pale tint with dark type (text on the tint stays above 4.5:1). */
 .hm-stage {
-  --stage-ink: color-mix(in oklab, var(--game) 34%, #0a0c14);
+  --stage-ink: color-mix(in oklab, var(--game) 30%, color-mix(in oklab, var(--accent) 10%, var(--bg)));
+  --stage-fg: #fff; --stage-fg-2: rgb(255 255 255 / 0.88); --stage-fg-3: rgb(255 255 255 / 0.8);
+  --stage-chip: rgb(255 255 255 / 0.14); --stage-line: rgb(255 255 255 / 0.28); --stage-fill: rgb(255 255 255 / 0.1);
+  --stage-btn-bg: #fff; --stage-btn-fg: #0b1018; --stage-glow: 55%; --stage-shade: rgb(0 0 0 / 0.5); --stage-grain: 0.08; --stage-title-shadow: 0 2px 24px rgb(0 0 0 / 0.35);
   position: relative; display: grid; align-items: end; min-height: clamp(420px, 56vh, 560px); isolation: isolate; overflow: hidden;
   margin-right: calc(var(--page-x) * -1); padding: clamp(24px, 4vw, 56px) clamp(24px, 4vw, 56px) 88px;
-  border-radius: 28px 0 0 28px; color: #fff; background: var(--stage-ink);
+  border-radius: 28px 0 0 28px; color: var(--stage-fg); background: var(--stage-ink);
   box-shadow: var(--elev-3); animation: lx-item-in 420ms var(--ease) backwards;
 }
 .hm-stage-bg {
   position: absolute; inset: 0; z-index: -2;
   background:
-    radial-gradient(70% 90% at 82% 30%, color-mix(in oklab, var(--game) 55%, transparent), transparent 70%),
-    radial-gradient(60% 70% at 0% 100%, rgb(0 0 0 / 0.5), transparent 70%);
+    radial-gradient(70% 90% at 82% 30%, color-mix(in oklab, var(--game) var(--stage-glow), transparent), transparent 70%),
+    radial-gradient(60% 70% at 0% 100%, var(--stage-shade), transparent 70%);
   transition: background var(--t-bg) var(--ease);
 }
-.hm-stage-bg::after { content: ""; position: absolute; inset: 0; background: var(--grain-dark) 0 0 / 160px 160px; opacity: 0.08; mix-blend-mode: overlay; }
+.hm-stage-bg::after { content: ""; position: absolute; inset: 0; background: var(--grain-dark) 0 0 / 160px 160px; opacity: var(--stage-grain); mix-blend-mode: overlay; }
 .hm-stage-art {
   position: absolute; z-index: -1; right: clamp(-40px, 2vw, 40px); top: 50%; width: clamp(240px, 38vw, 520px); aspect-ratio: 1;
   translate: 0 -54%; opacity: 0.95; pointer-events: none;
@@ -36,40 +40,50 @@
   transition: transform 300ms var(--ease-out-expo);
   animation: hm-art-in 700ms var(--ease-out-expo) backwards;
 }
-.hm-stage-art .tile-img { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 24px 48px rgb(0 0 0 / 0.45)); }
+.hm-stage-art .tile-img { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 24px 48px var(--stage-art-shadow, rgb(0 0 0 / 0.45))); }
 .hm-stage-art .cover-bg { fill: transparent; }
 .hm-stage-body { display: grid; gap: 16px; max-width: 620px; animation: hm-body-in 520ms var(--ease-out-expo) backwards; }
 .hm-stage-body::before { content: ""; position: absolute; inset: 0 40% 0 0; z-index: -1; background: linear-gradient(90deg, color-mix(in oklab, var(--stage-ink) 85%, transparent), transparent); pointer-events: none; }
-.hm-kicker { margin: 0; color: rgb(255 255 255 / 0.78); font: 600 14px / 1 var(--font-ui); }
-.hm-stage-title { margin: 0; font: 400 clamp(44px, 7vw, 104px) / 0.95 var(--game-font, var(--font-display)); letter-spacing: -0.01em; text-wrap: balance; text-shadow: 0 2px 24px rgb(0 0 0 / 0.35); }
-.hm-stage-desc { margin: 0; max-width: 52ch; color: rgb(255 255 255 / 0.86); font: 400 17px / 1.5 var(--font-ui); }
+.hm-kicker { margin: 0; color: var(--stage-fg-3); font: 600 14px / 1 var(--font-ui); }
+.hm-stage-title { margin: 0; font: 400 clamp(44px, 7vw, 104px) / 0.95 var(--game-font, var(--font-display)); letter-spacing: -0.01em; text-wrap: balance; text-shadow: var(--stage-title-shadow); }
+.hm-stage-desc { margin: 0; max-width: 52ch; color: var(--stage-fg-2); font: 400 17px / 1.5 var(--font-ui); }
 .hm-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
-.hm-facts span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgb(255 255 255 / 0.14); color: #fff; font: 500 13px var(--font-ui); }
+.hm-facts span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--stage-chip); color: var(--stage-fg); font: 500 13px var(--font-ui); }
 .hm-feature-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.hm-stage .btn-primary { background: #fff; color: #0b1018; }
-.hm-stage .btn-glass { background: rgb(255 255 255 / 0.14); color: #fff; border: 1px solid rgb(255 255 255 / 0.28); }
-.hm-stage .btn-glass:hover:not(:disabled) { background: rgb(255 255 255 / 0.24); }
+.hm-stage .btn-primary { background: var(--stage-btn-bg); color: var(--stage-btn-fg); }
+.hm-stage .btn-glass { background: var(--stage-chip); color: var(--stage-fg); border: 1px solid var(--stage-line); }
+.hm-stage .btn-glass:hover:not(:disabled) { background: color-mix(in oklab, var(--stage-fg) 18%, transparent); }
 
 .hm-stage-nav { position: absolute; left: clamp(24px, 4vw, 56px); right: clamp(24px, 4vw, 56px); bottom: 24px; display: flex; align-items: center; gap: 16px; }
 .hm-stage-arrow {
   display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 50%; cursor: pointer;
-  border: 1px solid rgb(255 255 255 / 0.28); background: rgb(255 255 255 / 0.1); color: #fff;
+  border: 1px solid var(--stage-line); background: var(--stage-fill); color: var(--stage-fg);
   transition: background-color var(--t-fast) var(--ease), transform var(--t-press) var(--ease);
 }
-.hm-stage-arrow:hover { background: rgb(255 255 255 / 0.22); }
+.hm-stage-arrow:hover { background: color-mix(in oklab, var(--stage-fg) 20%, transparent); }
 .hm-stage-dots { display: flex; flex: 1; gap: 8px; max-width: 420px; margin: 0; padding: 0; list-style: none; }
 .hm-stage-dots li { flex: 1; display: grid; }
 .hm-stage-dot { position: relative; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 4px; }
-.hm-stage-dot::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: rgb(255 255 255 / 0.28); transition: background-color var(--t-fast) var(--ease); }
-.hm-stage-dot:hover::before { background: rgb(255 255 255 / 0.5); }
-.hm-stage-fill { position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: #fff; transform-origin: 0 50%; animation: hm-fill linear forwards; }
+.hm-stage-dot::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: var(--stage-line); transition: background-color var(--t-fast) var(--ease); }
+.hm-stage-dot:hover::before { background: color-mix(in oklab, var(--stage-fg) 50%, transparent); }
+.hm-stage-fill { position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: var(--stage-fg); transform-origin: 0 50%; animation: hm-fill linear forwards; }
 .hm-stage.is-paused .hm-stage-fill { animation-play-state: paused; }
 .hm-stage.is-still .hm-stage-fill { animation: none; }
-.hm-stage :focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.hm-stage :focus-visible { outline: 2px solid var(--stage-fg); outline-offset: 3px; }
 @keyframes hm-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes hm-body-in { from { opacity: 0; transform: translateY(14px); } }
 @keyframes hm-art-in { from { opacity: 0; scale: 0.94; } }
 
+/* Light palettes: a pale tint of the game over the theme surface, dark type. */
+html[data-theme="light"] .hm-stage {
+  --stage-ink: color-mix(in oklab, var(--game) 12%, color-mix(in oklab, var(--accent) 4%, var(--surface)));
+  --stage-fg: var(--text); --stage-fg-2: color-mix(in oklab, var(--text) 82%, var(--stage-ink)); --stage-fg-3: color-mix(in oklab, var(--text) 78%, var(--stage-ink));
+  --stage-chip: color-mix(in oklab, var(--game) 16%, var(--surface)); --stage-line: color-mix(in oklab, var(--text) 30%, transparent); --stage-fill: color-mix(in oklab, var(--surface) 70%, transparent);
+  --stage-btn-bg: var(--text); --stage-btn-fg: var(--surface); --stage-glow: 38%; --stage-shade: transparent; --stage-grain: 0.04; --stage-title-shadow: none;
+  --stage-art-shadow: color-mix(in oklab, var(--game) 40%, rgb(0 0 0 / 0.25));
+  box-shadow: var(--elev-3);
+  border: 1px solid color-mix(in oklab, var(--game) 30%, var(--hairline)); border-right: 0;
+}
 .hm-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .hm-action {
   display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--r-round);
@@ -122,7 +136,7 @@
 @media (max-width: 760px) {
   .hm { gap: 24px; }
   .hm-stage { min-height: 480px; margin-right: 0; border-radius: 24px; padding: 24px 20px 80px; align-items: end; }
-  .hm-stage-art { width: 220px; right: -24px; top: 24px; translate: 0 0; opacity: 0.55; }
+  .hm-stage-art { width: 180px; right: -16px; top: 16px; translate: 0 0; opacity: 0.6; -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 88%); mask-image: linear-gradient(180deg, #000 35%, transparent 88%); }
   .hm-stage-body::before { inset: 0; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--stage-ink) 80%, transparent) 60%); }
   .hm-stage-nav { left: 20px; right: 20px; bottom: 20px; }
   .hm-stage-arrow { width: 44px; height: 44px; }

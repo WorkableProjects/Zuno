@@ -43,7 +43,7 @@
 .lx-mark:hover svg { transform: rotate(180deg); }
 .lx-mark:hover { transform: scale(1.06); }
 .lx-mark:active { transform: scale(1.1, 0.86); transition-duration: var(--t-press); }
-.lx-mark:focus-visible, .lx-collapse:focus-visible, .lx-nav-btn:focus-visible, .lx-recent:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.lx-mark:focus-visible, .lx-collapse:focus-visible, .lx-nav-btn:focus-visible, .lx-recent-ico:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @keyframes lx-sheen {
   0%, 84%, 100% { filter: brightness(1) saturate(1); }
   91% { filter: brightness(1.35) saturate(1.15); }
@@ -98,21 +98,21 @@
 /* Recently played: overlapped covers that fan out on hover. */
 .lx-recent {
   display: flex; flex-direction: column; align-items: center; flex: none;
-  padding: 12px 0 0; border: 0; background: none; cursor: pointer; position: relative;
+  padding: 12px 0 0; position: relative;
 }
 .lx-recent::before { content: ""; position: absolute; top: 0; width: 20px; height: 1px; background: var(--hairline); }
 .lx-recent-ico {
   position: relative; display: grid; place-items: center; overflow: hidden;
   width: 30px; height: 30px; margin-top: calc(var(--i) * -12px + 0px); border-radius: 50%;
   z-index: calc(10 - var(--i));
-  border: 2px solid color-mix(in oklab, var(--surface) 90%, var(--text));
+  border: 2px solid color-mix(in oklab, var(--surface) 90%, var(--text)); padding: 0; cursor: pointer;
   background: color-mix(in oklab, var(--c, var(--accent)) 55%, var(--surface-2));
   transition: transform 360ms var(--rail-spring);
 }
 .lx-recent-ico:first-child { margin-top: 0; }
 .lx-recent-ico img { width: 100%; height: 100%; object-fit: cover; }
 .lx-recent-ico b { font: 700 13px / 1 var(--font-display); color: var(--text); }
-.lx-recent:hover .lx-recent-ico, .lx-recent:focus-visible .lx-recent-ico { transform: translateY(calc(var(--i) * 10px)); }
+.lx-recent:hover .lx-recent-ico, .lx-recent:focus-within .lx-recent-ico { transform: translateY(calc(var(--i) * 10px)); }
 .lx-recent:hover .lx-recent-ico:first-child { transform: translateY(-2px) scale(1.06); }
 .lx-dock { width: 52px; height: 52px; flex: none; }
 
@@ -132,7 +132,7 @@
   border-radius: 6px; border: 1px solid var(--hairline); background: color-mix(in oklab, var(--text) 8%, transparent);
   color: var(--text-2); font: 600 11px / 1 var(--font-mono, ui-monospace, monospace);
 }
-:is(.lx-mark, .lx-collapse, .lx-nav-btn, .lx-recent):is(:hover, :focus-visible) > .lx-tip { opacity: 1; transform: translate(0, -50%); transition-delay: 90ms; }
+:is(.lx-mark, .lx-collapse, .lx-nav-btn):is(:hover, :focus-visible) > .lx-tip, .lx-recent:is(:hover, :focus-within) > .lx-tip { opacity: 1; transform: translate(0, -50%); transition-delay: 90ms; }
 
 @media (min-width: 761px) {
   .lx-plate { transition: clip-path 560ms var(--rail-spring); }
@@ -151,6 +151,8 @@
 @media (max-width: 760px) {
   .lx-side { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; height: 68px; flex-direction: row; padding: 0 12px; gap: 10px; }
   .lx-plate, .lx-shadow { border-radius: 999px; }
+  /* Content scrolls under the bottom bar, so the plate must hold text back. */
+  .lx-plate { background: var(--surface); }
   .lx-shadow-mini, .lx-collapse, .lx-recent, .lx-tip { display: none; }
   .lx-mark { width: 40px; height: 40px; }
   .lx-mark svg { width: 34px; height: 34px; }

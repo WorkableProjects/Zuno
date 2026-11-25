@@ -346,6 +346,7 @@ export function App() {
           accent={screen.name === "game" ? (getEngine(screen.gameType)?.appearance.accentColor ?? selected.backdrop.accent) : selected.backdrop.accent}
           onSection={goSection}
           onSettings={() => goSection("settings")}
+          onOpenGame={(gameType) => push({ name: "game", gameType }, `game:${gameType}`)}
         >
           {screen.name === "dashboard" && section === "settings" ? (
             <SettingsPage theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} />
