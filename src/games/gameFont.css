@@ -1,5 +1,10 @@
 /* Per-game display type. The game root sets --game-font (and remaps --font-display) inline; see gameFont.ts.
-   Long body text stays Figtree: only controls, scores and cards are switched here. */
-.game-scope[style*="--game-font"] :is(h1, h2, h3, .btn, .eyebrow, .stepper-value, .score, [class*="score"], [class*="-card"], [class*="-cell"], [class*="-points"], [class*="-answer"], [class*="-rank"], [class*="-timer"]) {
+   Only display elements take the game face: headings, room codes, scores, board cells and card faces.
+   Buttons, labels, inputs and small UI text always stay Figtree (and --font-display is reset inside them). */
+.game-scope[style*="--game-font"] :is(.btn, button:not([class*="-cell"], [class*="-card"], [class*="-face"]), label, input, select, textarea, small, .meta, .eyebrow, .lx-eyebrow, .stepper-value, .page-lede) {
+  --font-display: var(--font-ui);
+  font-family: var(--font-ui);
+}
+.game-scope[style*="--game-font"] :is(h1, h2, .flip-code, .flip-char, .hb-code-input, [class*="room-code"], [class*="-code"]:not(input), .score, .scoreboard, [class*="-score"], [class*="score-"]:not(input, .score-edit, .score-editor, .score-pencil), [class*="-cell"], [class*="-face"], [class*="-points"], [class*="-answer"], [class*="-timer"]) {
   font-family: var(--game-font, var(--font-display));
 }

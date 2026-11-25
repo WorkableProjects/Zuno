@@ -71,6 +71,19 @@
   will-change: transform, opacity; animation: atm-neon 6s ease-in-out infinite alternate;
 }
 
+/* Import / setup screens: one shared accent glow so the first screen after PLAY already feels like the game. */
+.import-atm { position: relative; isolation: isolate; }
+.import-atm::before, .import-atm::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+.import-atm::before {
+  background:
+    radial-gradient(60% 50% at 50% -8%, color-mix(in oklab, var(--game) 26%, transparent), transparent 70%),
+    radial-gradient(50% 40% at 100% 100%, color-mix(in oklab, var(--game) 14%, transparent), transparent 70%);
+}
+.import-atm::after { background: var(--grain-dark) 0 0 / 160px 160px; opacity: 0.05; mix-blend-mode: overlay; }
+.import-atm[data-game="jeopardy"]::before { background: radial-gradient(60% 55% at 50% -8%, color-mix(in oklab, var(--game) 28%, transparent), transparent 70%), linear-gradient(color-mix(in oklab, var(--game) 8%, transparent) 1px, transparent 1px) 0 0 / 72px 72px, linear-gradient(90deg, color-mix(in oklab, var(--game) 8%, transparent) 1px, transparent 1px) 0 0 / 72px 72px; -webkit-mask-image: radial-gradient(90% 80% at 50% 20%, #000 30%, transparent 95%); mask-image: radial-gradient(90% 80% at 50% 20%, #000 30%, transparent 95%); }
+.import-atm[data-game="headbands"]::before { background: radial-gradient(90% 50% at 20% 105%, color-mix(in oklab, var(--game) 24%, transparent), transparent 70%), radial-gradient(80% 45% at 85% 112%, color-mix(in oklab, #38bdf8 16%, transparent), transparent 70%); }
+.import-atm[data-game="liar"]::before { background: radial-gradient(55% 40% at 15% 10%, color-mix(in oklab, var(--game) 22%, transparent), transparent 70%), radial-gradient(50% 45% at 85% 25%, color-mix(in oklab, #34d399 14%, transparent), transparent 70%), radial-gradient(70% 50% at 50% 100%, color-mix(in oklab, #8b5cf6 16%, transparent), transparent 70%); }
+
 /* Card-level tables. Isolation keeps the layers behind the card's own content. */
 .bj-table, .feud-main, .draw-main { isolation: isolate; overflow: hidden; }
 .bj-table::before, .bj-table::after, .feud-main::before, .feud-main::after, .draw-main::before {

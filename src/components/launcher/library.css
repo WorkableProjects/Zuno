@@ -1,0 +1,39 @@
+/* Library tiles: pointer tilt and parallax (transform only), accent edge light, game-font titles.
+   Loaded after launcher.css; the .launcher prefix lets these rules win over the older tile rules there. */
+.launcher .lib-grid { gap: 24px 16px; }
+.launcher .lib-tile { gap: 12px; perspective: 900px; animation: lx-tile-in 480ms var(--ease-out-expo) backwards; animation-delay: calc(var(--i, 0) * var(--t-stagger) + 60ms); }
+.launcher .lib-art { box-shadow: var(--elev-1); transform-style: preserve-3d; }
+.launcher .lib-art .tile-img { transition: transform 300ms var(--ease-out-expo); }
+
+/* Accent edge light: a ring that brightens around the pointer. */
+.launcher .lib-art::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; padding: 2px; pointer-events: none; opacity: 0;
+  background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 0%), var(--game), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  transition: opacity var(--t-med) var(--ease);
+}
+.launcher .lib-tile:hover .lib-art::before, .launcher .lib-tile:focus-visible .lib-art::before, .launcher .lib-tile.is-active .lib-art::before { opacity: 1; }
+
+.launcher .lib-tile:hover .lib-art, .launcher .lib-tile:focus-visible .lib-art, .launcher .lib-tile.is-active .lib-art {
+  transform: translateY(-4px) scale(1.02) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  border-color: color-mix(in oklab, var(--game) 55%, var(--hairline));
+  box-shadow: var(--elev-3), 0 0 32px -4px color-mix(in oklab, var(--game) 40%, transparent);
+  animation: none;
+}
+.launcher .lib-tile:hover .tile-img, .launcher .lib-tile.is-active .tile-img {
+  transform: translate3d(calc(var(--py-x, 0) * 10px), calc(var(--py-y, 0) * 8px), 24px) scale(1.06);
+}
+.launcher .lib-tile:active .lib-art { transform: scale(0.97) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+.launcher .lib-tile:focus-visible .lib-art { outline: 2px solid var(--text); outline-offset: 4px; }
+
+.launcher .lib-name { font: 600 17px / 1.25 var(--game-font, var(--font-ui)); letter-spacing: 0; transform: none !important; }
+.launcher .lib-tile:hover .lib-name, .launcher .lib-tile.is-active .lib-name { color: color-mix(in oklab, var(--game) 55%, var(--text)); }
+[data-theme="light"] .launcher .lib-tile:hover .lib-name, [data-theme="light"] .launcher .lib-tile.is-active .lib-name { color: var(--game-ink); }
+
+@media (prefers-reduced-motion: reduce), (hover: none) {
+  .launcher .lib-tile:hover .lib-art, .launcher .lib-tile.is-active .lib-art { transform: translateY(-2px); }
+  .launcher .lib-tile:hover .tile-img, .launcher .lib-tile.is-active .tile-img { transform: scale(1.04); }
+}
+[data-motion="off"] .launcher .lib-tile { animation: none; }
+[data-motion="off"] .launcher .lib-tile:hover .lib-art { transform: none; }

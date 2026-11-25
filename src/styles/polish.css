@@ -16,7 +16,7 @@ html .btn {
     transform 420ms var(--ease-pop);
 }
 html .btn:hover:not(:disabled) { transform: translateY(-1px); }
-html .btn:active:not(:disabled) { transform: scale(0.95); transition-duration: var(--t-fast), var(--t-fast), var(--t-fast), var(--t-fast), var(--t-fast), 90ms; transition-timing-function: var(--ease); }
+html .btn:active:not(:disabled) { transform: scale(0.97); transition-duration: var(--t-fast), var(--t-fast), var(--t-fast), var(--t-fast), var(--t-fast), 90ms; transition-timing-function: var(--ease); }
 html .btn svg { transition: transform 420ms var(--ease-pop); }
 html .btn:hover:not(:disabled) svg { transform: scale(1.1); }
 html .btn-primary:hover:not(:disabled) { box-shadow: 0 10px 26px color-mix(in oklab, var(--btn-bg) 30%, transparent); }
@@ -39,7 +39,7 @@ html[data-theme="light"] .btn-secondary .zuno-ripple, html[data-theme="light"] .
 @keyframes zuno-ripple { from { transform: scale(0); opacity: 1; } to { transform: scale(1); opacity: 0; } }
 
 /* ---------- Focus: the ring draws in rather than appearing ---------- */
-html :where(.btn, html .lx-tab, html .segment, html .lx-back, html input, html select, html textarea):focus-visible {
+html :where(.btn, .lx-tab, .segment, .lx-back, input, select, textarea):focus-visible {
   animation: focus-in 260ms var(--ease-pop);
 }
 @keyframes focus-in { from { outline-offset: 8px; outline-color: transparent; } }
@@ -117,11 +117,6 @@ html .dialog-layer.is-closing .dialog-backdrop { animation: fade-out 180ms var(-
 @keyframes sheet-out { to { opacity: 0; transform: translateX(40px); } }
 
 /* ---------- Home cards ---------- */
-html .hm-feature { animation: card-in 640ms var(--ease-out-expo) backwards; }
-html .hm-feature-art { transition: transform 600ms var(--ease-pop); }
-html .hm-feature:hover .hm-feature-art { transform: rotate(-3deg) scale(1.04); }
-html .hm-feature-art .tile-img { animation: float-y 6s ease-in-out infinite; }
-@keyframes float-y { 50% { transform: translateY(-6px) rotate(1deg); } }
 html .hm-action { animation: card-in 560ms var(--ease-out-expo) backwards; }
 html .hm-action:nth-child(1) { animation-delay: 120ms; }
 html .hm-action:nth-child(2) { animation-delay: 170ms; }
@@ -129,8 +124,8 @@ html .hm-action:nth-child(3) { animation-delay: 220ms; }
 html .hm-action-icon { transition: transform 460ms var(--ease-pop), background-color var(--t-med) var(--ease); }
 html .hm-action:hover .hm-action-icon { transform: scale(1.12) rotate(-8deg); background: color-mix(in oklab, var(--game) 36%, transparent); }
 html .hm-chipcard, html .hm-recent-card { transition: transform 420ms var(--ease-pop), border-color var(--t-fast) var(--ease), box-shadow var(--t-med) var(--ease) !important; }
-html .hm-chipcard:hover, html .hm-recent-card:hover { transform: translateY(-4px) scale(1.02) !important; box-shadow: 0 16px 36px rgb(0 0 0 / 0.35), 0 0 24px color-mix(in oklab, var(--game) 22%, transparent); }
-html .hm-chipcard:active, html .hm-recent-card:active { transform: scale(0.97) !important; transition-duration: 90ms !important; }
+html .hm-chipcard:hover, html .hm-recent-card:hover { transform: translateY(-3px) !important; box-shadow: var(--elev-2); }
+
 html .hm-recent-go { transition: transform 420ms var(--ease-pop); }
 html .hm-recent-card:hover .hm-recent-go { transform: translateX(5px); }
 
@@ -179,7 +174,37 @@ html .importer.is-dragging .dropzone-icon { transform: translateY(-6px) scale(1.
 @keyframes march { to { background-position: 0 0, 44px 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  html .hm-feature-art .tile-img { animation: none; }
   html .lx-rule { animation: none; }
 }
-html[data-motion="off"] .hm-feature-art .tile-img { animation: none !important; }
+
+/* ==========================================================================
+   System tokens and shared interaction rules.
+   Elevation: 1 resting card, 2 raised on hover, 3 floating stage / dialog.
+   ========================================================================== */
+:root {
+  --elev-1: 0 1px 2px rgb(0 0 0 / 0.2), 0 4px 12px rgb(0 0 0 / 0.18);
+  --elev-2: 0 2px 4px rgb(0 0 0 / 0.2), 0 12px 28px rgb(0 0 0 / 0.3);
+  --elev-3: 0 4px 8px rgb(0 0 0 / 0.22), 0 24px 56px rgb(0 0 0 / 0.42);
+  --focus-color: var(--text);
+}
+[data-theme="light"] {
+  --elev-1: 0 1px 2px rgb(17 24 39 / 0.08), 0 4px 12px rgb(17 24 39 / 0.06);
+  --elev-2: 0 2px 4px rgb(17 24 39 / 0.1), 0 12px 28px rgb(17 24 39 / 0.14);
+  --elev-3: 0 4px 8px rgb(17 24 39 / 0.12), 0 24px 56px rgb(17 24 39 / 0.22);
+}
+
+/* One press feedback for every pressable surface. */
+html :is(.btn, .lx-tab, .segment, .icon-btn, .lx-back, .hm-action, .hm-signin, .hm-chipcard, .hm-recent-card, .hm-stage-arrow, .lib-tile):active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: var(--t-press);
+}
+/* One visible focus ring. */
+html :is(button, a[href], [role="tab"], [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 3px;
+}
+
+/* Quieter labels: sentence case, no tracking. */
+html :is(.lx-eyebrow, .lx-back) { text-transform: none; letter-spacing: 0; }
+html .lx-eyebrow { font-size: 14px; line-height: 1.2; }
+html .lx-back { font-size: 14px; font-weight: 600; }

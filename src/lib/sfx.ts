@@ -33,7 +33,8 @@ export type Sfx =
   | "sadTrombone"
   | "applause"
   | "boing"
-  | "rimshot";
+  | "rimshot"
+  | "launch";
 
 interface Bus {
   ac: AudioContext;
@@ -355,6 +356,30 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
     thump(c, 140, 70, 0.16, 0.14, 0.45);
     air(c, 0.4, 0.9, 7500, 5500, 0.18, 0.6, 0.005);
     thump(c, 90, 45, 0.4, 0.3, 0.4);
+  },
+  launch: (c) => {
+    // Whoosh riser into a heavy impact when the wipe covers the screen (~0.45s).
+    const { ac, out, t } = c;
+    air(c, 0, 0.45, 250, 7000, 0.4, 0.9, 0.2);
+    const o = ac.createOscillator();
+    const lp = ac.createBiquadFilter();
+    const g = ac.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(90, t);
+    o.frequency.exponentialRampToValueAtTime(900, t + 0.45);
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(300, t);
+    lp.frequency.exponentialRampToValueAtTime(5000, t + 0.45);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.44);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(lp).connect(g).connect(out);
+    o.start(t);
+    o.stop(t + 0.55);
+    thump(c, 150, 32, 0.45, 0.6, 0.85);
+    air(c, 0.45, 0.7, 6000, 900, 0.4, 0.6, 0.005);
+    bell(c, 220, 0.45, 1.1, 0.25, 2.5);
+    bell(c, 440, 0.47, 0.9, 0.18, 2.5);
   },
 };
 

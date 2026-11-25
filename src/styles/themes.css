@@ -7,14 +7,14 @@
 
 /* Ocean: deep navy with teal. Dark base. */
 html[data-skin="ocean"] {
-  --bg: #06141f;
-  --bg-rgb: 6 20 31;
-  --surface: #0c2233;
-  --surface-2: #12304a;
-  --surface-3: #1a3f5e;
+  --bg: #04202e;
+  --bg-rgb: 4 32 46;
+  --surface: #0a3b52;
+  --surface-2: #0f4d6b;
+  --surface-3: #16607f;
   --text: #eaf6fa;
-  --text-2: #a3c0cf;
-  --text-3: #7f9fb0;
+  --text-2: #b4dbe8;
+  --text-3: #93c3d4;
   --accent: #2dd4bf;
   --accent-ink: #04201c;
   --accent-glow: rgba(45, 212, 191, 0.28);
@@ -35,7 +35,8 @@ html[data-skin="ocean"] {
   --mark-b: #5b8def;
   --game: #5ccfe6;
 }
-html[data-skin="ocean"] body { background: var(--bg); }
+html[data-skin="ocean"] body { background: radial-gradient(120% 70% at 50% -10%, #0e7c92 0%, transparent 60%), linear-gradient(180deg, #06384d 0%, #031a28 100%) fixed; background-color: var(--bg); }
+html[data-skin="ocean"] .btn-primary { background: linear-gradient(100deg, #2dd4bf, #38bdf8); color: #04201c; }
 html[data-skin="ocean"] ::selection { background: #2dd4bf; color: #04201c; }
 
 /* Zuno Special: the brand sunset pushed bolder over a dusk-violet base. Dark base. */
@@ -43,14 +44,14 @@ html[data-skin="zuno-special"] {
   --sunset-1: #ffa63d;
   --sunset-2: #ff4f8b;
   --sunset-3: #7c5cff;
-  --bg: #0f0a1a;
-  --bg-rgb: 15 10 26;
-  --surface: #1a1229;
-  --surface-2: #251a3a;
-  --surface-3: #31244d;
+  --bg: #1d0f38;
+  --bg-rgb: 29 15 56;
+  --surface: #351a52;
+  --surface-2: #4b2563;
+  --surface-3: #62306f;
   --text: #fff6ee;
-  --text-2: #d2bfdb;
-  --text-3: #a592b5;
+  --text-2: #e8d2e6;
+  --text-3: #cdb0cc;
   --accent: #ffa63d;
   --accent-ink: #1a0c04;
   --accent-glow: rgba(255, 166, 61, 0.3);
@@ -68,7 +69,7 @@ html[data-skin="zuno-special"] {
   --mark-b: #9a7cff;
   --game: #ff8a4c;
 }
-html[data-skin="zuno-special"] body { background: var(--bg); }
+html[data-skin="zuno-special"] body { background: radial-gradient(90% 60% at 100% 100%, rgb(255 107 90 / 0.55), transparent 65%), radial-gradient(80% 60% at 0% 0%, rgb(124 92 255 / 0.5), transparent 65%), linear-gradient(160deg, #3a1664 0%, #7a2a6a 55%, #c2483f 100%) fixed; background-color: var(--bg); }
 html[data-skin="zuno-special"] .btn-primary { background: linear-gradient(100deg, var(--sunset-1), var(--sunset-2)); color: #1a0c04; }
 html[data-skin="zuno-special"] ::selection { background: #ffa63d; color: #1a0c04; }
 
@@ -106,3 +107,15 @@ html[data-skin="anthropical"] {
 }
 html[data-skin="anthropical"] body { background: var(--bg); }
 html[data-skin="anthropical"] ::selection { background: #b4532f; color: #fff; }
+
+/* Home hero card on the light palettes: a solid tint of the featured game's accent over the surface, never a transparent pink wash. */
+html[data-theme="light"] .hm-feature {
+  background:
+    radial-gradient(80% 110% at 0% 0%, color-mix(in oklab, var(--game) 20%, transparent), transparent 62%),
+    color-mix(in oklab, var(--game) 9%, var(--surface));
+  border-color: color-mix(in oklab, var(--game) 40%, var(--hairline));
+  color: var(--text);
+}
+html[data-theme="light"] .hm-feature-art { background: color-mix(in oklab, var(--game) 22%, var(--surface)); }
+html[data-theme="light"] .hm-feature-title { color: color-mix(in oklab, var(--game) 40%, #0b0f18); }
+html[data-theme="light"] .hm-feature-desc { color: var(--text-2); }

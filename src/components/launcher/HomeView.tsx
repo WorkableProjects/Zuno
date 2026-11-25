@@ -1,7 +1,8 @@
-import { useMemo, useState, type RefObject } from "react";
-import { ArrowRight, Clock, LayoutGrid, LogIn, Play, Plus, Shuffle, Smartphone, Tv, Users, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type RefObject } from "react";
+import { ArrowRight, ChevronLeft, ChevronRight, Clock, LayoutGrid, LogIn, Play, Plus, Shuffle, Smartphone, Tv, Users, X } from "lucide-react";
 import { useProfile } from "../../lib/profile";
 import { Avatar } from "../avatar/AvatarView";
+import { gameFontStyle } from "../../games/gameFont";
 import { TileCover } from "../dashboard/GameTile";
 import type { RailItem } from "../dashboard/railItems";
 import { GAME_INFO } from "./gameInfo";
@@ -39,6 +40,48 @@ function dailyIndex(n: number): number {
   return (d.getFullYear() * 400 + d.getMonth() * 31 + d.getDate()) % Math.max(n, 1);
 }
 
+const ROTATE_MS = 7000;
+
+/** Auto-rotation is off for people who asked for less motion (OS setting or the in-app Still mode). */
+function useReducedMotion(): boolean {
+  const query = () => {
+    try {
+      return window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "off";
+    } catch {
+      return false;
+    }
+  };
+  const [reduced, setReduced] = useState(query);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(query());
+    mq.addEventListener("change", update);
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-motion"] });
+    return () => {
+      mq.removeEventListener("change", update);
+      mo.disconnect();
+    };
+  }, []);
+  return reduced;
+}
+
+/** Pointer-driven parallax for the stage art: writes two CSS vars, once per frame. */
+function stageParallax(e: React.PointerEvent<HTMLElement>) {
+  if (e.pointerType !== "mouse") return;
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width - 0.5) * 2;
+  const y = ((e.clientY - r.top) / r.height - 0.5) * 2;
+  cancelAnimationFrame(Number(el.dataset.raf ?? 0));
+  el.dataset.raf = String(
+    requestAnimationFrame(() => {
+      el.style.setProperty("--px", x.toFixed(3));
+      el.style.setProperty("--py", y.toFixed(3));
+    }),
+  );
+}
+
 /**
  * Home is a starting point, not a second library: who you are, tonight's pick,
  * the fastest ways in, what you played last, and games grouped by the room you're in.
@@ -53,8 +96,14 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
     }
   });
   const [ctaLeaving, setCtaLeaving] = useState(false);
-  const featured = engines[dailyIndex(engines.length)];
+  const daily = dailyIndex(engines.length);
+  const [stageIdx, setStageIdx] = useState(daily);
+  const [paused, setPaused] = useState(false);
+  const reduced = useReducedMotion();
+  const count = engines.length;
+  const featured = engines[stageIdx % Math.max(count, 1)];
   const feat = featured ? GAME_INFO[featured.gameType] : undefined;
+  const step = useCallback((d: number) => setStageIdx((i) => (i + d + count) % Math.max(count, 1)), [count]);
 
   const groups = useMemo(() => {
     const info = (i: RailItem) => GAME_INFO[i.gameType];
@@ -121,14 +170,26 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
       )}
 
       {featured && (
-        <section className="hm-feature" style={{ "--game": featured.backdrop.accent } as React.CSSProperties} aria-label="Tonight's pick">
-          <div className="hm-feature-art" aria-hidden="true" data-morph={featured.kind === "engine" ? `game:${featured.gameType}` : undefined}>
+        <section
+          className={`hm-stage game-scope${paused ? " is-paused" : ""}${reduced ? " is-still" : ""}`}
+          style={{ "--game": featured.backdrop.accent, ...gameFontStyle(featured.gameType) } as CSSProperties}
+          data-game={featured.gameType}
+          aria-roledescription="carousel"
+          aria-label="Featured games"
+          onPointerEnter={() => setPaused(true)}
+          onPointerLeave={() => setPaused(false)}
+          onPointerMove={stageParallax}
+          onFocus={() => setPaused(true)}
+          onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node | null) && setPaused(false)}
+        >
+          <div className="hm-stage-bg" aria-hidden="true" />
+          <div className="hm-stage-art" aria-hidden="true" key={`art:${featured.id}`} data-morph={featured.kind === "engine" ? `game:${featured.gameType}` : undefined}>
             <TileCover gameType={featured.gameType} />
           </div>
-          <div className="hm-feature-body">
-            <p className="hm-kicker">Tonight's pick</p>
-            <h2 className="hm-feature-title">{featured.title}</h2>
-            <p className="hm-feature-desc">{featured.description}</p>
+          <div className="hm-stage-body" key={featured.id} aria-live={reduced || paused ? "polite" : "off"}>
+            <p className="hm-kicker">{stageIdx % count === daily ? "Pick of the day" : "Featured"}</p>
+            <h2 className="hm-stage-title">{featured.title}</h2>
+            <p className="hm-stage-desc">{featured.description}</p>
             {feat && (
               <p className="hm-facts">
                 <span>
@@ -145,12 +206,31 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
                 <Play size={18} strokeWidth={2} />
                 Play {featured.title}
               </PlayButton>
-              <button type="button" className="btn btn-secondary" onClick={surprise}>
+              <button type="button" className="btn btn-glass" onClick={surprise}>
                 <Shuffle size={18} strokeWidth={1.75} />
                 Surprise me
               </button>
             </div>
           </div>
+          {count > 1 && (
+            <div className="hm-stage-nav">
+              <button type="button" className="hm-stage-arrow" aria-label="Previous game" onClick={() => step(-1)}>
+                <ChevronLeft size={18} strokeWidth={2} />
+              </button>
+              <ol className="hm-stage-dots">
+                {engines.map((e, i) => (
+                  <li key={e.id}>
+                    <button type="button" className={`hm-stage-dot${i === stageIdx % count ? " is-on" : ""}`} aria-label={`Show ${e.title}`} aria-current={i === stageIdx % count ? "true" : undefined} onClick={() => setStageIdx(i)}>
+                      {i === stageIdx % count && <span className="hm-stage-fill" key={`${stageIdx}`} onAnimationEnd={() => !reduced && step(1)} style={{ animationDuration: `${ROTATE_MS}ms` }} />}
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <button type="button" className="hm-stage-arrow" aria-label="Next game" onClick={() => step(1)}>
+                <ChevronRight size={18} strokeWidth={2} />
+              </button>
+            </div>
+          )}
         </section>
       )}
 

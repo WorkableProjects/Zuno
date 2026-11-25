@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { ArrowLeft, ChevronDown, Clock, FolderOpen, LogIn, Monitor, PencilRuler, Play, Radio, Users } from "lucide-react";
+import { gameFontStyle } from "../../games/gameFont";
 import { getEngine } from "../../games/registry";
 import { holdMusic, isSoundTheme, releaseMusic } from "../../lib/audio";
 import { useEscape } from "../navigation/spatialNav";
@@ -34,7 +35,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
   const online = !!engine.onlineOnly;
 
   return (
-    <main className="lx-detail" key={gameType}>
+    <main className="lx-detail" key={gameType} style={gameFontStyle(gameType)}>
       <section className="lx-hero" data-morph={`game:${gameType}`}>
         <button type="button" className="lx-back" onClick={onBack} data-nav-row="1">
           <ArrowLeft size={16} strokeWidth={2} />
@@ -63,7 +64,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
           <div className="lx-actions" data-nav-row="2">
             {online ? (
               <>
-                <PlayButton className="btn btn-primary lx-play" data-nav-default="" disabled={!onHostOnline} onOpen={() => onHostOnline?.(gameType)}>
+                <PlayButton className="btn btn-primary lx-play" data-nav-default="" title={engine.title} disabled={!onHostOnline} onOpen={() => onHostOnline?.(gameType)}>
                   <Play size={20} strokeWidth={2} fill="currentColor" />
                   Play
                 </PlayButton>
@@ -74,7 +75,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
               </>
             ) : (
               <>
-                <PlayButton className="btn btn-primary lx-play" data-nav-default="" onOpen={() => onLoad(gameType)}>
+                <PlayButton className="btn btn-primary lx-play" data-nav-default="" title={engine.title} onOpen={() => onLoad(gameType)}>
                   <Play size={20} strokeWidth={2} fill="currentColor" />
                   Play
                 </PlayButton>
@@ -133,7 +134,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
             ))}
           </div>
           <div className="lx-actions lx-actions-end">
-            <PlayButton className="btn btn-primary lx-play" onOpen={() => (online ? onHostOnline?.(gameType) : onLoad(gameType))} disabled={online && !onHostOnline}>
+            <PlayButton className="btn btn-primary lx-play" title={engine.title} onOpen={() => (online ? onHostOnline?.(gameType) : onLoad(gameType))} disabled={online && !onHostOnline}>
               <Play size={20} strokeWidth={2} fill="currentColor" />
               Play {engine.title}
             </PlayButton>

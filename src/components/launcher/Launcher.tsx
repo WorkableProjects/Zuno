@@ -1,7 +1,9 @@
 import { ZunoMark } from "../brand/Logo";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, House, LayoutGrid, Plus, Search, Settings, X } from "lucide-react";
-import { loadSidebarCollapsed, saveSidebarCollapsed } from "../../app/storage";
+import { loadRecent, loadSidebarCollapsed, saveSidebarCollapsed } from "../../app/storage";
+import { playSfx } from "../../lib/sfx";
+import { gameFontStyle } from "../../games/gameFont";
 import { getEngine } from "../../games/registry";
 import { TileCover } from "../dashboard/GameTile";
 import type { RailItem } from "../dashboard/railItems";
@@ -9,47 +11,102 @@ import { GAME_INFO } from "./gameInfo";
 import { HomeView } from "./HomeView";
 import "../dashboard/dashboard.css";
 import "./launcher.css";
+import "./library.css";
+import "./rail.css";
 
 export type Section = "home" | "library" | "settings";
 
-/** The round sidebar shared by the home, library and game pages. */
+/** Hover/focus tooltip that sits to the right of a rail control. */
+function Tip({ children, keys }: { children: ReactNode; keys?: string }) {
+  return (
+    <span className="lx-tip" aria-hidden="true">
+      {children}
+      {keys ? <kbd>{keys}</kbd> : null}
+    </span>
+  );
+}
+
+/** The command rail shared by the home, library and game pages. */
 export function LauncherShell({ section, onSection, onSettings, children, accent }: { section: Section | null; onSection: (s: Section) => void; onSettings: () => void; children: ReactNode; accent: string }) {
   const nav: Array<{ id: Section; label: string; Icon: typeof House }> = [
     { id: "home", label: "Home", Icon: House },
     { id: "library", label: "Library", Icon: LayoutGrid },
   ];
   const [collapsed, setCollapsed] = useState(loadSidebarCollapsed);
-  const toggle = () => {
+  const [recent, setRecent] = useState(() => loadRecent().slice(0, 3));
+  useEffect(() => setRecent(loadRecent().slice(0, 3)), [section]);
+
+  // Phones keep the bottom bar, where collapsing does not apply.
+  const [desktop, setDesktop] = useState(() => typeof window === "undefined" || !window.matchMedia("(max-width: 760px)").matches);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 760px)");
+    const on = () => setDesktop(!mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+
+  const toggle = useCallback((sound = false) => {
     setCollapsed((c) => {
       saveSidebarCollapsed(!c);
+      if (sound) playSfx(c ? "toggleOn" : "toggleOff");
       return !c;
     });
-  };
+  }, []);
+  // '[' toggles the rail, except while typing.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "[" || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      toggle(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [toggle]);
+
   const Chevron = collapsed ? ChevronRight : ChevronLeft;
+  const idx = section === "home" ? 0 : section === "library" ? 1 : section === "settings" ? 2 : -1;
   return (
     <div className={`launcher game-scope${collapsed ? " is-collapsed" : ""}`} style={{ "--game": accent } as React.CSSProperties}>
       <aside className="lx-side" aria-label="Zuno">
-        <button type="button" className="lx-mark" aria-label="Zuno home" title="Home" onClick={() => onSection("home")}>
+        <span className="lx-shadow lx-shadow-full" aria-hidden="true" />
+        <span className="lx-shadow lx-shadow-mini" aria-hidden="true" />
+        <span className="lx-plate" aria-hidden="true" />
+        <button type="button" className="lx-mark" aria-label="Zuno home" onClick={() => onSection("home")}>
           <ZunoMark size={40} />
+          <Tip>Home</Tip>
         </button>
-        <button type="button" className="lx-collapse" aria-expanded={!collapsed} aria-controls="lx-nav" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={toggle}>
+        <button type="button" className="lx-collapse" aria-expanded={!collapsed} aria-controls="lx-nav" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => toggle()}>
           <Chevron size={16} strokeWidth={2} />
+          <Tip keys="[">{collapsed ? "Expand" : "Collapse"}</Tip>
         </button>
-        <nav id="lx-nav" className="lx-nav" data-nav-row="0" inert={collapsed} aria-label="Sections" style={{ "--idx": section === "home" ? 0 : section === "library" ? 1 : section === "settings" ? 2 : -1 } as React.CSSProperties}>
-          <span className={`lx-nav-pill${section ? "" : " is-hidden"}`} aria-hidden="true" />
-          {nav.map(({ id, label, Icon }) => (
-            <button key={id} type="button" className={`lx-nav-btn${section === id ? " is-on" : ""}`} aria-current={section === id ? "page" : undefined} aria-label={label} title={label} onClick={() => onSection(id)}>
-              <Icon size={20} strokeWidth={1.75} />
-              <span className="lx-nav-label">{label}</span>
+        <div className="lx-body" inert={collapsed && desktop}>
+          <nav id="lx-nav" className="lx-nav" data-nav-row="0" aria-label="Sections" style={{ "--idx": idx } as React.CSSProperties}>
+            <span className={`lx-nav-pill${section ? "" : " is-hidden"}`} aria-hidden="true" />
+            {nav.map(({ id, label, Icon }) => (
+              <button key={id} type="button" className={`lx-nav-btn${section === id ? " is-on" : ""}`} aria-current={section === id ? "page" : undefined} aria-label={label} onClick={() => onSection(id)}>
+                <Icon size={20} strokeWidth={1.75} />
+                <Tip>{label}</Tip>
+              </button>
+            ))}
+            <button type="button" className={`lx-nav-btn${section === "settings" ? " is-on" : ""}`} aria-current={section === "settings" ? "page" : undefined} aria-label="Settings" onClick={onSettings}>
+              <Settings size={20} strokeWidth={1.75} />
+              <Tip>Settings</Tip>
             </button>
-          ))}
-          <button type="button" className={`lx-nav-btn${section === "settings" ? " is-on" : ""}`} aria-current={section === "settings" ? "page" : undefined} aria-label="Settings" title="Settings" onClick={onSettings}>
-            <Settings size={20} strokeWidth={1.75} />
-            <span className="lx-nav-label">Settings</span>
-          </button>
-        </nav>
-        {/* The multi-action button (soundboard, chat, volume) docks here. */}
-        <span className="lx-dock" aria-hidden="true" />
+          </nav>
+          {recent.length > 0 ? (
+            <button type="button" className="lx-recent" aria-label="Recently played" onClick={() => onSection("home")}>
+              {recent.map((r, i) => (
+                <span key={r.id} className="lx-recent-ico" style={{ "--i": i, "--c": r.accentColor } as React.CSSProperties}>
+                  {r.coverImage ? <img src={r.coverImage} alt="" loading="lazy" /> : <b>{(r.title.trim()[0] ?? "?").toUpperCase()}</b>}
+                </span>
+              ))}
+              <Tip>{`Recent: ${recent[0].title}`}</Tip>
+            </button>
+          ) : null}
+          {/* The multi-action button (soundboard, chat, volume) docks here. */}
+          <span className="lx-dock" aria-hidden="true" />
+        </div>
       </aside>
       <div className="lx-main">{children}</div>
     </div>
@@ -70,6 +127,8 @@ function tilt(e: React.PointerEvent<HTMLElement>) {
       el.style.setProperty("--my", `${(y * 100).toFixed(1)}%`);
       el.style.setProperty("--rx", `${((0.5 - y) * 10).toFixed(2)}deg`);
       el.style.setProperty("--ry", `${((x - 0.5) * 12).toFixed(2)}deg`);
+      el.style.setProperty("--py-x", ((0.5 - x) * 2).toFixed(3));
+      el.style.setProperty("--py-y", ((0.5 - y) * 2).toFixed(3));
     }),
   );
 }
@@ -78,6 +137,8 @@ function untilt(e: React.PointerEvent<HTMLElement>) {
   cancelAnimationFrame(Number(el.dataset.raf ?? 0));
   el.style.removeProperty("--rx");
   el.style.removeProperty("--ry");
+  el.style.removeProperty("--py-x");
+  el.style.removeProperty("--py-y");
 }
 
 /** A large library tile: the game's art and its name, nothing else. */
@@ -106,7 +167,7 @@ export function LibTile({ item, active, onSelect, onOpen, index }: { item: RailI
           <TileCover gameType={item.gameType} />
         )}
       </span>
-      <span className="lib-name">{item.kind === "build" ? "Build a game" : item.title}</span>
+      <span className="lib-name" style={item.kind === "build" ? undefined : gameFontStyle(item.gameType)}>{item.kind === "build" ? "Build a game" : item.title}</span>
     </button>
   );
 }
