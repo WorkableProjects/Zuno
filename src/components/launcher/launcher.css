@@ -179,12 +179,12 @@
   font: 600 13px / 1 var(--font-ui);
   color: var(--text-2);
 }
-.lx-big { display: flex; flex-wrap: wrap; gap: 0 0.22em; margin: 0; font: 700 clamp(40px, 8vw, 112px) / 0.95 var(--font-display); letter-spacing: 0;
+.lx-big { display: flex; flex-wrap: wrap; gap: 0 0.22em; margin: 0; font: 700 clamp(40px, 8vw, 112px) / 1.12 var(--font-display); letter-spacing: 0; overflow-wrap: normal;
   /* Dutch Display Sans is wide: size the title by its longest word so it stays in the
      left column and only grazes the hero art (caps run about 0.8em each). */
   font-size: min(clamp(40px, 8vw, 112px), calc(52vw / var(--len, 8)));
   max-width: min(100%, 50vw); text-transform: uppercase; text-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
-.lx-big-word { display: inline-block; padding-block: 0.06em; /* room for Dutch Display Sans ascenders during the blur rise */ animation: lx-rise 700ms var(--ease-pop) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
+.lx-big-word { display: inline-block; padding: 0.1em 0.06em 0.14em; margin: -0.1em -0.06em -0.14em; /* script faces (Caveat) overshoot the line box: keep the box roomy so text and background-clip gradients never clip */ /* room for Dutch Display Sans ascenders during the blur rise */ animation: lx-rise 700ms var(--ease-pop) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
 .lx-big-word:last-child:not(:first-child) { color: color-mix(in oklab, var(--game) 70%, #fff); }
 .lx-big-word:last-child:not(:first-child), .lx-big-word:only-child {
   background: linear-gradient(100deg, currentColor 40%, #fff 50%, currentColor 60%) 100% 0 / 300% 100% no-repeat text;
@@ -253,6 +253,8 @@
   .corner.is-docked { left: auto; right: 22px; bottom: 22px; }
   .corner.is-docked .corner-panel { left: auto; right: calc(100% + 10px); }
   .lx-hero { min-height: calc(100dvh - 90px); }
+  /* Phones have the full width: size by the longest word against the viewport, not half of it. */
+  .lx-big { font-size: clamp(30px, calc(130vw / var(--len, 8)), 56px); max-width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lx-scroll, .lx-play, .lx-play::before, .lib-tile.is-active .lib-art { animation: none; }

@@ -5,6 +5,7 @@ import { useEscape } from "../navigation/spatialNav";
 import { useAutoFocus } from "../ui/useAutoFocus";
 import { GameImporter, type ImportSeed } from "./GameImporter";
 import type { LoadedGame } from "./loadGame";
+import { GameScene } from "../../games/scenes/GameScene";
 
 interface Props {
   gameType: string;
@@ -27,6 +28,7 @@ export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoad
   useEscape(onBack);
   return (
     <main className="screen game-scope import-atm" data-game={gameType} ref={root} style={{ "--game": engine?.appearance.accentColor, ...gameFontStyle(gameType) } as React.CSSProperties}>
+      <GameScene game={gameType} />
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Back to dashboard" onClick={onBack}>
           <ArrowLeft size={20} strokeWidth={1.5} />

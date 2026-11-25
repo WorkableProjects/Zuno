@@ -40,6 +40,7 @@ import {
 } from "./liarLobby";
 import "./liar.css";
 import { gameFontStyle } from "../gameFont";
+import { GameScene } from "../scenes/GameScene";
 
 interface Props {
   file: LiarFile;
@@ -206,6 +207,7 @@ export function LiarOnlineGame({
       className="screen game-scope liar-game liar-online-screen"
       style={{ "--game": file.appearance.accentColor, ...gameFontStyle("liar") } as React.CSSProperties}
     >
+      <GameScene game="liar" />
       <header className="screen-bar" data-nav-row="0">
         <button
           type="button"

@@ -9,6 +9,7 @@ import { createSession, rpgReducer } from "./rpgEngine";
 import { leaveRpgLobby, publishRpgGame, publishRpgPrivate, rpgMoveToAction, rpgPrivate, toRpgOnline, watchRpgLobby, watchRpgMoves, type RpgLobbyState, type RpgMove } from "./rpgLobby";
 import "./rpg.css";
 import { gameFontStyle } from "../gameFont";
+import { GameScene } from "../scenes/GameScene";
 
 interface Props {
   file: RpgFile;
@@ -132,6 +133,7 @@ export function RpgOnlineGame({ file, code, players, settings, onAgain, onExit }
 
   return (
     <main className="screen game-scope rpg-game rpg-online-screen" style={{ "--game": file.appearance.accentColor, ...gameFontStyle("rpg") } as React.CSSProperties}>
+      <GameScene game="rpg" />
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Exit to dashboard" onClick={() => (done ? onExit() : setConfirm("exit"))}>
           <ArrowLeft size={20} strokeWidth={1.5} />

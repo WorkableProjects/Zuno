@@ -8,6 +8,7 @@ import { boardProblems, type TeamSetup } from "./jeopardyEngine";
 import "./jeopardy.css";
 import "./setup.css";
 import { gameFontStyle } from "../gameFont";
+import { GameScene } from "../scenes/GameScene";
 
 interface Props {
   game: LoadedGame<JeopardyFile>;
@@ -107,6 +108,7 @@ export function JeopardySetup({ game, onBack, onStart }: Props) {
 
   return (
     <main className="screen game-scope" ref={root} style={{ "--game": file.appearance.accentColor, ...gameFontStyle("jeopardy") } as React.CSSProperties}>
+      <GameScene game="jeopardy" />
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Back to file" onClick={onBack}>
           <ArrowLeft size={20} strokeWidth={1.5} />

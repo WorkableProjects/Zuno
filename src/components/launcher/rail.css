@@ -4,7 +4,7 @@
    accent tile plus an edge bar that spring between rows.
    ========================================================================== */
 .lx-side {
-  --rail-mini: 128px;
+  --rail-mini: 168px;
   --rail-spring: var(--ease-pop);
   position: fixed;
   z-index: 40;
@@ -43,7 +43,7 @@
 .lx-mark:hover svg { transform: rotate(180deg); }
 .lx-mark:hover { transform: scale(1.06); }
 .lx-mark:active { transform: scale(1.1, 0.86); transition-duration: var(--t-press); }
-.lx-mark:focus-visible, .lx-collapse:focus-visible, .lx-nav-btn:focus-visible, .lx-recent-ico:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.lx-mark:focus-visible, .lx-collapse:focus-visible, .lx-nav-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @keyframes lx-sheen {
   0%, 84%, 100% { filter: brightness(1) saturate(1); }
   91% { filter: brightness(1.35) saturate(1.15); }
@@ -95,25 +95,28 @@
 .lx-nav-btn.is-on svg { animation: lx-icon-pop 520ms var(--ease-pop); }
 @keyframes lx-icon-pop { 0% { transform: scale(0.7) rotate(-16deg); } 60% { transform: scale(1.16) rotate(3deg); } }
 
-/* Recently played: overlapped covers that fan out on hover. */
-.lx-recent {
-  display: flex; flex-direction: column; align-items: center; flex: none;
-  padding: 12px 0 0; position: relative;
+/* Profile: the player's avatar (and name when expanded), opens Settings. Sits above the dock; when the rail
+   collapses it rides up into the mini plate. transform/opacity only. */
+.lx-side > .lx-profile {
+  position: absolute; left: 50%; top: 0; z-index: 2; pointer-events: auto;
+  width: 72px; height: 64px; margin-left: -36px; padding: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  border: 0; border-radius: 18px; background: transparent; color: var(--text-2); cursor: pointer;
+  transform: translateY(calc(100dvh - 32px - 82px - 64px));
+  transition: transform 560ms var(--rail-spring), background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.lx-recent::before { content: ""; position: absolute; top: 0; width: 20px; height: 1px; background: var(--hairline); }
-.lx-recent-ico {
-  position: relative; display: grid; place-items: center; overflow: hidden;
-  width: 30px; height: 30px; margin-top: calc(var(--i) * -12px + 0px); border-radius: 50%;
-  z-index: calc(10 - var(--i));
-  border: 2px solid color-mix(in oklab, var(--surface) 90%, var(--text)); padding: 0; cursor: pointer;
-  background: color-mix(in oklab, var(--c, var(--accent)) 55%, var(--surface-2));
-  transition: transform 360ms var(--rail-spring);
+.lx-profile .avatar { flex: none; box-shadow: 0 0 0 2px color-mix(in oklab, var(--surface) 90%, var(--text)); transition: box-shadow var(--t-fast) var(--ease), transform 300ms var(--rail-spring); }
+.lx-profile:hover .avatar { transform: scale(1.06); }
+.lx-profile:active .avatar { transform: scale(0.92); }
+.lx-profile.is-on .avatar { box-shadow: 0 0 0 2px var(--accent); }
+.lx-profile:hover { color: var(--text); }
+.lx-profile-name {
+  max-width: 100%; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 11px / 1.2 var(--font-ui); transition: opacity var(--t-fast) var(--ease);
 }
-.lx-recent-ico:first-child { margin-top: 0; }
-.lx-recent-ico img { width: 100%; height: 100%; object-fit: cover; }
-.lx-recent-ico b { font: 700 13px / 1 var(--font-display); color: var(--text); }
-.lx-recent:hover .lx-recent-ico, .lx-recent:focus-within .lx-recent-ico { transform: translateY(calc(var(--i) * 10px)); }
-.lx-recent:hover .lx-recent-ico:first-child { transform: translateY(-2px) scale(1.06); }
+.lx-profile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.launcher.is-collapsed .lx-side > .lx-profile { transform: translateY(104px); }
+.launcher.is-collapsed .lx-profile-name { opacity: 0; }
 .lx-dock { width: 52px; height: 52px; flex: none; }
 
 /* Tooltips. */
@@ -132,7 +135,7 @@
   border-radius: 6px; border: 1px solid var(--hairline); background: color-mix(in oklab, var(--text) 8%, transparent);
   color: var(--text-2); font: 600 11px / 1 var(--font-mono, ui-monospace, monospace);
 }
-:is(.lx-mark, .lx-collapse, .lx-nav-btn):is(:hover, :focus-visible) > .lx-tip, .lx-recent:is(:hover, :focus-within) > .lx-tip { opacity: 1; transform: translate(0, -50%); transition-delay: 90ms; }
+:is(.lx-mark, .lx-collapse, .lx-nav-btn, .lx-profile):is(:hover, :focus-visible) > .lx-tip { opacity: 1; transform: translate(0, -50%); transition-delay: 90ms; }
 
 @media (min-width: 761px) {
   .lx-plate { transition: clip-path 560ms var(--rail-spring); }
@@ -153,7 +156,7 @@
   .lx-plate, .lx-shadow { border-radius: 999px; }
   /* Content scrolls under the bottom bar, so the plate must hold text back. */
   .lx-plate { background: var(--surface); }
-  .lx-shadow-mini, .lx-collapse, .lx-recent, .lx-tip { display: none; }
+  .lx-shadow-mini, .lx-collapse, .lx-profile, .lx-tip { display: none; }
   .lx-mark { width: 40px; height: 40px; }
   .lx-mark svg { width: 34px; height: 34px; }
   .lx-body { flex-direction: row; gap: 10px; justify-content: center; }
@@ -163,9 +166,9 @@
   .lx-nav-pill::before { left: 15px; top: auto; bottom: -9px; width: 20px; height: 4px; border-radius: 4px 4px 0 0; }
 }
 
-@media (max-height: 560px) { .lx-recent { display: none; } }
+@media (max-height: 560px) { .lx-profile-name { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .lx-plate, .lx-shadow, .lx-body, .lx-nav-pill, .lx-tip, .lx-recent-ico, .lx-mark, .lx-collapse, .lx-nav-btn { transition-duration: 0.01ms !important; transition-delay: 0s !important; }
+  .lx-plate, .lx-shadow, .lx-body, .lx-nav-pill, .lx-tip, .lx-profile, .lx-mark, .lx-collapse, .lx-nav-btn { transition-duration: 0.01ms !important; transition-delay: 0s !important; }
   .lx-mark svg, .lx-nav-btn.is-on svg { animation: none; }
 }
 [data-motion="off"] :is(.lx-mark svg, .lx-nav-btn.is-on svg) { animation: none !important; }

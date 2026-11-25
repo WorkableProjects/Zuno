@@ -1,0 +1,208 @@
+/* Full-bleed game scenes (see GameScene.tsx). The scene is the first child of a `.screen`, whose
+   stacking context keeps it above the global 3D backdrop and below the content. Every colour is
+   derived from --game. At most three layers per scene move, and only by transform and opacity;
+   blur and masks are static. Reduced motion, Motion: Off and the motion governor pin a still pose. */
+
+.gscene {
+  --g1: var(--game, #6ea8ff);
+  --g2: color-mix(in oklab, var(--g1) 55%, #ffd36a);
+  --g3: color-mix(in oklab, var(--g1) 55%, #5be4ff);
+  --gs-ink: 3 5 12;
+  --gs-deep: #03050c;
+  --gs-lite: color-mix(in oklab, var(--g1) 34%, #03050c);
+  --gs-vig: 0.66;
+  --gs-mid: 0.5;
+  --gs-flat: 0.16;
+  /* Sticky, not fixed: the screen's entry animation leaves a transform on it, which would turn a fixed
+     child into a page-sized one that scrolls away. A viewport-high sticky box that cancels its own
+     height with a negative margin behaves like a fixed backdrop inside the screen. */
+  position: sticky;
+  top: 0;
+  flex: none;
+  width: calc(100% + 2 * var(--page-x, 0px));
+  margin: 0 calc(var(--page-x, 0px) * -1) -100dvh;
+  height: 100dvh;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint;
+  user-select: none;
+}
+@supports (color: oklch(from red l c h)) {
+  .gscene {
+    --g2: oklch(from var(--g1) clamp(0.7, l, 0.86) c calc(h + 150));
+    --g3: oklch(from var(--g1) clamp(0.7, l, 0.86) c calc(h - 110));
+  }
+}
+html[data-theme="light"] .gscene {
+  --gs-ink: 255 255 255;
+  --gs-deep: color-mix(in oklab, var(--g1) 20%, #f4f7fc);
+  --gs-lite: color-mix(in oklab, var(--g1) 34%, #ffffff);
+  --gs-vig: 0.62;
+  --gs-mid: 0.38;
+  --gs-flat: 0.12;
+}
+
+.gscene > * { position: absolute; }
+.gs-fill { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.gs-base { inset: 0; }
+.gs-layer { inset: -8%; will-change: transform; }
+.gs-ring { left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax; will-change: transform; }
+.gs-item { position: absolute; }
+.gs-item svg { display: block; overflow: visible; }
+.gs-blur-sm { filter: blur(5px); }
+.gs-blur-lg { filter: blur(22px); }
+.gscene polyline { vector-effect: non-scaling-stroke; }
+.gs-vig {
+  inset: 0;
+  background:
+    radial-gradient(ellipse 78% 62% at 42% 38%, rgb(var(--gs-ink) / var(--gs-mid)), transparent 85%),
+    radial-gradient(ellipse 120% 100% at 50% 45%, transparent 36%, rgb(var(--gs-ink) / var(--gs-vig)) 100%),
+    linear-gradient(rgb(var(--gs-ink) / var(--gs-flat)), rgb(var(--gs-ink) / var(--gs-flat)));
+}
+
+/* ---------- Jeopardy: TV studio ---------- */
+.gs-jeopardy .gs-base { background: linear-gradient(180deg, color-mix(in oklab, var(--gs-lite) 88%, transparent) 0, color-mix(in oklab, var(--gs-deep) 76%, transparent) 62%, color-mix(in oklab, var(--g1) 25%, var(--gs-deep)) 100%); }
+.gs-jeopardy .gs-a { transform-origin: 50% 0; transform: rotate(-3deg); animation: gs-sway-l 11s var(--ease-in-out, ease-in-out) infinite alternate; opacity: 0.7; }
+.gs-jeopardy .gs-b { transform-origin: 50% 0; transform: rotate(3deg); animation: gs-sway-r 14s var(--ease-in-out, ease-in-out) infinite alternate; opacity: 0.6; }
+.gs-jeopardy .gs-a, .gs-jeopardy .gs-b { inset: 0 -4% 0 -4%; mix-blend-mode: screen; }
+.gs-jeopardy .gs-c { animation: gs-rise 26s linear infinite alternate; filter: blur(1.5px); }
+html[data-theme="light"] .gs-jeopardy .gs-a, html[data-theme="light"] .gs-jeopardy .gs-b { mix-blend-mode: normal; opacity: 0.55; }
+@keyframes gs-sway-l { from { transform: rotate(-6deg); } to { transform: rotate(5deg); } }
+@keyframes gs-sway-r { from { transform: rotate(6deg); } to { transform: rotate(-5deg); } }
+@keyframes gs-rise { from { transform: translate3d(0, 5%, 0); opacity: 0.55; } to { transform: translate3d(2%, -6%, 0); opacity: 1; } }
+
+/* ---------- Headbands: question-mark cards through bokeh ---------- */
+.gs-headbands .gs-base { background: radial-gradient(90% 70% at 50% 40%, color-mix(in oklab, var(--gs-lite) 80%, transparent), color-mix(in oklab, var(--gs-deep) 82%, transparent) 78%); }
+.gs-headbands .gs-a { animation: gs-drift 28s var(--ease-in-out, ease-in-out) infinite alternate; }
+.gs-headbands .gs-b { animation: gs-spin 150s linear infinite; }
+.gs-headbands .gs-c { animation: gs-spin-rev 110s linear infinite; opacity: 0.85; }
+@keyframes gs-drift { from { transform: translate3d(-3%, 2%, 0) scale(1); } to { transform: translate3d(3%, -3%, 0) scale(1.06); } }
+@keyframes gs-spin { to { transform: rotate(360deg); } }
+@keyframes gs-spin-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+/* ---------- LIAR: interrogation room ---------- */
+.gs-liar .gs-base { background: linear-gradient(180deg, color-mix(in oklab, var(--gs-deep) 92%, transparent), color-mix(in oklab, var(--g1) 14%, var(--gs-deep)) 100%); }
+.gs-liar .gs-a { animation: gs-smoke 22s var(--ease-in-out, ease-in-out) infinite alternate; filter: blur(14px); }
+.gs-liar .gs-lampwrap { inset: 0; transform-origin: 50% 0; transform: rotate(1deg); animation: gs-lamp 6.5s var(--ease-in-out, ease-in-out) infinite alternate; --lw: min(22vmax, 34vw); }
+.gs-liar .gs-lamp { left: 50%; top: 0; width: var(--lw); margin-left: calc(var(--lw) / -2); height: auto; position: absolute; }
+.gs-liar .gs-cone {
+  position: absolute;
+  left: 50%; top: calc(var(--lw) * 1.04); width: 112vmax; height: 100%; margin-left: -56vmax;
+  clip-path: polygon(46.5% 0, 53.5% 0, 100% 78%, 0 78%);
+  background: linear-gradient(180deg, color-mix(in oklab, #fff4d2 70%, var(--g1)) 0, color-mix(in oklab, var(--g1) 40%, transparent) 55%, transparent 80%);
+  opacity: 0.8; filter: blur(7px);
+}
+.gs-liar .gs-wave { left: 0; right: 0; bottom: 8%; height: 25vh; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); }
+.gs-wavemove { position: absolute; top: 0; left: 0; width: 200%; height: 100%; transform: translate3d(-12%, 0, 0); animation: gs-scan 8s linear infinite; }
+@keyframes gs-smoke { from { transform: translate3d(-4%, 2%, 0) scale(1); } to { transform: translate3d(5%, -3%, 0) scale(1.1); } }
+@keyframes gs-lamp { from { transform: rotate(-2.4deg); } to { transform: rotate(2.4deg); } }
+@keyframes gs-scan { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+
+/* ---------- Rock Paper Gamble: Vegas strip ---------- */
+.gs-rpg .gs-base { background: linear-gradient(180deg, color-mix(in oklab, var(--g1) 20%, var(--gs-deep)) 0, color-mix(in oklab, var(--gs-deep) 90%, transparent) 60%, color-mix(in oklab, var(--g1) 30%, var(--gs-deep)) 100%); }
+.gs-signs { inset: 0; }
+.gs-glow { filter: blur(9px); animation: gs-flicker 7s steps(1, end) infinite; opacity: 0.95; }
+.gs-glow .gs-item { filter: none; }
+.gs-rpg .gs-b { animation: gs-float 34s var(--ease-in-out, ease-in-out) infinite alternate; opacity: 0.92; }
+.gs-rpg .gs-c { animation: gs-drift 30s var(--ease-in-out, ease-in-out) infinite alternate-reverse; }
+@keyframes gs-flicker {
+  0%, 100% { opacity: 1; } 18% { opacity: 0.35; } 19% { opacity: 1; } 21% { opacity: 0.2; } 22% { opacity: 1; }
+  58% { opacity: 0.85; } 60% { opacity: 0.3; } 61% { opacity: 1; } 84% { opacity: 0.6; } 85% { opacity: 1; }
+}
+@keyframes gs-float { from { transform: translate3d(-2%, 3%, 0) rotate(-2deg); } to { transform: translate3d(2%, -4%, 0) rotate(3deg); } }
+
+/* ---------- Blackjack: felt arc with gold rail ---------- */
+.gs-blackjack .gs-base { background: linear-gradient(180deg, color-mix(in oklab, var(--gs-deep) 90%, transparent), color-mix(in oklab, var(--gs-deep) 80%, transparent)); }
+.gs-felt, .gs-railwrap { left: 50%; top: 0; width: 190vw; height: 150vh; transform: translate(-50%, -50%); border-radius: 50%; }
+.gs-felt {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 75%, color-mix(in oklab, var(--g1) 60%, #fff) 0, transparent 70%),
+    radial-gradient(ellipse at 50% 70%, color-mix(in oklab, var(--g1) 80%, var(--gs-deep)) 0, color-mix(in oklab, var(--g1) 45%, var(--gs-deep)) 100%);
+  opacity: 0.92;
+}
+.gs-rail {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 1.3vmax solid #e0b04a;
+  background: none;
+  box-shadow: 0 0 3.5vmax rgb(255 200 90 / 0.65), inset 0 0 2.2vmax rgb(255 210 110 / 0.45), 0 2vmax 4vmax rgb(0 0 0 / 0.55);
+  border-image: none;
+}
+.gs-railwrap { -webkit-mask-image: radial-gradient(closest-side, transparent 96.5%, #000 96.5%, #000 100%); mask-image: radial-gradient(closest-side, transparent 96.5%, #000 96.5%, #000 100%); }
+.gs-railsweep {
+  left: 50%; top: 50%; width: 260vmax; height: 260vmax; margin: -130vmax 0 0 -130vmax; position: absolute;
+  background: conic-gradient(from 0deg, transparent 0 80%, rgb(255 240 190 / 0.95) 94%, transparent 100%);
+  transform: rotate(40deg); animation: gs-spin 14s linear infinite;
+}
+.gs-blackjack .gs-a { animation: gs-float 36s var(--ease-in-out, ease-in-out) infinite alternate; }
+.gs-blackjack .gs-b { animation: gs-float 26s var(--ease-in-out, ease-in-out) infinite alternate-reverse; }
+.gs-far { opacity: 0.8; }
+
+/* ---------- Draw It: sketchbook page ---------- */
+.gs-drawit .gs-base { background: linear-gradient(180deg, color-mix(in oklab, var(--gs-deep) 90%, transparent), color-mix(in oklab, var(--g1) 14%, var(--gs-deep))); }
+.gs-page {
+  left: 4vw; right: 4vw; top: 3vh; bottom: -8vh; transform: rotate(-1.2deg);
+  background: linear-gradient(135deg, rgb(255 240 205 / 0.2), rgb(255 226 170 / 0.12));
+  border: 2px solid rgb(255 236 190 / 0.4);
+  border-radius: 6px;
+  box-shadow: 0 2vmax 5vmax rgb(0 0 0 / 0.5), inset 0 0 6vmax rgb(255 220 150 / 0.12);
+}
+html[data-theme="light"] .gs-page { background: linear-gradient(135deg, #fffaf0, #fdf1d6); border-color: rgb(120 90 30 / 0.3); box-shadow: 0 2vmax 5vmax rgb(80 60 20 / 0.25); }
+.gs-spiral { position: absolute; left: 0; top: 0; bottom: 0; width: 3.4vmax; background:
+    radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.55) 0 0.5vmax, transparent 0.58vmax) 0 0 / 100% 3.2vmax,
+    repeating-linear-gradient(180deg, transparent 0 1.3vmax, #cfd3dc 1.3vmax 1.9vmax, transparent 1.9vmax 3.2vmax) 0.3vmax 0 / 3vmax 100% no-repeat; }
+.gs-ink { fill: none; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; animation: gs-draw 18s ease-in-out infinite both; }
+html[data-theme="light"] .gs-ink { stroke-width: 2.6; }
+.gs-drawit .gs-b { animation: gs-float 32s var(--ease-in-out, ease-in-out) infinite alternate; }
+.gs-drawit .gs-c { animation: gs-drift 38s var(--ease-in-out, ease-in-out) infinite alternate-reverse; opacity: 0.8; }
+@keyframes gs-draw {
+  0% { stroke-dashoffset: 1; opacity: 0; } 2% { opacity: 1; } 16% { stroke-dashoffset: 0; opacity: 1; }
+  82% { stroke-dashoffset: 0; opacity: 1; } 92% { stroke-dashoffset: 0; opacity: 0; } 100% { stroke-dashoffset: 1; opacity: 0; }
+}
+
+/* ---------- Survey Feud: game-show marquee ---------- */
+.gs-feud .gs-base { background: radial-gradient(110% 80% at 50% 0%, color-mix(in oklab, var(--gs-lite) 90%, transparent), color-mix(in oklab, var(--gs-deep) 84%, transparent) 75%); }
+.gs-bulbs-dim, .gs-bulbs { --s: 2.6vmax; inset: 0; }
+.gs-bulbs-dim {
+  background:
+    radial-gradient(circle, rgb(255 224 130 / 0.5) 0 0.4vmax, transparent 0.8vmax) 0 0.9vmax / var(--s) 2.4vmax repeat-x,
+    radial-gradient(circle, rgb(255 224 130 / 0.5) 0 0.4vmax, transparent 0.8vmax) 0 calc(100% - 0.9vmax) / var(--s) 2.4vmax repeat-x,
+    radial-gradient(circle, rgb(255 224 130 / 0.5) 0 0.4vmax, transparent 0.8vmax) 0.9vmax 0 / 2.4vmax var(--s) repeat-y,
+    radial-gradient(circle, rgb(255 224 130 / 0.5) 0 0.4vmax, transparent 0.8vmax) calc(100% - 0.9vmax) 0 / 2.4vmax var(--s) repeat-y;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-position: 0 0.9vmax, 0 calc(100% - 0.9vmax), 0.9vmax 0, calc(100% - 0.9vmax) 0;
+  background-size: var(--s) 2.4vmax, var(--s) 2.4vmax, 2.4vmax var(--s), 2.4vmax var(--s);
+}
+.gs-bulbs {
+  left: calc(var(--s) * -3); right: 0; width: auto;
+  background:
+    radial-gradient(circle, #fffbe0 0 0.45vmax, rgb(255 213 74 / 0.8) 0.8vmax, transparent 1.9vmax),
+    radial-gradient(circle, #fffbe0 0 0.45vmax, rgb(255 213 74 / 0.8) 0.8vmax, transparent 1.9vmax);
+  background-repeat: repeat-x, repeat-x;
+  background-position: 0 0.3vmax, 0 calc(100% - 0.3vmax);
+  background-size: calc(var(--s) * 3) 3.4vmax, calc(var(--s) * 3) 3.4vmax;
+  animation: gs-chase 0.9s steps(3, jump-none) infinite;
+}
+.gs-bulbs { -webkit-mask-image: linear-gradient(180deg, #000 0 9%, transparent 9% 91%, #000 91%); mask-image: linear-gradient(180deg, #000 0 9%, transparent 9% 91%, #000 91%); }
+.gs-feud .gs-b { top: 0; left: 0; right: 0; bottom: auto; height: 200%; inset: 0 0 auto 0; transform: translate3d(0, -50%, 0); animation: gs-fall 46s linear infinite; }
+.gs-confetti i { position: absolute; display: block; border-radius: 1px; opacity: 0.85; }
+.gs-boardglow { background: radial-gradient(ellipse 52% 40% at 50% 46%, color-mix(in oklab, var(--g1) 60%, transparent), transparent 72%); animation: gs-pulse 5s var(--ease-in-out, ease-in-out) infinite alternate; }
+@keyframes gs-chase { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(calc(var(--s) * 3), 0, 0); } }
+@keyframes gs-fall { from { transform: translate3d(0, -50%, 0); } to { transform: translate3d(0, 0, 0); } }
+@keyframes gs-pulse { from { opacity: 0.45; } to { opacity: 1; } }
+
+/* ---------- Generic ---------- */
+.gs-generic .gs-base { background: radial-gradient(100% 80% at 50% 30%, color-mix(in oklab, var(--gs-lite) 80%, transparent), color-mix(in oklab, var(--gs-deep) 85%, transparent) 80%); }
+.gs-generic .gs-a { animation: gs-drift 30s var(--ease-in-out, ease-in-out) infinite alternate; }
+.gs-generic .gs-b { animation: gs-spin 200s linear infinite; opacity: 0.8; }
+
+/* ---------- Still pose ---------- */
+html[data-motion-auto="still"] .gscene *,
+html[data-motion="off"] .gscene * { animation: none !important; will-change: auto !important; }
+@media (prefers-reduced-motion: reduce) {
+  .gscene * { animation: none !important; will-change: auto !important; }
+}
+
+@media (max-width: 640px) {
+  .gs-liar .gs-a { filter: none; }
+}
