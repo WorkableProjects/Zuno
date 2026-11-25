@@ -1,21 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Annoyed, Bell, Drum, LayoutGrid, Megaphone, MessageCircle, Music2, PartyPopper, Send, ThumbsDown, Trophy, Volume, Volume1, Volume2, VolumeX, type LucideIcon } from "lucide-react";
-import { preloadBoardClips, sendBoardSound, useSoundboardListener, type BoardId } from "../../lib/soundboard";
+import { LayoutGrid, MessageCircle, Music2, Send, Volume, Volume1, Volume2, VolumeX } from "lucide-react";
+import { SoundBoard } from "./SoundBoard";
+import { preloadBoardClips, useSoundboardListener } from "../../lib/soundboard";
 import { useRoom } from "../../lib/room";
 import { CHAT_FEED_MS, CHAT_MAX, useChat, type ChatMessage } from "../../lib/chat";
 import { isSfxEnabled, playSfx, subscribeSfx } from "../../lib/sfx";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
-
-const BOARD: { id: BoardId; label: string; Icon: LucideIcon }[] = [
-  { id: "airhorn", label: "Air horn", Icon: Megaphone },
-  { id: "drumroll", label: "Drum roll", Icon: Drum },
-  { id: "sadTrombone", label: "Sad trombone", Icon: ThumbsDown },
-  { id: "applause", label: "Applause", Icon: PartyPopper },
-  { id: "boing", label: "Boing", Icon: Annoyed },
-  { id: "rimshot", label: "Rimshot", Icon: Bell },
-  { id: "win", label: "Fanfare", Icon: Trophy },
-  { id: "wrong", label: "Buzzer", Icon: Music2 },
-];
 
 type Panel = "volume" | "board" | "chat";
 
@@ -183,13 +173,7 @@ export function CornerControls({ docked = false }: { docked?: boolean }) {
 
         {active === "board" && (
           <div className="corner-panel corner-board" id="corner-board" role="group" aria-label="Soundboard">
-            <div className="corner-board-grid">
-              {BOARD.map(({ id, label, Icon }) => (
-                <button key={id} type="button" className="icon-btn corner-board-sound" title={label} aria-label={label} onClick={() => sendBoardSound(id)}>
-                  <Icon size={18} strokeWidth={1.5} />
-                </button>
-              ))}
-            </div>
+            <SoundBoard />
             <p className="corner-hint">{room ? "Plays for everyone in this room" : "Plays on this device"}</p>
             {heardOff && <p className="corner-hint corner-warn" role="status">{!sfxOn && !silent ? "Sound effects are off in Settings, so you will not hear the board." : "Sound is off, so you will not hear the board."}</p>}
           </div>

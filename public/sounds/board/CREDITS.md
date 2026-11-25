@@ -10,3 +10,5 @@ All clips are CC0 1.0 (public domain dedication); license verified on each sourc
 | win.mp3 | Fanfare (3s excerpt) | https://opengameart.org/content/classic-fanfare-lick | fvcalderan | CC0 |
 
 Not yet sourced (these still use the synthesized sounds): airhorn, drumroll, sadTrombone, wrong (buzzer).
+
+Update (4.0.0): a search of OpenGameArt for CC0 airhorn, drum roll, sad trombone and buzzer clips found nothing usable, and kenney.nl was unreachable from the build environment. Those four, and the entry "welcome" sound, are synthesized in src/lib/sfx.ts (layered detuned oscillators, filter and amplitude envelopes, filtered noise); no third-party audio is involved.

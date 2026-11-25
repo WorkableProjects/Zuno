@@ -223,23 +223,8 @@ html.intro-playing .dash * { animation-play-state: paused; }
 }
 .corner-board {
   width: max-content;
+  max-width: calc(100vw - 80px);
   bottom: 52px;
-}
-.corner-board-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 44px);
-  gap: 6px;
-}
-.corner-board .corner-board-sound {
-  width: 44px;
-  height: 44px;
-  background: var(--surface-2);
-  color: var(--text);
-}
-.corner-board-sound:hover:not(:disabled),
-.corner-board-sound:focus-visible {
-  background: var(--surface-3);
-  color: var(--accent);
 }
 .corner-warn {
   color: var(--negative);
