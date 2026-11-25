@@ -71,6 +71,7 @@ export function PlayButton({ onOpen, accent, title: _title, className = "", chil
   return (
     <span className="pb" style={wrapStyle}>
       <button ref={btn} type="button" className={`${className} pb-btn`} disabled={disabled} style={style} onClick={click} {...rest}>
+        <i className="pb-invert" aria-hidden="true" />
         {children}
         <i className="pb-glow" aria-hidden="true" />
         <i className="pb-sweep" aria-hidden="true" />

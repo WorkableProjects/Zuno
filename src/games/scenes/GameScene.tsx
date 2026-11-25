@@ -2,9 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import "./scenes.css";
 
 /**
- * A full-bleed themed scene for a game screen. Mount it as the first child of the screen's root
- * (the `.screen` element owns a stacking context): it paints above the global 3D backdrop and below
- * the content. Colour comes from the inherited `--game`. At most three layers per scene move
+ * A full-bleed themed scene for the game info page (GameDetail mounts it in .lx-stage). Not used on play screens.
+ * It paints above the global 3D backdrop and below the content. Colour comes from the inherited `--game`. At most three layers per scene move
  * (transform and opacity only, see scenes.css); everything else is a static composition.
  */
 export type SceneId = "jeopardy" | "headbands" | "liar" | "rpg" | "blackjack" | "drawit" | "feud" | "generic";
@@ -130,7 +129,7 @@ function JeopardyScene() {
   return (
     <>
       <div className="gs-base" />
-      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="none">
+      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id="jfloor" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" style={{ stopColor: G1, stopOpacity: 0 }} />
@@ -173,13 +172,13 @@ function JeopardyScene() {
         ))}
       </svg>
       <div className="gs-layer gs-a">
-        <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="none">
+        <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
           {beam(180, 120, 150, "a")}
           {beam(1420, 120, -150, "b")}
         </svg>
       </div>
       <div className="gs-layer gs-b">
-        <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="none">
+        <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
           {beam(520, 90, -60, "c", 0.85)}
           {beam(1080, 90, 60, "d", 0.85)}
         </svg>
@@ -240,7 +239,7 @@ function LiarScene() {
   return (
     <>
       <div className="gs-base" />
-      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="none">
+      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
         {Array.from({ length: 9 }, (_, i) => (
           <rect key={i} x={i * 200 + 6} y="0" width="188" height="780" fill={G1} fillOpacity=".05" stroke="#fff" strokeOpacity=".08" strokeWidth="2" />
         ))}
@@ -352,7 +351,7 @@ function RpgScene() {
   return (
     <>
       <div className="gs-base" />
-      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="none">
+      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id="rroad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" style={{ stopColor: G1, stopOpacity: 0.1 }} />
@@ -403,7 +402,7 @@ function BlackjackScene() {
     <>
       <div className="gs-base" />
       <div className="gs-felt" />
-      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="none">
+      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
         <defs>
           <path id="bjarc" d="M200 330 Q800 600 1400 330" />
         </defs>
@@ -570,7 +569,7 @@ function FeudScene() {
   return (
     <>
       <div className="gs-base" />
-      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="none">
+      <svg className="gs-fill" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id="fbeam" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#fff" stopOpacity=".5" />

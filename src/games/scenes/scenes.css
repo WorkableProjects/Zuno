@@ -1,4 +1,4 @@
-/* Full-bleed game scenes (see GameScene.tsx). The scene is the first child of a `.screen`, whose
+/* Full-bleed game scenes (see GameScene.tsx), mounted on the game info page (GameDetail, inside .lx-stage), whose
    stacking context keeps it above the global 3D backdrop and below the content. Every colour is
    derived from --game. At most three layers per scene move, and only by transform and opacity;
    blur and masks are static. Reduced motion, Motion: Off and the motion governor pin a still pose. */
@@ -36,11 +36,11 @@
 }
 html[data-theme="light"] .gscene {
   --gs-ink: 255 255 255;
-  --gs-deep: color-mix(in oklab, var(--g1) 20%, #f4f7fc);
-  --gs-lite: color-mix(in oklab, var(--g1) 34%, #ffffff);
-  --gs-vig: 0.62;
-  --gs-mid: 0.38;
-  --gs-flat: 0.12;
+  --gs-deep: color-mix(in oklab, var(--g1) 38%, #eef2fa);
+  --gs-lite: color-mix(in oklab, var(--g1) 55%, #ffffff);
+  --gs-vig: 0.34;
+  --gs-mid: 0.1;
+  --gs-flat: 0;
 }
 
 .gscene > * { position: absolute; }
