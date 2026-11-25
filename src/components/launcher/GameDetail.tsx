@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { ArrowLeft, ChevronDown, Clock, FolderOpen, LogIn, Monitor, PencilRuler, Play, Radio, Users } from "lucide-react";
+import { GameScene } from "../../games/scenes/GameScene";
 import { gameFontStyle } from "../../games/gameFont";
 import { getEngine } from "../../games/registry";
 import { holdMusic, isSoundTheme, releaseMusic } from "../../lib/audio";
@@ -18,7 +19,7 @@ interface Props {
   onJoin?: () => void;
 }
 
-/** One game's page: big title over its moving backdrop, soft music, play buttons, and how to play below. */
+/** One game's page: big title over its full-bleed scene, soft music, play buttons, and how to play below. */
 export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, onJoinOnline, onJoin }: Props) {
   const engine = getEngine(gameType);
   const info = GAME_INFO[gameType];
@@ -37,6 +38,9 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
   return (
     <main className="lx-detail" key={gameType} style={gameFontStyle(gameType)}>
       <section className="lx-hero" data-morph={`game:${gameType}`}>
+        <div className="lx-stage" aria-hidden="true">
+          <GameScene game={gameType} />
+        </div>
         <button type="button" className="lx-back" onClick={onBack} data-nav-row="1">
           <ArrowLeft size={16} strokeWidth={2} />
           Back

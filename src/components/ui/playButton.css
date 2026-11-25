@@ -4,6 +4,23 @@
 .pb-btn { position: relative; overflow: hidden; isolation: isolate; }
 .pb-btn:active:not(:disabled) { transform: scale(0.95, 0.92); transition: transform 90ms var(--ease-snap); }
 
+/* Hover and keyboard focus invert the button: white with black text and icon on the dark themes, black with white on the
+   light ones. The fill is its own layer (.pb-invert) that fades in under the label, so it animates the same way over a flat
+   colour or a skin's gradient. Skins only change the resting look; the base theme (data-theme) picks the inverse. */
+.pb { --pb-inv-bg: #fff; --pb-inv-fg: #000; }
+html[data-theme="light"] .pb { --pb-inv-bg: #000; --pb-inv-fg: #fff; }
+.pb .pb-btn { transition: color var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease), filter var(--t-med) var(--ease), transform var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease); }
+.pb-invert { position: absolute; inset: 0; z-index: -1; display: block; pointer-events: none; border-radius: inherit; background: var(--pb-inv-bg); opacity: 0; transition: opacity var(--t-med) var(--ease); }
+.pb .pb-btn svg { transition: transform 420ms var(--ease-pop), color var(--t-med) var(--ease); }
+.pb .pb-btn:is(:hover, :focus-visible):not(:disabled) { color: var(--pb-inv-fg); filter: none; }
+.pb .pb-btn:is(:hover, :focus-visible):not(:disabled) .pb-invert { opacity: 1; }
+.pb .pb-btn:focus-visible:not(:disabled) { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--pb-inv-bg), 0 12px 30px color-mix(in oklab, var(--game, #79b8ff) 45%, transparent); }
+/* The launch effect rides on top: its glow and shimmer sit above the inverted fill (z-index order -1 < glow < label), so
+   the burst still reads as the accent colour washing across white or black. */
+.pb-btn[data-firing] .pb-invert { opacity: 1; }
+.pb-btn[data-firing] { color: var(--pb-inv-fg); }
+@media (prefers-reduced-motion: reduce) { .pb .pb-btn, .pb-invert { transition-duration: 1ms; } }
+
 /* Inside the button: a glow that builds, and a conic shimmer sweeping around. */
 .pb-glow, .pb-sweep { position: absolute; display: block; pointer-events: none; opacity: 0; z-index: -1; will-change: transform, opacity; }
 .pb-glow { inset: 0; background: radial-gradient(closest-side at 50% 50%, color-mix(in oklab, var(--game, #79b8ff) 40%, #fff) 0%, color-mix(in oklab, var(--game, #79b8ff) 80%, #fff) 50%, transparent 100%); transform: scale(0.4); }

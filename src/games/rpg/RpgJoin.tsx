@@ -13,7 +13,6 @@ import { isStaleOnline, joinRpgLobby, keepRpgSeat, leaveRpgLobby, orderedPlayers
 import "../headbands/headbands.css";
 import "./rpg.css";
 import { gameFontStyle } from "../gameFont";
-import { GameScene } from "../scenes/GameScene";
 
 interface Props {
   code: string | null;
@@ -112,7 +111,6 @@ export function RpgJoin({ code: linkCode, name: givenName, onExit }: Props) {
 
   return (
     <main className={`screen game-scope${playing ? " rpg-online-screen" : ""}`} style={{ "--game": "#7C3AED", ...gameFontStyle("rpg") } as React.CSSProperties}>
-      <GameScene game="rpg" />
       <header className="screen-bar" data-nav-row="0">
         <button
           type="button"

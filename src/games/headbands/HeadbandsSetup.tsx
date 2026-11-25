@@ -16,7 +16,6 @@ import "../jeopardy/jeopardy.css";
 import "../jeopardy/setup.css";
 import "./headbands.css";
 import { gameFontStyle } from "../gameFont";
-import { GameScene } from "../scenes/GameScene";
 
 export interface HeadbandsStart {
   players: PlayerSetup[];
@@ -84,7 +83,6 @@ export function HeadbandsSetup({ game, onBack, onStart, onLobby }: Props) {
 
   return (
     <main className="screen game-scope" ref={root} style={{ "--game": file.appearance.accentColor, ...gameFontStyle("headbands") } as React.CSSProperties}>
-      <GameScene game="headbands" />
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Back to file" onClick={onBack}>
           <ArrowLeft size={20} strokeWidth={1.5} />

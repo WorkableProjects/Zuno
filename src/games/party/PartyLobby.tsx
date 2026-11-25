@@ -28,7 +28,6 @@ import "../headbands/headbands.css";
 import "../rpg/rpg.css";
 import "./party.css";
 import { gameFontStyle } from "../gameFont";
-import { GameScene } from "../scenes/GameScene";
 
 const NAME_KEY = "zuno.hb.name";
 const savedName = () => {
@@ -167,7 +166,6 @@ export function PartyLobby({ def, code: initialCode, onCode, onBack, onStart }: 
   const Editor = def.SettingsEditor;
   return (
     <main className="screen game-scope party-scope" style={{ "--game": def.accent, ...gameFontStyle(def.gameType) } as React.CSSProperties}>
-      <GameScene game={def.gameType} />
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Close the room" onClick={() => setConfirmLeave(true)}>
           <ArrowLeft size={20} strokeWidth={1.5} />

@@ -298,7 +298,11 @@ export function App() {
 
   const buildBackdrop = items.find((i) => i.id === BUILD_TILE_ID)!.backdrop;
   let backdrop: BackdropSpec = selected.backdrop;
-  if (screen.name === "game") backdrop = items.find((i) => i.kind === "engine" && i.gameType === screen.gameType)?.backdrop ?? selected.backdrop;
+  // The game page paints its own GameScene over the gradient field, so the floating engine parts are left out.
+  if (screen.name === "game") {
+    const b = items.find((i) => i.kind === "engine" && i.gameType === screen.gameType)?.backdrop ?? selected.backdrop;
+    backdrop = { ...b, artwork: null };
+  }
   else if (screen.name === "editor") backdrop = draftBackdrop ?? buildBackdrop;
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
