@@ -50,6 +50,7 @@ function jeopardySound(a: SessionAction): Sfx | null {
 }
 import { WinnerReveal } from "./WinnerReveal";
 import "./jeopardy.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   file: JeopardyFile;
@@ -124,7 +125,7 @@ export function JeopardyGame({ file, teams, allowNegativeScores, timeLimitSecond
   );
 
   return (
-    <main className="screen game game-scope" style={{ "--game": file.appearance.accentColor } as React.CSSProperties}>
+    <main className="screen game game-scope" style={{ "--game": file.appearance.accentColor, ...gameFontStyle("jeopardy") } as React.CSSProperties}>
       <header className="screen-bar game-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Exit to dashboard" onClick={() => (state.phase === "results" ? onExit() : setConfirm("exit"))}>
           <ArrowLeft size={20} strokeWidth={1.5} />

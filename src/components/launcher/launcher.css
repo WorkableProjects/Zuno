@@ -13,107 +13,7 @@
 .launcher .btn { border-radius: 999px; padding-inline: 22px; min-height: 46px; }
 .launcher .btn-secondary, .launcher .btn-quiet { backdrop-filter: blur(10px); }
 
-/* ---------- Sidebar ---------- */
-.lx-side {
-  position: fixed;
-  z-index: 40;
-  top: 16px;
-  bottom: 16px;
-  left: 16px;
-  width: var(--side-w);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
-  padding: 18px 0 16px;
-  border-radius: 28px;
-  background: color-mix(in oklab, var(--surface) 72%, transparent);
-  border: 1px solid var(--hairline);
-  backdrop-filter: blur(18px) saturate(1.2);
-  box-shadow: var(--top-light), 0 20px 50px rgb(0 0 0 / 0.35);
-}
-/* The Zuno mark sits in the rail itself: no tile, just the sun and a soft glow. */
-.lx-mark {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  cursor: pointer;
-  filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--mark-a) 40%, transparent));
-  transition: transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
-}
-.lx-mark svg { transition: transform 700ms var(--ease-pop); }
-.lx-mark:hover svg { transform: rotate(180deg); }
-.lx-mark:hover { transform: scale(1.06); filter: drop-shadow(0 8px 22px color-mix(in oklab, var(--mark-a) 55%, transparent)); }
-.lx-mark:active { transform: scale(0.96); transition-duration: var(--t-press); }
-.lx-mark:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
-.lx-nav { position: relative; display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
-/* One pill that springs between sections, so the highlight travels instead of blinking. */
-.lx-nav-pill {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 52px;
-  height: 52px;
-  margin-top: calc(-52px * 1.5 - 10px);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--game) 70%, #fff), var(--game) 70%);
-  box-shadow: 0 8px 24px color-mix(in oklab, var(--game) 55%, transparent), 0 0 0 4px color-mix(in oklab, var(--game) 18%, transparent);
-  transform: translateY(calc(var(--idx, 0) * 62px));
-  transition: transform 560ms var(--ease-pop), opacity var(--t-fast) var(--ease), background-color var(--t-slow) var(--ease);
-  pointer-events: none;
-}
-.lx-nav-pill.is-hidden { opacity: 0; transform: translateY(calc(var(--idx, 0) * 62px)) scale(0.4); }
-.lx-nav-pill::after {
-  content: ""; position: absolute; inset: -6px; border-radius: inherit;
-  border: 2px solid color-mix(in oklab, var(--game) 60%, transparent);
-  opacity: 0; animation: lx-pill-ring 2.8s var(--ease) infinite;
-}
-@keyframes lx-pill-ring { 0% { opacity: 0.7; transform: scale(0.85); } 60%, 100% { opacity: 0; transform: scale(1.25); } }
-.lx-nav-btn {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
-  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
-}
-.lx-nav-btn:hover { background: color-mix(in oklab, var(--text) 8%, transparent); color: var(--text); }
-.lx-nav-btn:active { transform: scale(0.94); }
-.lx-nav-btn.is-on { color: #fff; }
-.lx-nav-btn.is-on:hover { background: transparent; }
-.lx-nav-btn svg { transition: transform 420ms var(--ease-pop); }
-.lx-nav-btn:hover svg { transform: scale(1.12) rotate(-6deg); }
-.lx-nav-btn.is-on svg { animation: lx-icon-pop 520ms var(--ease-pop); }
-@keyframes lx-icon-pop { 0% { transform: scale(0.6) rotate(-20deg); } 60% { transform: scale(1.18) rotate(4deg); } }
-.lx-nav-btn:focus-visible { outline: 2px solid var(--game); outline-offset: 3px; }
-/* A label slides out on hover, like a tooltip pill. */
-.lx-nav-label {
-  position: absolute;
-  left: calc(100% + 14px);
-  padding: 6px 12px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: var(--surface-2);
-  border: 1px solid var(--hairline);
-  color: var(--text);
-  font: 600 13px / 1 var(--font-ui);
-  pointer-events: none;
-  opacity: 0;
-  transform: translateX(-6px);
-  transition: opacity var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
-}
-.lx-nav-btn:hover .lx-nav-label, .lx-nav-btn:focus-visible .lx-nav-label { opacity: 1; transform: none; }
-.lx-dock { width: 52px; height: 52px; flex: none; }
+/* Sidebar rules live in rail.css. */
 
 /* The multi-action button docks in the sidebar on launcher pages and opens to the right. */
 .corner.is-docked {
@@ -123,6 +23,9 @@
 }
 .corner.is-docked .corner-panel { right: auto; left: calc(100% + 14px); }
 .corner.is-docked .corner-main { border-radius: 50%; }
+/* The closed dock is taller than its button and sits over the recent-games icons: only the button itself takes clicks. */
+.corner.is-docked[data-open="false"] { pointer-events: none; }
+.corner.is-docked[data-open="false"] .corner-main { pointer-events: auto; }
 
 /* ---------- Page area ---------- */
 .lx-main { padding-left: calc(var(--side-w) + 32px); }
@@ -225,7 +128,7 @@
 .lib-name { transition: color var(--t-fast) var(--ease), transform var(--t-med) var(--ease-pop); }
 .lib-tile:hover .lib-name, .lib-tile.is-active .lib-name { transform: translateX(4px); }
 /* Selected tile: the accent halo breathes slowly. */
-.lib-tile.is-active .lib-art { animation: lx-halo 1.4s ease-in-out 1; }
+.lib-tile.is-active .lib-art { animation: lx-halo 1.4s var(--ease-in-out) 1; }
 @keyframes lx-halo {
   50% {
     box-shadow:
@@ -281,12 +184,12 @@
      left column and only grazes the hero art (caps run about 0.8em each). */
   font-size: min(clamp(40px, 8vw, 112px), calc(52vw / var(--len, 8)));
   max-width: min(100%, 50vw); text-transform: uppercase; text-shadow: 0 10px 40px rgb(0 0 0 / 0.35); }
-.lx-big-word { display: inline-block; padding-block: 0.06em; /* room for Dutch Display Sans ascenders during the blur rise */ animation: lx-rise 700ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
+.lx-big-word { display: inline-block; padding-block: 0.06em; /* room for Dutch Display Sans ascenders during the blur rise */ animation: lx-rise 700ms var(--ease-pop) backwards; animation-delay: calc(var(--i) * 90ms + 80ms); }
 .lx-big-word:last-child:not(:first-child) { color: color-mix(in oklab, var(--game) 70%, #fff); }
 .lx-big-word:last-child:not(:first-child), .lx-big-word:only-child {
   background: linear-gradient(100deg, currentColor 40%, #fff 50%, currentColor 60%) 100% 0 / 300% 100% no-repeat text;
   -webkit-background-clip: text; background-clip: text;
-  animation: lx-rise 700ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards, lx-shimmer 1.4s var(--ease) both;
+  animation: lx-rise 700ms var(--ease-pop) backwards, lx-shimmer 1.4s var(--ease) both;
   animation-delay: calc(var(--i) * 90ms + 80ms), calc(var(--i) * 90ms + 760ms);
 }
 .lx-big-word:last-child:not(:first-child), .lx-big-word:only-child { text-shadow: none; filter: drop-shadow(0 10px 30px rgb(0 0 0 / 0.35)); }
@@ -297,7 +200,7 @@
 .lx-desc { margin: 0; max-width: 56ch; color: var(--text-2); font: 400 clamp(16px, 1.4vw, 19px) / 1.5 var(--font-ui); animation: lx-item-in 450ms var(--ease) 260ms backwards; }
 .lx-actions { display: flex; flex-wrap: wrap; gap: 12px; animation: lx-item-in 450ms var(--ease) 340ms backwards; }
 .lx-play { min-width: 160px; font-size: 17px; background: var(--game); color: #fff; border-color: transparent; box-shadow: 0 12px 30px color-mix(in oklab, var(--game) 45%, transparent); }
-.lx-play { position: relative; overflow: hidden; isolation: isolate; animation: lx-play-breathe 1.6s ease-in-out 1.2s 1; }
+.lx-play { position: relative; overflow: hidden; isolation: isolate; animation: lx-play-breathe 1.6s var(--ease-in-out) 1.2s 1; }
 .lx-play:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-2px) scale(1.03); }
 .lx-play::before {
   content: ""; position: absolute; inset: 0; z-index: -1;
@@ -320,7 +223,7 @@
   color: var(--text-2);
   font: 600 13px / 1 var(--font-ui);
   cursor: pointer;
-  animation: lx-bob 2.2s ease-in-out infinite;
+  animation: lx-bob 2.2s var(--ease-in-out) infinite;
 }
 .lx-scroll:hover { color: var(--text); }
 @keyframes lx-bob { 50% { transform: translateY(5px); } }
@@ -344,13 +247,6 @@
 
 /* ---------- Phones: the sidebar becomes a round bottom bar ---------- */
 @media (max-width: 760px) {
-  .lx-side { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; height: 68px; flex-direction: row; padding: 0 12px; gap: 10px; border-radius: 999px; }
-  .lx-mark { width: 40px; height: 40px; }
-  .lx-mark svg { width: 34px; height: 34px; }
-  .lx-nav { flex-direction: row; justify-content: center; }
-  .lx-nav-pill { top: 50%; left: 50%; margin-top: -26px; margin-left: calc(-52px * 1.5 - 10px); transform: translateX(calc(var(--idx, 0) * 62px)); }
-  .lx-nav-pill.is-hidden { transform: translateX(calc(var(--idx, 0) * 62px)) scale(0.4); }
-  .lx-nav-label { display: none; }
   .lx-main { padding-left: var(--page-x); padding-bottom: 96px; }
   .lx-page { padding-top: 22px; }
   .lib-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
@@ -359,9 +255,9 @@
   .lx-hero { min-height: calc(100dvh - 90px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lx-scroll, .lx-play, .lx-play::before, .lx-nav-pill::after, .lib-tile.is-active .lib-art { animation: none; }
+  .lx-scroll, .lx-play, .lx-play::before, .lib-tile.is-active .lib-art { animation: none; }
 }
-[data-motion="off"] :is(.lx-scroll, .lx-play, .lx-play::before, .lx-nav-pill::after, .lib-tile.is-active .lib-art) { animation: none !important; }
+[data-motion="off"] :is(.lx-scroll, .lx-play, .lx-play::before, .lib-tile.is-active .lib-art) { animation: none !important; }
 
 @keyframes lx-page-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes lx-item-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -375,3 +271,9 @@
 .lib-slot:hover .lib-forget, .lib-forget:focus-visible { opacity: 1; }
 .lib-forget:hover { color: var(--negative); }
 @media (hover: none) { .lib-forget { opacity: 1; } }
+
+/* Light palettes: the accent word of a game title darkens instead of lightening, so it never washes out on the pale page. */
+html[data-theme="light"] .lx-big-word:last-child:not(:first-child) { color: color-mix(in oklab, var(--game) 62%, #0b0f18); }
+html[data-theme="light"] .lx-big-word:last-child:not(:first-child),
+html[data-theme="light"] .lx-big-word:only-child { background-image: linear-gradient(100deg, currentColor 40%, color-mix(in oklab, currentColor 55%, #fff) 50%, currentColor 60%); filter: none; }
+html[data-theme="light"] .lx-big { text-shadow: none; }

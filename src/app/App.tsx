@@ -17,6 +17,7 @@ import { CornerControls } from "../components/ui/CornerControls";
 import { installHoverSounds, isSoundTheme, setSoundTheme, type SoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
 import { withScreenTransition } from "../lib/screenTransition";
+import { installMotionGovernor } from "../lib/motionGovernor";
 import { installRipples } from "../lib/ripple";
 import { SettingsPage } from "../components/settings/SettingsPanel";
 import type { BackgroundPreset } from "../game-files/schema/common";
@@ -53,6 +54,7 @@ import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
 import { getEngine } from "../games/registry";
 import { forgetGame, loadDevice, loadLastTile, loadRecent, loadTheme, rememberGame, saveDevice, saveLastTile, saveTheme, type Device, type Theme } from "./storage";
+import { themeDef } from "./themes";
 
 type Screen =
   | { name: "dashboard" }
@@ -102,13 +104,12 @@ function backdropTheme(screen: Screen, tileGameType: string): SoundTheme {
   return "headbands";
 }
 
-/** Vice rides on the dark palette (so every dark-mode rule still applies) plus a skin layer. */
-const paletteOf = (t: Theme) => (t === "light" ? "light" : "dark");
-const skinOf = (t: Theme) => (t === "vice" ? "vice" : "");
+/** Each theme is a base palette plus an optional skin; see themes.ts. */
 function applyTheme(t: Theme) {
   const root = document.documentElement;
-  root.dataset.theme = paletteOf(t);
-  if (t === "vice") root.dataset.skin = "vice";
+  const def = themeDef(t);
+  root.dataset.theme = def.base;
+  if (def.skin) root.dataset.skin = def.skin;
   else delete root.dataset.skin;
 }
 
@@ -192,8 +193,9 @@ export function App() {
 
   const changeTheme = useCallback((next: Theme) => {
     const root = document.documentElement;
-    if (root.dataset.theme === paletteOf(next) && (root.dataset.skin ?? "") === skinOf(next)) return;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "light" ? "#F2F4F8" : next === "vice" ? "#140726" : "#080B12");
+    const def = themeDef(next);
+    if (root.dataset.theme === def.base && (root.dataset.skin ?? "") === (def.skin ?? "")) return;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", def.themeColor);
     saveTheme(next);
     // A circular wipe from the toggle. When no view transition runs, the update happens
     // synchronously, so the colour cross-fade class must already be on.
@@ -224,6 +226,7 @@ export function App() {
   useEffect(() => installHoverSounds(), []);
   useEffect(() => installClickSounds(), []);
   useEffect(() => installRipples(), []);
+  useEffect(() => installMotionGovernor(), []);
   // A soft transition whenever the screen changes.
   const screenName = stack[stack.length - 1].name;
   const firstScreen = useRef(true);
@@ -345,6 +348,7 @@ export function App() {
           accent={screen.name === "game" ? (getEngine(screen.gameType)?.appearance.accentColor ?? selected.backdrop.accent) : selected.backdrop.accent}
           onSection={goSection}
           onSettings={() => goSection("settings")}
+          onOpenGame={(gameType) => push({ name: "game", gameType }, `game:${gameType}`)}
         >
           {screen.name === "dashboard" && section === "settings" ? (
             <SettingsPage theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} />

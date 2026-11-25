@@ -17,6 +17,7 @@ import { adoptSeatId, clearSeat, loadSeat, saveSeat } from "../../lib/rejoin";
 import { isStaleOnline } from "./liarLobby";
 import "../headbands/headbands.css";
 import "./liar.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   code: string | null;
@@ -108,7 +109,7 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
   return (
     <main
       className={`screen game-scope${playing ? " liar-online-screen" : ""}`}
-      style={{ "--game": "#E85D75" } as React.CSSProperties}
+      style={{ "--game": "#E85D75", ...gameFontStyle("liar") } as React.CSSProperties}
     >
       <header className="screen-bar" data-nav-row="0">
         <button

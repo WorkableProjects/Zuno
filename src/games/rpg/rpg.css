@@ -26,7 +26,7 @@
 .rpg-title { display: flex; flex-wrap: wrap; gap: 0 0.3em; margin: 0 0 8px; font: 700 clamp(28.9px, 5.1vw, 54.4px) / 0.95 var(--font-display); letter-spacing: -0.02em; text-transform: uppercase; }
 .rpg-title-sm { font-size: clamp(30px, 9vw, 44px); }
 .rpg-title-word { display: inline-flex; overflow: hidden; padding-bottom: 0.08em; }
-.rpg-roll { display: inline-block; animation: rpg-roll 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--n) * 60ms); }
+.rpg-roll { display: inline-block; animation: rpg-roll 0.8s var(--ease-pop) both; animation-delay: calc(var(--n) * 60ms); }
 .rpg-title-word.is-gamble { color: var(--rpg-cyan-ink); }
 @keyframes rpg-roll { from { transform: translateY(-110%); opacity: 0; } to { transform: none; opacity: 1; } }
 
@@ -129,7 +129,7 @@
 .rpg-weapon:disabled:not(.is-picked):not(.is-dim) { opacity: 0.7; }
 .rpg-emoji { font-size: clamp(36px, 8vw, 56px); line-height: 1; }
 .rpg-check { position: absolute; top: 8px; right: 8px; color: var(--rpg-green-ink); }
-.rpg-wait { margin: 0; text-align: center; color: var(--text-2); animation: rpg-pulse 1.4s ease-in-out infinite; }
+.rpg-wait { margin: 0; text-align: center; color: var(--text-2); animation: rpg-pulse 1.4s var(--ease-in-out) infinite; }
 @keyframes rpg-pulse { 50% { opacity: 0.45; } }
 
 .rpg-overlay { position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 16px; border-radius: var(--r-card); text-align: center; background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(6px); animation: rpg-pop 0.35s var(--ease) both; }
@@ -193,7 +193,7 @@
 .rpg-wire:disabled { opacity: 0.55; cursor: default; }
 
 .rpg-fx { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
-.rpg-fx-bomb { background: radial-gradient(circle, transparent 35%, color-mix(in oklab, var(--rpg-red) 55%, transparent)); animation: rpg-red-pulse 0.9s ease-in-out infinite; }
+.rpg-fx-bomb { background: radial-gradient(circle, transparent 35%, color-mix(in oklab, var(--rpg-red) 55%, transparent)); animation: rpg-red-pulse 0.9s var(--ease-in-out) infinite; }
 .rpg-fx-nuke { background: color-mix(in oklab, var(--rpg-cyan) 30%, transparent); animation: rpg-flicker 0.7s steps(2, end) infinite; }
 @keyframes rpg-red-pulse { 50% { opacity: 0.25; } }
 @keyframes rpg-flicker { 0%, 100% { opacity: 0.05; } 20% { opacity: 0.55; } 45% { opacity: 0.1; } 70% { opacity: 0.4; } }
@@ -231,7 +231,7 @@
 .rpg-gift, .rpg-bet, .rpg-items, .rpg-locked, .rpg-row[role="group"] { animation: rpg-item-in 300ms var(--ease) backwards; }
 .rpg-versus .rpg-side-card.is-a { animation: rpg-slide-l 480ms var(--ease) backwards; }
 .rpg-versus .rpg-side-card.is-b { animation: rpg-slide-r 480ms var(--ease) backwards; }
-.rpg-versus .rpg-vs { animation: rpg-pop-big 420ms 200ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.rpg-versus .rpg-vs { animation: rpg-pop-big 420ms 200ms var(--ease-pop) backwards; }
 @keyframes rpg-slide-l { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
 @keyframes rpg-slide-r { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
 @keyframes rpg-pop-big { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
@@ -251,21 +251,21 @@
 .rpg-timer { transition: color 300ms var(--ease), border-color 300ms var(--ease), background-color 300ms var(--ease); }
 .rpg-timer-n { display: inline-block; }
 .rpg-timer.is-low { background: color-mix(in oklab, var(--rpg-red) 10%, var(--surface-2)); }
-.rpg-timer.is-low .rpg-timer-n { animation: rpg-tick 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.rpg-timer.is-low .rpg-timer-n { animation: rpg-tick 420ms var(--ease-pop) both; }
 @keyframes rpg-tick { from { transform: scale(1.35); } to { transform: none; } }
 
 /* Duel. */
 .rpg-statusline { min-height: 24px; display: grid; place-items: center; }
 .rpg-statusline > * { animation: fade-in 240ms var(--ease) backwards; }
 .rpg-dots span { transition: background-color 300ms var(--ease), border-color 300ms var(--ease), box-shadow 300ms var(--ease); }
-.rpg-dots span.is-on { animation: rpg-dot 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.rpg-dots span.is-on { animation: rpg-dot 480ms var(--ease-pop) both; }
 @keyframes rpg-dot { 0% { transform: scale(0.3); } 60% { transform: scale(1.4); } 100% { transform: none; } }
 .rpg-weapon:active:not(:disabled) { transform: translateY(-2px) scale(0.97); transition-duration: 80ms; }
-.rpg-weapon.is-picked { animation: rpg-picked 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both; box-shadow: 0 10px 28px color-mix(in oklab, var(--game) 35%, transparent); }
+.rpg-weapon.is-picked { animation: rpg-picked 420ms var(--ease-pop) both; box-shadow: 0 10px 28px color-mix(in oklab, var(--game) 35%, transparent); }
 @keyframes rpg-picked { 0% { transform: none; } 50% { transform: translateY(-14px) scale(1.08); } 100% { transform: translateY(-10px) scale(1.04); } }
-.rpg-weapon .rpg-emoji { transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.rpg-weapon .rpg-emoji { transition: transform 260ms var(--ease-pop); }
 .rpg-weapon:hover:not(:disabled) .rpg-emoji { transform: rotate(-8deg) scale(1.1); }
-.rpg-overlay-title { animation: rpg-pop-big 420ms 80ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.rpg-overlay-title { animation: rpg-pop-big 420ms 80ms var(--ease-pop) both; }
 .rpg-overlay-picks .is-a { animation: rpg-slide-l 380ms 140ms var(--ease) both; }
 .rpg-overlay-picks .is-b { animation: rpg-slide-r 380ms 140ms var(--ease) both; }
 .rpg-overlay.is-leaving { animation: rpg-overlay-out 220ms var(--ease) both; pointer-events: none; }
@@ -280,7 +280,7 @@
 .rpg-wire { transition: transform 160ms var(--ease), filter 160ms var(--ease), opacity 200ms var(--ease); }
 .rpg-wire:hover:not(:disabled) { transform: translateY(-3px); filter: brightness(1.1); }
 .rpg-wire:active:not(:disabled) { transform: scale(0.96); }
-.rpg-fx-bomb { animation: fade-in 300ms var(--ease) both, rpg-red-pulse 0.9s 300ms ease-in-out infinite; }
+.rpg-fx-bomb { animation: fade-in 300ms var(--ease) both, rpg-red-pulse 0.9s 300ms var(--ease-in-out) infinite; }
 .rpg-fx-nuke { animation: fade-in 300ms var(--ease) both, rpg-flicker 0.7s 300ms steps(2, end) infinite; }
 .rpg-banner.is-leaving { animation: rpg-banner-out 260ms var(--ease) both; }
 @keyframes rpg-banner-out { to { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.97); } }

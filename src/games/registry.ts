@@ -17,6 +17,8 @@ export interface GameEngine {
   schemaVersions: readonly number[];
   hasBuilder: boolean;
   appearance: { accentColor: string; backgroundPreset: BackgroundPreset };
+  /** In-game display font (self-hosted, lazy loaded by games/gameFont.ts). Omitted games use the shell display face. */
+  font?: { id: string; family: string };
   validate: (raw: Record<string, unknown>) => ValidationResult<GameFile>;
   /** Decorative scene drawn behind the dashboard for this engine. */
   artwork: "board" | "cards" | "statements" | "hands" | "deck" | "sketch" | "survey" | null;
@@ -44,6 +46,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: true,
     appearance: { accentColor: "#79B8FF", backgroundPreset: "spotlight" },
+    font: { id: "anton", family: "Anton" },
     validate: validateJeopardy as GameEngine["validate"],
     artwork: "board",
     sampleFile: "science-review.zuno.json",
@@ -71,6 +74,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: true,
     appearance: { accentColor: "#FFB454", backgroundPreset: "tide" },
+    font: { id: "fredoka", family: "Fredoka" },
     validate: validateHeadbands as GameEngine["validate"],
     artwork: "cards",
     sampleFile: "everyday-things.zuno.json",
@@ -98,6 +102,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: false,
     appearance: { accentColor: "#FF6B8B", backgroundPreset: "aurora" },
+    font: { id: "special-elite", family: "Special Elite" },
     validate: validateLiar as GameEngine["validate"],
     artwork: "statements",
     sampleFile: "liar-prompts.zuno.json",
@@ -124,6 +129,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: false,
     appearance: { accentColor: "#7C3AED", backgroundPreset: "vegas" },
+    font: { id: "bungee", family: "Bungee" },
     validate: validateRpg as GameEngine["validate"],
     artwork: "hands",
     onlineOnly: true,
@@ -151,6 +157,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: false,
     appearance: { accentColor: "#16A34A", backgroundPreset: "vegas" },
+    font: { id: "playfair-display", family: "Playfair Display" },
     validate: validateBlackjack as GameEngine["validate"],
     artwork: "deck",
     onlineOnly: true,
@@ -168,6 +175,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: false,
     appearance: { accentColor: "#F59E0B", backgroundPreset: "aurora" },
+    font: { id: "caveat", family: "Caveat" },
     validate: validateDrawIt as GameEngine["validate"],
     artwork: "sketch",
     onlineOnly: true,
@@ -185,6 +193,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: false,
     appearance: { accentColor: "#2563EB", backgroundPreset: "spotlight" },
+    font: { id: "alfa-slab-one", family: "Alfa Slab One" },
     validate: validateFeud as GameEngine["validate"],
     artwork: "survey",
     onlineOnly: true,

@@ -2,11 +2,13 @@ import type { BackgroundPreset } from "../game-files/schema/common";
 
 /** Small local preferences. No account, no server. Every read and write is guarded. */
 
-/** "vice" is a neon Miami-night skin layered over the dark palette. */
-export type Theme = "dark" | "light" | "vice";
+/** Theme ids. The registry (labels, palettes, skins) lives in ./themes.ts. */
+export type Theme = "dark" | "light" | "vice" | "ocean" | "zuno-special" | "anthropical";
+export const THEME_IDS: readonly Theme[] = ["dark", "light", "vice", "ocean", "zuno-special", "anthropical"];
 
 const KEYS = {
   theme: "zuno.theme",
+  sidebar: "zuno.sidebar",
   lastTile: "zuno.lastTile",
   recent: "zuno.recent",
   draft: "zuno.draft.jeopardy",
@@ -32,10 +34,18 @@ function write(key: string, value: string): boolean {
 
 export function loadTheme(): Theme {
   const v = read(KEYS.theme);
-  return v === "light" || v === "vice" ? v : "dark";
+  return (THEME_IDS as readonly string[]).includes(v ?? "") ? (v as Theme) : "dark";
 }
 export function saveTheme(theme: Theme) {
   write(KEYS.theme, theme);
+}
+
+/** Whether the home sidebar is folded down to the logo and its toggle. */
+export function loadSidebarCollapsed(): boolean {
+  return read(KEYS.sidebar) === "collapsed";
+}
+export function saveSidebarCollapsed(collapsed: boolean) {
+  write(KEYS.sidebar, collapsed ? "collapsed" : "expanded");
 }
 
 export type Device = "mobile" | "desktop";

@@ -96,7 +96,7 @@
   aspect-ratio: 5 / 7;
   transform: translateY(-46%);
   perspective: 1400px;
-  animation: fan-sway 18s ease-in-out infinite alternate;
+  animation: fan-sway 18s var(--ease-in-out) infinite alternate;
 }
 @keyframes fan-sway {
   from {
@@ -229,7 +229,7 @@
   border: 1px solid var(--hairline);
   background: color-mix(in oklab, var(--surface-2) 86%, transparent);
   box-shadow: var(--top-light), 0 20px 50px rgb(0 0 0 / 0.32);
-  animation: statement-bob 6s ease-in-out infinite alternate;
+  animation: statement-bob 6s var(--ease-in-out) infinite alternate;
   animation-delay: calc(var(--i) * -2s);
 }
 .art-statement:nth-child(2) {
@@ -334,7 +334,7 @@
   inset: 0;
   transform-style: preserve-3d;
   transform-origin: 72% 50%;
-  animation: p3d-orbit 34s ease-in-out infinite;
+  animation: p3d-orbit 34s var(--ease-in-out) infinite;
 }
 @keyframes p3d-orbit {
   0%,
@@ -376,7 +376,7 @@
   position: absolute;
   display: block;
   transform: translateZ(var(--z, 0px));
-  animation: hands-float 16s ease-in-out infinite alternate;
+  animation: hands-float 16s var(--ease-in-out) infinite alternate;
   animation-delay: var(--d, 0s);
   will-change: transform;
 }
@@ -440,7 +440,7 @@
 /* ---------- Engine artwork: Draw It doodles and pencils ---------- */
 .art-doodle path {
   fill: none; stroke: var(--tone); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
-  stroke-dasharray: 1; stroke-dashoffset: 1; animation: doodle-draw 9s ease-in-out infinite; animation-delay: var(--d, 0s);
+  stroke-dasharray: 1; stroke-dashoffset: 1; animation: doodle-draw 9s var(--ease-in-out) infinite; animation-delay: var(--d, 0s);
 }
 @keyframes doodle-draw {
   0% { stroke-dashoffset: 1; opacity: 0; }
@@ -457,7 +457,7 @@
 
 /* ---------- Engine artwork: Survey Feud tiles and strikes ---------- */
 .art-tile { height: auto !important; aspect-ratio: 2.4; perspective: 600px; }
-.art-tile-flip { position: absolute; inset: 0; transform-style: preserve-3d; animation: tile-flip 10s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.art-tile-flip { position: absolute; inset: 0; transform-style: preserve-3d; animation: tile-flip 10s var(--ease-in-out) infinite; animation-delay: var(--d, 0s); }
 .art-tile-front, .art-tile-back {
   position: absolute; inset: 0; display: grid; place-items: center; border-radius: 10px; backface-visibility: hidden;
   font: 800 clamp(18px, 2vw, 30px) / 1 var(--font-display, sans-serif); box-shadow: 0 14px 28px rgb(0 0 0 / 0.35);

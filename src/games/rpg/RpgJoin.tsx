@@ -12,6 +12,7 @@ import { RpgTitle } from "./RpgTitle";
 import { isStaleOnline, joinRpgLobby, keepRpgSeat, leaveRpgLobby, orderedPlayers, releaseRpgSeat, rpgLobbyExists, setRpgReady, watchRpgLobby, type RpgLobbyState } from "./rpgLobby";
 import "../headbands/headbands.css";
 import "./rpg.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   code: string | null;
@@ -109,7 +110,7 @@ export function RpgJoin({ code: linkCode, name: givenName, onExit }: Props) {
   const mine = lobby?.players[me];
 
   return (
-    <main className={`screen game-scope${playing ? " rpg-online-screen" : ""}`} style={{ "--game": "#7C3AED" } as React.CSSProperties}>
+    <main className={`screen game-scope${playing ? " rpg-online-screen" : ""}`} style={{ "--game": "#7C3AED", ...gameFontStyle("rpg") } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">
         <button
           type="button"

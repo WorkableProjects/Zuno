@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import * as db from "firebase/database";
+import { lobbiesAvailable, database } from "../games/headbands/lobby";
 import { getRoom, subscribeRoom } from "./room";
 import { getSfxContext, playSfx, playSfxBuffer, unlockSfx, type Sfx } from "./sfx";
 
@@ -19,6 +21,21 @@ export const BOARD_CLIPS: Partial<Record<BoardId, string>> = {
   rimshot: "rimshot.mp3",
   win: "win.mp3",
 };
+
+/** Display name and approximate length in seconds for each board sound. */
+export const BOARD_INFO: Record<BoardId, { label: string; seconds: number }> = {
+  airhorn: { label: "Air horn", seconds: 1 },
+  drumroll: { label: "Drum roll", seconds: 1.8 },
+  sadTrombone: { label: "Sad trombone", seconds: 2.7 },
+  applause: { label: "Applause", seconds: 4 },
+  boing: { label: "Boing", seconds: 2 },
+  rimshot: { label: "Rimshot", seconds: 1 },
+  win: { label: "Fanfare", seconds: 3 },
+  wrong: { label: "Buzzer", seconds: 0.5 },
+};
+
+/** Whether a board sound is a recorded clip or the built-in synthesized sound. */
+export const boardKind = (id: BoardId): "clip" | "synth" => (BOARD_CLIPS[id] ? "clip" : "synth");
 
 const clips = new Map<BoardId, AudioBuffer>();
 let loading: Promise<void> | null = null;
@@ -95,7 +112,6 @@ export function useSoundboardListener(): void {
 }
 
 export async function backend() {
-  const [{ lobbiesAvailable, database }, db] = await Promise.all([import("../games/headbands/lobby"), import("firebase/database")]);
   return lobbiesAvailable() ? { d: database(), db } : null;
 }
 

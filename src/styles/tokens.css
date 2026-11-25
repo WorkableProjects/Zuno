@@ -33,7 +33,7 @@
   font-style: normal;
   font-display: swap;
 }
-/* Design tokens. Spacing sits on a 4px grid. One easing curve, a few durations. */
+/* Design tokens. Spacing sits on a 4px grid. One easing family (ease, pop, out-expo, in-quick, in-out, snap), a few durations. */
 :root {
   --font-ui: "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Dutch Display Sans", "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
@@ -47,6 +47,9 @@
   --ease-pop: cubic-bezier(0.34, 1.36, 0.64, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-quick: cubic-bezier(0.5, 0, 0.75, 0);
+  /* Symmetric curve for slow ambient loops and wipes; snap for effects that should land hard. */
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.2, 1);
   --t-page: 460ms;
   --t-stagger: 38ms;
 

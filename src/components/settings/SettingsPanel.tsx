@@ -1,5 +1,6 @@
 import { useState, useSyncExternalStore, type ReactNode } from "react";
-import { Info, Monitor, Moon, Palette, Smartphone, Sparkles, Sun, Sunset, UserRound, Volume2, VolumeX } from "lucide-react";
+import { Info, Leaf, Monitor, Moon, Palette, Smartphone, Sparkles, Star, Sun, Sunset, Waves, UserRound, Volume2, VolumeX } from "lucide-react";
+import { THEMES } from "../../app/themes";
 import { applyMotion, loadMotion, loadSfxOn, saveMotion, saveSfxOn, type Device, type Motion, type Theme } from "../../app/storage";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 import { setSfxEnabled } from "../../lib/sfx";
@@ -44,6 +45,8 @@ function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange:
 }
 
 /** The Settings page, a section of the launcher. */
+const THEME_ICONS: Record<Theme, typeof Moon> = { dark: Moon, light: Sun, vice: Sunset, ocean: Waves, "zuno-special": Star, anthropical: Leaf };
+
 export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
   const muted = useSyncExternalStore(subscribeMuted, isMuted);
   const [volume, setVol] = useState(getVolume);
@@ -85,25 +88,22 @@ export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
           <Card id="look" title="Look">
             <span className="field-label">Theme</span>
             <div className="st-themes" role="radiogroup" aria-label="Theme" data-nav-row="20">
-              {(
-                [
-                  ["dark", "Dark", Moon],
-                  ["light", "Light", Sun],
-                  ["vice", "Vice", Sunset],
-                ] as const
-              ).map(([value, label, Icon]) => (
-                <button key={value} type="button" role="radio" aria-checked={theme === value} className={`st-theme st-theme-${value}${theme === value ? " is-on" : ""}`} onClick={() => onTheme(value)}>
-                  <span className="st-theme-preview" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                  </span>
-                  <span className="st-theme-label">
-                    <Icon size={16} strokeWidth={1.75} />
-                    {label}
-                  </span>
-                </button>
-              ))}
+              {THEMES.map(({ id, label, swatch }) => {
+                const Icon = THEME_ICONS[id];
+                return (
+                  <button key={id} type="button" role="radio" aria-checked={theme === id} className={`st-theme st-theme-${id}${theme === id ? " is-on" : ""}`} style={{ "--sw-bg": swatch.bg, "--sw-panel": swatch.panel, "--sw-accent": swatch.accent } as React.CSSProperties} onClick={() => onTheme(id)}>
+                    <span className="st-theme-preview" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                    <span className="st-theme-label">
+                      <Icon size={16} strokeWidth={1.75} />
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <span className="field-label st-gap">Layout</span>
             <div className="segmented" role="radiogroup" aria-label="Layout" data-nav-row="21">

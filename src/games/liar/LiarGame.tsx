@@ -24,6 +24,7 @@ import {
 import { useLiarSounds } from "./useLiarSounds";
 import { Notepad } from "../../components/notepad/Notepad";
 import "./liar.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   file: LiarFile;
@@ -50,7 +51,7 @@ export function LiarGame({ file, names, options, onAgain, onExit }: Props) {
   if (state.phase === "done") return <Done state={state} onAgain={onAgain} onExit={onExit} />;
 
   return (
-    <main className="screen game-scope liar-game" style={{ "--game": file.appearance.accentColor } as React.CSSProperties}>
+    <main className="screen game-scope liar-game" style={{ "--game": file.appearance.accentColor, ...gameFontStyle("liar") } as React.CSSProperties}>
       <header className="liar-head">
         <div>
           <h1 className="liar-title">{file.metadata.title}</h1>

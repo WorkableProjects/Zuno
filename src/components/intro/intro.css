@@ -27,7 +27,7 @@
   margin: 12px 0 0;
   color: var(--text);
   font-size: 15px;
-  animation: intro-fade 600ms var(--ease) 1100ms both, intro-pulse 2.4s ease-in-out 1700ms infinite;
+  animation: intro-fade 600ms var(--ease) 1100ms both, intro-pulse 2.4s var(--ease-in-out) 1700ms infinite;
 }
 .intro-note {
   margin: 0;
@@ -223,23 +223,8 @@ html.intro-playing .dash * { animation-play-state: paused; }
 }
 .corner-board {
   width: max-content;
+  max-width: calc(100vw - 80px);
   bottom: 52px;
-}
-.corner-board-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 44px);
-  gap: 6px;
-}
-.corner-board .corner-board-sound {
-  width: 44px;
-  height: 44px;
-  background: var(--surface-2);
-  color: var(--text);
-}
-.corner-board-sound:hover:not(:disabled),
-.corner-board-sound:focus-visible {
-  background: var(--surface-3);
-  color: var(--accent);
 }
 .corner-warn {
   color: var(--negative);
@@ -348,7 +333,7 @@ html.intro-playing .dash * { animation-play-state: paused; }
 }
 .chat-feed-item {
   pointer-events: auto;
-  animation: chat-feed-in 420ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation: chat-feed-in 420ms var(--ease-pop) both;
 }
 .chat-feed-item.is-leaving {
   animation: chat-feed-out 320ms var(--ease) forwards;

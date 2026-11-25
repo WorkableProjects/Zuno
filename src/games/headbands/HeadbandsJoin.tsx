@@ -16,6 +16,7 @@ import { isNewerRevision } from "./headbandsEngine";
 import { joinLobby, leaveLobby, lobbyExists, normalizeCode, playerId, submitEntry, watchLobby, type LobbyEntry, type LobbyState } from "./lobby";
 import "../jeopardy/setup.css";
 import "./headbands.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   code: string | null;
@@ -114,7 +115,7 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
   const targetName = target && lobby ? (lobby.players[target]?.name ?? "the next player") : null;
 
   return (
-    <main className="screen game-scope" style={{ "--game": "#FFB454" } as React.CSSProperties}>
+    <main className="screen game-scope" style={{ "--game": "#FFB454", ...gameFontStyle("headbands") } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Leave" onClick={leave}>
           <ArrowLeft size={20} strokeWidth={1.5} />

@@ -18,6 +18,7 @@ import { useJoinSound } from "../../lib/useGameSounds";
 import "../jeopardy/jeopardy.css";
 import "../jeopardy/setup.css";
 import "./headbands.css";
+import { gameFontStyle } from "../gameFont";
 
 interface Props {
   /** Title and look of the game. Its own deck is not used: players write the identities. */
@@ -169,7 +170,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
   };
 
   return (
-    <main className="screen game-scope" style={{ "--game": base.appearance.accentColor } as React.CSSProperties}>
+    <main className="screen game-scope" style={{ "--game": base.appearance.accentColor, ...gameFontStyle("headbands") } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Close the lobby" onClick={() => setConfirmLeave(true)}>
           <ArrowLeft size={20} strokeWidth={1.5} />

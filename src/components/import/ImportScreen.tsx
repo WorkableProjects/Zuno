@@ -1,4 +1,5 @@
 import { ArrowLeft, LogIn, Radio } from "lucide-react";
+import { gameFontStyle } from "../../games/gameFont";
 import { getEngine } from "../../games/registry";
 import { useEscape } from "../navigation/spatialNav";
 import { useAutoFocus } from "../ui/useAutoFocus";
@@ -25,7 +26,7 @@ export function ImportScreen({ gameType, seed, onBack, onHost, onBuilder, onLoad
   const root = useAutoFocus<HTMLElement>();
   useEscape(onBack);
   return (
-    <main className="screen" ref={root}>
+    <main className="screen game-scope import-atm" data-game={gameType} ref={root} style={{ "--game": engine?.appearance.accentColor, ...gameFontStyle(gameType) } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Back to dashboard" onClick={onBack}>
           <ArrowLeft size={20} strokeWidth={1.5} />

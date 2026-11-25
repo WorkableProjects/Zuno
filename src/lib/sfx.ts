@@ -27,12 +27,14 @@ export type Sfx =
   | "win"
   | "pause"
   | "skip"
+  | "welcome"
   | "airhorn"
   | "drumroll"
   | "sadTrombone"
   | "applause"
   | "boing"
-  | "rimshot";
+  | "rimshot"
+  | "launch";
 
 interface Bus {
   ac: AudioContext;
@@ -180,6 +182,43 @@ function air({ ac, out, t }: Ctx, at: number, len: number, f0: number, f1: numbe
   src.stop(s + attack + len + 0.05);
 }
 
+/** A brass-like voice: detuned saws through a swelling low-pass, with slow vibrato. */
+function brass({ ac, out, t }: Ctx, f: number, at: number, len: number, peak = 0.25, opts: { bend?: number; vibrato?: number; open?: number } = {}) {
+  const s = t + at;
+  const lp = ac.createBiquadFilter();
+  const g = ac.createGain();
+  lp.type = "lowpass";
+  lp.Q.value = 1.4;
+  const open = opts.open ?? 6;
+  lp.frequency.setValueAtTime(f * 1.5, s);
+  lp.frequency.exponentialRampToValueAtTime(f * open, s + Math.min(0.12, len * 0.4));
+  lp.frequency.exponentialRampToValueAtTime(f * 2, s + len);
+  g.gain.setValueAtTime(0.0001, s);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), s + 0.04);
+  g.gain.setValueAtTime(Math.max(peak, 0.0002), s + Math.max(0.05, len - 0.12));
+  g.gain.exponentialRampToValueAtTime(0.0001, s + len);
+  const lfo = ac.createOscillator();
+  const lfoGain = ac.createGain();
+  lfo.frequency.value = 5.5;
+  lfoGain.gain.setValueAtTime(0, s);
+  lfoGain.gain.linearRampToValueAtTime(opts.vibrato ?? 6, s + len * 0.6);
+  lfo.connect(lfoGain);
+  [-9, 0, 9].forEach((d) => {
+    const o = ac.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f, s);
+    if (opts.bend) o.frequency.exponentialRampToValueAtTime(f * opts.bend, s + len);
+    o.detune.value = d;
+    lfoGain.connect(o.detune);
+    o.connect(lp);
+    o.start(s);
+    o.stop(s + len + 0.05);
+  });
+  lp.connect(g).connect(out);
+  lfo.start(s);
+  lfo.stop(s + len + 0.05);
+}
+
 const N = (semis: number) => 440 * Math.pow(2, semis / 12);
 const C5 = N(3), E5 = N(7), G5 = N(10), C6 = N(15), D5 = N(5), A4 = N(0), F4 = N(-4), C4 = N(-9);
 
@@ -225,9 +264,12 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
     air(c, 0.2, 0.6, 6000, 9000, 0.05, 0.5, 0.05);
   },
   wrong: (c) => {
-    thump(c, 140, 60, 0, 0.45, 0.6);
-    pluck(c, N(-14), 0, 0.5, 0.25);
-    pluck(c, N(-13), 0.02, 0.5, 0.2);
+    thump(c, 140, 60, 0, 0.45, 0.55);
+    [0, 0.17].forEach((at) => {
+      pluck(c, N(-14), at, 0.15, 0.3, "square");
+      pluck(c, N(-13), at, 0.15, 0.22, "square");
+    });
+    air(c, 0, 0.05, 900, 400, 0.2, 1);
   },
   reveal: (c) => {
     air(c, 0, 0.55, 300, 6000, 0.18, 0.7, 0.45);
@@ -270,12 +312,19 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
   skip: (c) => {
     air(c, 0, 0.18, 3500, 600, 0.2, 1.2, 0.02);
   },
+  welcome: (c) => {
+    // A soft rising chord, a sparkle on top and a low bloom underneath.
+    air(c, 0, 0.5, 500, 4500, 0.07, 0.8, 0.3);
+    thump(c, 110, 55, 0.02, 0.7, 0.28);
+    [N(-9), N(-2), N(3)].forEach((f) => pluck(c, f, 0.05, 1.8, 0.1, "triangle"));
+    [C5, E5, G5, C6].forEach((f, i) => bell(c, f, 0.12 + i * 0.11, 1.5, 0.22, 1.4));
+    bell(c, E5 * 2, 0.62, 1.8, 0.14, 1.8);
+    air(c, 0.6, 0.9, 7000, 10000, 0.04, 0.5, 0.08);
+  },
   airhorn: (c) => {
-    [N(-14), N(-10), N(-7)].forEach((f) => {
-      pluck(c, f, 0, 0.9, 0.22, "sawtooth");
-      pluck(c, f * 2, 0.01, 0.9, 0.1, "square");
-    });
-    air(c, 0, 0.12, 1500, 900, 0.2, 0.8, 0.01);
+    [N(-14), N(-10), N(-7)].forEach((f) => brass(c, f, 0, 1.0, 0.2, { vibrato: 3, open: 8 }));
+    brass(c, N(-14) * 2, 0.0, 1.0, 0.08, { vibrato: 3, open: 5 });
+    air(c, 0, 0.14, 2000, 900, 0.22, 0.8, 0.01);
     thump(c, 160, 90, 0, 0.3, 0.3);
   },
   drumroll: (c) => {
@@ -288,10 +337,8 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
     air(c, 0.95, 0.9, 7000, 5000, 0.12, 0.6, 0.01);
   },
   sadTrombone: (c) => {
-    [[-14, 0, 0.4], [-15, 0.45, 0.4], [-16, 0.9, 0.4], [-17, 1.35, 1.1]].forEach(([semi, at, len]) => {
-      pluck(c, N(semi), at, len, 0.3, "sawtooth");
-      pluck(c, N(semi) * 2, at, len, 0.08, "triangle");
-    });
+    [[-14, 0, 0.42], [-15, 0.46, 0.42], [-16, 0.92, 0.42]].forEach(([semi, at, len]) => brass(c, N(semi), at, len, 0.26, { vibrato: 2, open: 4 }));
+    brass(c, N(-17), 1.38, 1.3, 0.28, { bend: 0.84, vibrato: 14, open: 4 });
   },
   applause: (c) => {
     air(c, 0, 1.8, 2500, 3500, 0.14, 0.5, 0.3);
@@ -309,6 +356,30 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
     thump(c, 140, 70, 0.16, 0.14, 0.45);
     air(c, 0.4, 0.9, 7500, 5500, 0.18, 0.6, 0.005);
     thump(c, 90, 45, 0.4, 0.3, 0.4);
+  },
+  launch: (c) => {
+    // Whoosh riser into a heavy impact when the wipe covers the screen (~0.45s).
+    const { ac, out, t } = c;
+    air(c, 0, 0.45, 250, 7000, 0.4, 0.9, 0.2);
+    const o = ac.createOscillator();
+    const lp = ac.createBiquadFilter();
+    const g = ac.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(90, t);
+    o.frequency.exponentialRampToValueAtTime(900, t + 0.45);
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(300, t);
+    lp.frequency.exponentialRampToValueAtTime(5000, t + 0.45);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.44);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(lp).connect(g).connect(out);
+    o.start(t);
+    o.stop(t + 0.55);
+    thump(c, 150, 32, 0.45, 0.6, 0.85);
+    air(c, 0.45, 0.7, 6000, 900, 0.4, 0.6, 0.005);
+    bell(c, 220, 0.45, 1.1, 0.25, 2.5);
+    bell(c, 440, 0.47, 0.9, 0.18, 2.5);
   },
 };
 
