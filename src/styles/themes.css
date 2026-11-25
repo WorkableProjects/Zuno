@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Extra themes. Each overrides the same tokens as the dark and light palettes
+   in tokens.css, selected by html[data-skin]. The base palette (data-theme)
+   still applies underneath, so anything not overridden stays consistent.
+   Text pairs were chosen for at least 4.5:1 against their surfaces.
+   ========================================================================== */
+
+/* Ocean: deep navy with teal. Dark base. */
+html[data-skin="ocean"] {
+  --bg: #06141f;
+  --bg-rgb: 6 20 31;
+  --surface: #0c2233;
+  --surface-2: #12304a;
+  --surface-3: #1a3f5e;
+  --text: #eaf6fa;
+  --text-2: #a3c0cf;
+  --text-3: #7f9fb0;
+  --accent: #2dd4bf;
+  --accent-ink: #04201c;
+  --accent-glow: rgba(45, 212, 191, 0.28);
+  --border: rgba(130, 200, 225, 0.22);
+  --hairline: rgba(130, 200, 225, 0.12);
+  --btn-bg: #2dd4bf;
+  --btn-text: #04201c;
+  --positive: #5ee0a0;
+  --negative: #ff7a85;
+  --ring: rgba(45, 212, 191, 0.55);
+  --top-light: inset 0 1px 0 rgba(180, 230, 245, 0.08);
+  --shadow-float: 0 16px 40px rgba(0, 8, 16, 0.6);
+  --shadow-tile: 0 14px 28px rgba(0, 8, 16, 0.6);
+  --sunset-1: #7be0d2;
+  --sunset-2: #3aa8d8;
+  --sunset-3: #4f6fe0;
+  --mark-a: #2dd4bf;
+  --mark-b: #5b8def;
+  --game: #5ccfe6;
+}
+html[data-skin="ocean"] body { background: var(--bg); }
+html[data-skin="ocean"] ::selection { background: #2dd4bf; color: #04201c; }
+
+/* Zuno Special: the brand sunset pushed bolder over a dusk-violet base. Dark base. */
+html[data-skin="zuno-special"] {
+  --sunset-1: #ffa63d;
+  --sunset-2: #ff4f8b;
+  --sunset-3: #7c5cff;
+  --bg: #0f0a1a;
+  --bg-rgb: 15 10 26;
+  --surface: #1a1229;
+  --surface-2: #251a3a;
+  --surface-3: #31244d;
+  --text: #fff6ee;
+  --text-2: #d2bfdb;
+  --text-3: #a592b5;
+  --accent: #ffa63d;
+  --accent-ink: #1a0c04;
+  --accent-glow: rgba(255, 166, 61, 0.3);
+  --border: rgba(255, 190, 150, 0.2);
+  --hairline: rgba(255, 190, 150, 0.1);
+  --btn-bg: #ffa63d;
+  --btn-text: #1a0c04;
+  --positive: #5fd49a;
+  --negative: #ff6b82;
+  --ring: rgba(255, 166, 61, 0.55);
+  --top-light: inset 0 1px 0 rgba(255, 220, 190, 0.09);
+  --shadow-float: 0 16px 40px rgba(6, 2, 14, 0.6);
+  --shadow-tile: 0 14px 28px rgba(6, 2, 14, 0.6);
+  --mark-a: #ff8a3d;
+  --mark-b: #9a7cff;
+  --game: #ff8a4c;
+}
+html[data-skin="zuno-special"] body { background: var(--bg); }
+html[data-skin="zuno-special"] .btn-primary { background: linear-gradient(100deg, var(--sunset-1), var(--sunset-2)); color: #1a0c04; }
+html[data-skin="zuno-special"] ::selection { background: #ffa63d; color: #1a0c04; }
+
+/* Anthropical: warm ivory, clay and terracotta. Light base. An original palette. */
+html[data-skin="anthropical"] {
+  --bg: #f5f0e6;
+  --bg-rgb: 245 240 230;
+  --surface: #fbf8f1;
+  --surface-2: #ede6d6;
+  --surface-3: #e2d9c5;
+  --text: #2b2620;
+  --text-2: #5e564a;
+  --text-3: #6f6657;
+  --accent: #b4532f;
+  --accent-ink: #ffffff;
+  --accent-glow: rgba(180, 83, 47, 0.18);
+  --border: rgba(60, 45, 30, 0.2);
+  --hairline: rgba(60, 45, 30, 0.1);
+  --btn-bg: #b4532f;
+  --btn-text: #ffffff;
+  --positive: #3f7d4e;
+  --negative: #b3362b;
+  --beam-core: var(--accent);
+  --ring: rgba(180, 83, 47, 0.45);
+  --top-light: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --shadow-float: 0 8px 24px rgba(60, 45, 30, 0.14);
+  --shadow-tile: 0 10px 22px rgba(60, 45, 30, 0.22);
+  --status-warning: #9a5a0a;
+  --sunset-1: #d98a4e;
+  --sunset-2: #b4532f;
+  --sunset-3: #7a5a8c;
+  --mark-a: #c0603a;
+  --mark-b: #8a5a44;
+  --game: #b4532f;
+}
+html[data-skin="anthropical"] body { background: var(--bg); }
+html[data-skin="anthropical"] ::selection { background: #b4532f; color: #fff; }

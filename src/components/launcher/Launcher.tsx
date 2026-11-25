@@ -1,6 +1,7 @@
 import { ZunoMark } from "../brand/Logo";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { House, LayoutGrid, Plus, Search, Settings, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, House, LayoutGrid, Plus, Search, Settings, X } from "lucide-react";
+import { loadSidebarCollapsed, saveSidebarCollapsed } from "../../app/storage";
 import { getEngine } from "../../games/registry";
 import { TileCover } from "../dashboard/GameTile";
 import type { RailItem } from "../dashboard/railItems";
@@ -17,13 +18,24 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
     { id: "home", label: "Home", Icon: House },
     { id: "library", label: "Library", Icon: LayoutGrid },
   ];
+  const [collapsed, setCollapsed] = useState(loadSidebarCollapsed);
+  const toggle = () => {
+    setCollapsed((c) => {
+      saveSidebarCollapsed(!c);
+      return !c;
+    });
+  };
+  const Chevron = collapsed ? ChevronRight : ChevronLeft;
   return (
-    <div className="launcher game-scope" style={{ "--game": accent } as React.CSSProperties}>
+    <div className={`launcher game-scope${collapsed ? " is-collapsed" : ""}`} style={{ "--game": accent } as React.CSSProperties}>
       <aside className="lx-side" aria-label="Zuno">
         <button type="button" className="lx-mark" aria-label="Zuno home" title="Home" onClick={() => onSection("home")}>
           <ZunoMark size={40} />
         </button>
-        <nav className="lx-nav" data-nav-row="0" aria-label="Sections" style={{ "--idx": section === "home" ? 0 : section === "library" ? 1 : section === "settings" ? 2 : -1 } as React.CSSProperties}>
+        <button type="button" className="lx-collapse" aria-expanded={!collapsed} aria-controls="lx-nav" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={toggle}>
+          <Chevron size={16} strokeWidth={2} />
+        </button>
+        <nav id="lx-nav" className="lx-nav" data-nav-row="0" inert={collapsed} aria-label="Sections" style={{ "--idx": section === "home" ? 0 : section === "library" ? 1 : section === "settings" ? 2 : -1 } as React.CSSProperties}>
           <span className={`lx-nav-pill${section ? "" : " is-hidden"}`} aria-hidden="true" />
           {nav.map(({ id, label, Icon }) => (
             <button key={id} type="button" className={`lx-nav-btn${section === id ? " is-on" : ""}`} aria-current={section === id ? "page" : undefined} aria-label={label} title={label} onClick={() => onSection(id)}>

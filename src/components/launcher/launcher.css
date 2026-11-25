@@ -115,6 +115,29 @@
 .lx-nav-btn:hover .lx-nav-label, .lx-nav-btn:focus-visible .lx-nav-label { opacity: 1; transform: none; }
 .lx-dock { width: 52px; height: 52px; flex: none; }
 
+/* Collapse toggle: a small round chevron under the mark. */
+.lx-collapse {
+  display: grid; place-items: center; flex: none;
+  width: 28px; height: 28px; margin-top: -10px; padding: 0;
+  border: 1px solid var(--hairline); border-radius: 50%;
+  background: transparent; color: var(--text-2); cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-press) var(--ease);
+}
+.lx-collapse:hover { background: color-mix(in oklab, var(--text) 8%, transparent); color: var(--text); }
+.lx-collapse:active { transform: scale(0.92); }
+.lx-collapse:focus-visible { outline: 2px solid var(--game); outline-offset: 3px; }
+
+@media (min-width: 761px) {
+  .lx-side { transition: height var(--t-page) var(--ease-out-expo); }
+  .lx-main { transition: padding-left var(--t-page) var(--ease-out-expo); }
+  .lx-nav, .lx-dock { transition: opacity var(--t-med) var(--ease), transform var(--t-page) var(--ease-out-expo), visibility 0s linear 0s; }
+  .launcher.is-collapsed { --side-w: 72px; }
+  .launcher.is-collapsed .lx-side { height: 128px; bottom: auto; }
+  .launcher.is-collapsed .lx-nav, .launcher.is-collapsed .lx-dock { opacity: 0; transform: translateY(-12px); visibility: hidden; pointer-events: none; transition: opacity var(--t-fast) var(--ease), transform var(--t-med) var(--ease), visibility 0s linear var(--t-med); }
+  .lx-side { height: calc(100dvh - 32px); bottom: auto; }
+}
+@media (max-width: 760px) { .lx-collapse { display: none; } }
+
 /* The multi-action button docks in the sidebar on launcher pages and opens to the right. */
 .corner.is-docked {
   left: calc(16px + (var(--side-w, 84px) - 48px) / 2);
@@ -359,6 +382,7 @@
   .lx-hero { min-height: calc(100dvh - 90px); }
 }
 @media (prefers-reduced-motion: reduce) {
+  .lx-side, .lx-main, .lx-nav, .lx-dock { transition-duration: 0.01ms !important; }
   .lx-scroll, .lx-play, .lx-play::before, .lx-nav-pill::after, .lib-tile.is-active .lib-art { animation: none; }
 }
 [data-motion="off"] :is(.lx-scroll, .lx-play, .lx-play::before, .lx-nav-pill::after, .lib-tile.is-active .lib-art) { animation: none !important; }

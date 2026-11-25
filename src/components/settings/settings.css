@@ -115,6 +115,9 @@
 .st-theme-vice .st-theme-preview { background: linear-gradient(180deg, #2a0b4a 0%, #7a1d6e 55%, #ff7a59 100%); }
 .st-theme-vice .st-theme-preview span { background: rgb(20 7 38 / 0.7); box-shadow: inset 0 0 0 1px #ff3ea5; }
 .st-theme-vice .st-theme-preview span:nth-child(2) { background: linear-gradient(90deg, #ff3ea5, #22e1ff); box-shadow: 0 0 10px #ff3ea5; }
+.st-theme-ocean .st-theme-preview, .st-theme-zuno-special .st-theme-preview, .st-theme-anthropical .st-theme-preview { background: var(--sw-bg); }
+.st-theme-ocean .st-theme-preview span, .st-theme-zuno-special .st-theme-preview span, .st-theme-anthropical .st-theme-preview span { background: var(--sw-panel); }
+.st-theme-ocean .st-theme-preview span:nth-child(2), .st-theme-zuno-special .st-theme-preview span:nth-child(2), .st-theme-anthropical .st-theme-preview span:nth-child(2) { background: var(--sw-accent); }
 .st-theme-label { display: inline-flex; align-items: center; gap: 6px; padding: 0 4px 2px; font: 600 14px var(--font-ui); }
 
 .st-list { display: grid; gap: 4px; }
