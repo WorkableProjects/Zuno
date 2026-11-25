@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { ArrowLeft, ChevronDown, Clock, FolderOpen, LogIn, Monitor, PencilRuler, Play, Radio, Users } from "lucide-react";
 import { GameScene } from "../../games/scenes/GameScene";
+import { Parts3D } from "../backdrop/Parts3D";
+import { scenePalette } from "../backdrop/GradientField";
 import { gameFontStyle } from "../../games/gameFont";
 import { getEngine } from "../../games/registry";
 import { holdMusic, isSoundTheme, releaseMusic } from "../../lib/audio";
@@ -19,6 +21,13 @@ interface Props {
   onJoin?: () => void;
 }
 
+/** Dark or white text, whichever contrasts more with the game's accent fill. */
+function inkFor(hex: string): string {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  const L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  return (L + 0.05) / 0.05 > 1.05 / (L + 0.05) ? "#0b1018" : "#fff";
+}
+
 /** One game's page: big title over its full-bleed scene, soft music, play buttons, and how to play below. */
 export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, onJoinOnline, onJoin }: Props) {
   const engine = getEngine(gameType);
@@ -32,14 +41,21 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
     return () => releaseMusic();
   }, [gameType]);
 
+  const accent = engine?.appearance.accentColor;
+  const palette = useMemo(() => (accent ? scenePalette(accent) : undefined), [accent]);
   if (!engine) return null;
   const online = !!engine.onlineOnly;
 
   return (
-    <main className="lx-detail" key={gameType} style={gameFontStyle(gameType)}>
+    <main className="lx-detail" key={gameType} style={{ ...gameFontStyle(gameType), "--game-ink": inkFor(accent ?? "#000000") } as React.CSSProperties}>
       <section className="lx-hero" data-morph={`game:${gameType}`}>
         <div className="lx-stage" aria-hidden="true">
           <GameScene game={gameType} />
+          {engine.artwork && palette && (
+            <div className="lx-parts">
+              <Parts3D kind={engine.artwork} palette={palette} />
+            </div>
+          )}
         </div>
         <button type="button" className="lx-back" onClick={onBack} data-nav-row="1">
           <ArrowLeft size={16} strokeWidth={2} />
