@@ -14,6 +14,7 @@ import "../headbands/headbands.css";
 import "../rpg/rpg.css";
 import "./party.css";
 import { gameFontStyle } from "../gameFont";
+import { GameScene } from "../scenes/GameScene";
 
 const NAME_KEY = "zuno.hb.name";
 const savedName = () => {
@@ -109,6 +110,7 @@ export function PartyJoin({ def, code: linkCode, name: givenName, onExit }: Prop
 
   return (
     <main className={`screen game-scope party-scope${playing ? " rpg-online-screen" : ""}`} style={{ "--game": def.accent, ...gameFontStyle(def.gameType) } as React.CSSProperties}>
+      <GameScene game={def.gameType} />
       <header className="screen-bar" data-nav-row="0">
         <button
           type="button"

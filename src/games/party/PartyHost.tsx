@@ -9,6 +9,7 @@ import type { AnyPartyDef, PartyAction, Published } from "./types";
 import "../rpg/rpg.css";
 import "./party.css";
 import { gameFontStyle } from "../gameFont";
+import { GameScene } from "../scenes/GameScene";
 
 interface Props {
   def: AnyPartyDef;
@@ -142,6 +143,7 @@ export function PartyHost({ def, code, players, settings, onAgain, onExit }: Pro
 
   return (
     <main className="screen game-scope party-scope rpg-online-screen" style={{ "--game": def.accent, ...gameFontStyle(def.gameType) } as React.CSSProperties}>
+      <GameScene game={def.gameType} />
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Exit to dashboard" onClick={() => (done ? onExit() : setConfirm("exit"))}>
           <ArrowLeft size={20} strokeWidth={1.5} />

@@ -1,7 +1,9 @@
 import { ZunoMark } from "../brand/Logo";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, House, LayoutGrid, Plus, Search, Settings, X } from "lucide-react";
-import { loadRecent, loadSidebarCollapsed, saveSidebarCollapsed } from "../../app/storage";
+import { loadSidebarCollapsed, saveSidebarCollapsed } from "../../app/storage";
+import { Avatar } from "../avatar/AvatarView";
+import { useProfile } from "../../lib/profile";
 import { playSfx } from "../../lib/sfx";
 import { cachedRect, cancelWrite, forgetRect, writeNextFrame } from "../../lib/pointerFrame";
 import { gameFontStyle } from "../../games/gameFont";
@@ -27,15 +29,24 @@ function Tip({ children, keys }: { children: ReactNode; keys?: string }) {
   );
 }
 
+/** The name a signed-out player last typed on a join screen, if any. */
+function localName(): string {
+  try {
+    return localStorage.getItem("zuno.hb.name")?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
 /** The command rail shared by the home, library and game pages. */
-export function LauncherShell({ section, onSection, onSettings, onOpenGame, children, accent }: { section: Section | null; onSection: (s: Section) => void; onSettings: () => void; onOpenGame: (gameType: string) => void; children: ReactNode; accent: string }) {
+export function LauncherShell({ section, onSection, onSettings, children, accent }: { section: Section | null; onSection: (s: Section) => void; onSettings: () => void; children: ReactNode; accent: string }) {
   const nav: Array<{ id: Section; label: string; Icon: typeof House }> = [
     { id: "home", label: "Home", Icon: House },
     { id: "library", label: "Library", Icon: LayoutGrid },
   ];
   const [collapsed, setCollapsed] = useState(loadSidebarCollapsed);
-  const [recent, setRecent] = useState(() => loadRecent().slice(0, 3));
-  useEffect(() => setRecent(loadRecent().slice(0, 3)), [section]);
+  const profile = useProfile();
+  const displayName = profile?.username || localName() || "Guest";
 
   // Phones keep the bottom bar, where collapsing does not apply.
   const [desktop, setDesktop] = useState(() => typeof window === "undefined" || !window.matchMedia("(max-width: 760px)").matches);
@@ -95,26 +106,14 @@ export function LauncherShell({ section, onSection, onSettings, onOpenGame, chil
               <Tip>Settings</Tip>
             </button>
           </nav>
-          {recent.length > 0 ? (
-            <div className="lx-recent" role="group" aria-label="Recently played">
-              {recent.map((r, i) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  className="lx-recent-ico"
-                  aria-label={`Open ${r.title}`}
-                  style={{ "--i": i, "--c": r.accentColor } as React.CSSProperties}
-                  onClick={() => onOpenGame(r.gameType)}
-                >
-                  {r.coverImage ? <img src={r.coverImage} alt="" loading="lazy" /> : <b>{(r.title.trim()[0] ?? "?").toUpperCase()}</b>}
-                </button>
-              ))}
-              <Tip>{`Recent: ${recent[0].title}`}</Tip>
-            </div>
-          ) : null}
           {/* The multi-action button (soundboard, chat, volume) docks here. */}
           <span className="lx-dock" aria-hidden="true" />
         </div>
+        <button type="button" className={`lx-profile${section === "settings" ? " is-on" : ""}`} aria-label={`${displayName}, open settings`} onClick={onSettings}>
+          <Avatar name={displayName} avatar={profile?.avatar ?? null} size={40} className="lx-profile-av" />
+          <span className="lx-profile-name">{displayName}</span>
+          <Tip>{displayName}</Tip>
+        </button>
       </aside>
       <div className="lx-main">{children}</div>
     </div>

@@ -14,24 +14,23 @@ export type BoardId = (typeof BOARD_IDS)[number];
 
 export const isBoardId = (v: unknown): v is BoardId => typeof v === "string" && (BOARD_IDS as readonly string[]).includes(v);
 
-/** Recorded CC0 clips in public/sounds/board (see CREDITS.md). Others use the synthesized sound. */
-export const BOARD_CLIPS: Partial<Record<BoardId, string>> = {
-  applause: "applause.mp3",
-  boing: "boing.mp3",
-  rimshot: "rimshot.mp3",
-  win: "win.mp3",
-};
+/**
+ * Recorded clips in public/sounds/board, by board id. Empty on purpose: every
+ * board sound now uses its redesigned synth voice so the whole app shares one
+ * palette. Add an entry to bring a recorded clip back for a sound.
+ */
+export const BOARD_CLIPS: Partial<Record<BoardId, string>> = {};
 
 /** Display name and approximate length in seconds for each board sound. */
 export const BOARD_INFO: Record<BoardId, { label: string; seconds: number }> = {
   airhorn: { label: "Air horn", seconds: 1 },
   drumroll: { label: "Drum roll", seconds: 1.8 },
   sadTrombone: { label: "Sad trombone", seconds: 2.7 },
-  applause: { label: "Applause", seconds: 4 },
-  boing: { label: "Boing", seconds: 2 },
-  rimshot: { label: "Rimshot", seconds: 1 },
-  win: { label: "Fanfare", seconds: 3 },
-  wrong: { label: "Buzzer", seconds: 0.5 },
+  applause: { label: "Applause", seconds: 1.9 },
+  boing: { label: "Boing", seconds: 0.7 },
+  rimshot: { label: "Rimshot", seconds: 1.3 },
+  win: { label: "Fanfare", seconds: 2 },
+  wrong: { label: "Buzzer", seconds: 0.6 },
 };
 
 /** Whether a board sound is a recorded clip or the built-in synthesized sound. */

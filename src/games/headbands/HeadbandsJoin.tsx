@@ -17,6 +17,7 @@ import { joinLobby, leaveLobby, lobbyExists, normalizeCode, playerId, submitEntr
 import "../jeopardy/setup.css";
 import "./headbands.css";
 import { gameFontStyle } from "../gameFont";
+import { GameScene } from "../scenes/GameScene";
 
 interface Props {
   code: string | null;
@@ -116,6 +117,7 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
 
   return (
     <main className="screen game-scope" style={{ "--game": "#FFB454", ...gameFontStyle("headbands") } as React.CSSProperties}>
+      <GameScene game="headbands" />
       <header className="screen-bar" data-nav-row="0">
         <button type="button" className="icon-btn" aria-label="Leave" onClick={leave}>
           <ArrowLeft size={20} strokeWidth={1.5} />

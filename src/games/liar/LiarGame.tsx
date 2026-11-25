@@ -25,6 +25,7 @@ import { useLiarSounds } from "./useLiarSounds";
 import { Notepad } from "../../components/notepad/Notepad";
 import "./liar.css";
 import { gameFontStyle } from "../gameFont";
+import { GameScene } from "../scenes/GameScene";
 
 interface Props {
   file: LiarFile;
@@ -52,6 +53,7 @@ export function LiarGame({ file, names, options, onAgain, onExit }: Props) {
 
   return (
     <main className="screen game-scope liar-game" style={{ "--game": file.appearance.accentColor, ...gameFontStyle("liar") } as React.CSSProperties}>
+      <GameScene game="liar" />
       <header className="liar-head">
         <div>
           <h1 className="liar-title">{file.metadata.title}</h1>
@@ -440,6 +442,7 @@ function Done({ state, onAgain, onExit }: { state: ReturnType<typeof createSessi
   const rounds = new Set(state.recap.map((r) => r.round)).size;
   return (
     <main className="screen game-scope liar-game">
+      <GameScene game="liar" />
       <section className="liar-stage">
         <div className="liar-phase">
           <h1 className="page-title">{state.endedEarly ? "Game ended" : "Game over"}</h1>
