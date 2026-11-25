@@ -104,21 +104,21 @@ function StatementsArt() {
 
 const HANDS = ["rock", "paper", "scissors"] as const;
 const HAND_PATHS: Record<(typeof HANDS)[number], string> = {
-  // Simple filled silhouettes: fist, open palm, two-finger scissors.
-  rock: "M20 34c0-6 4-10 9-10h20c6 0 11 4 11 10v14c0 10-8 18-18 18h-4c-10 0-18-8-18-18zM26 24v-6a5 5 0 0 1 10 0v6M38 24v-8a5 5 0 0 1 10 0v8",
-  paper: "M18 44V22a4 4 0 0 1 8 0v14V14a4 4 0 0 1 8 0v22V10a4 4 0 0 1 8 0v26V16a4 4 0 0 1 8 0v34c0 10-8 18-18 18s-14-6-18-14z",
-  scissors: "M30 40 20 12a4 4 0 0 1 8-3l9 28 9-28a4 4 0 0 1 8 3L44 40c8 2 12 8 12 14 0 8-6 12-14 12s-12-6-12-14c0-4 0-8 0-12z",
+  // Simple filled silhouettes: a fist with four knuckles and a thumb, an open palm, and a fist with two raised fingers.
+  rock: "M16 38c0-7 5-10 9-9 0-7 8-10 12-5 3-5 11-4 12 3 5-2 10 1 10 7v12c0 12-9 21-21 21-12 0-22-8-22-20zM16 44c-8-1-9-11-1-13",
+  paper: "M20 34h36v16c0 11-8 19-18 19s-18-8-18-19zM20 36V20a4.5 4.5 0 0 1 9 0v16M29 36V11a4.5 4.5 0 0 1 9 0v25M38 36V9a4.5 4.5 0 0 1 9 0v27M47 36V17a4.5 4.5 0 0 1 9 0v19M22 48L9 36a4.5 4.5 0 0 1 6-6l11 10z",
+  scissors: "M20 38h36v10c0 12-8 21-18 21s-18-9-18-21zM24 40L14 14a5.500 5.500 0 0 1 10.500-3.500L36 38zM48 40L58 14a5.500 5.500 0 0 0-10.500-3.500L36 38z",
 };
 /** [shape, chip?, left %, top %, size px, depth px, delay s] — generic floaters. */
 const FLOATERS: Array<[number, boolean, number, number, number, number, number]> = [
-  [0, false, 68, 12, 120, 60, 0],
-  [1, false, 78, 58, 150, -40, -6],
-  [2, false, 60, 70, 110, 90, -11],
-  [0, true, 70, 20, 64, 120, -3],
-  [1, true, 88, 30, 48, -60, -9],
-  [2, true, 56, 44, 56, 30, -14],
-  [0, true, 84, 80, 72, 70, -5],
-  [1, true, 66, 88, 44, -20, -17],
+  [0, false, 80, 62, 130, 60, 0],
+  [1, false, 62, 70, 150, -40, -6],
+  [2, true, 78, 84, 64, 90, -11],
+  [0, true, 70, 56, 60, 120, -3],
+  [1, true, 56, 84, 52, -60, -9],
+  [2, true, 93, 54, 48, 30, -14],
+  [0, true, 72, 88, 68, 70, -5],
+  [1, true, 86, 94, 44, -20, -17],
 ];
 
 /** Rock, paper and scissors hands and casino chips drifting slowly. */

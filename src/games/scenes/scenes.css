@@ -75,8 +75,8 @@ html[data-theme="light"] .gs-jeopardy .gs-a, html[data-theme="light"] .gs-jeopar
 /* ---------- Headbands: question-mark cards through bokeh ---------- */
 .gs-headbands .gs-base { background: radial-gradient(90% 70% at 50% 40%, color-mix(in oklab, var(--gs-lite) 80%, transparent), color-mix(in oklab, var(--gs-deep) 82%, transparent) 78%); }
 .gs-headbands .gs-a { animation: gs-drift 28s var(--ease-in-out, ease-in-out) infinite alternate; }
-.gs-headbands .gs-b { animation: gs-spin 150s linear infinite; }
-.gs-headbands .gs-c { animation: gs-spin-rev 110s linear infinite; opacity: 0.85; }
+.gs-headbands .gs-b { animation: gs-spin 150s linear infinite; opacity: 0.8; }
+.gs-headbands .gs-c { animation: gs-spin-rev 110s linear infinite; opacity: 0.6; }
 @keyframes gs-drift { from { transform: translate3d(-3%, 2%, 0) scale(1); } to { transform: translate3d(3%, -3%, 0) scale(1.06); } }
 @keyframes gs-spin { to { transform: rotate(360deg); } }
 @keyframes gs-spin-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
@@ -142,7 +142,7 @@ html[data-theme="light"] .gs-jeopardy .gs-a, html[data-theme="light"] .gs-jeopar
 .gs-drawit .gs-base { background: linear-gradient(180deg, color-mix(in oklab, var(--gs-deep) 90%, transparent), color-mix(in oklab, var(--g1) 14%, var(--gs-deep))); }
 .gs-page {
   left: 4vw; right: 4vw; top: 3vh; bottom: -8vh; transform: rotate(-1.2deg);
-  background: linear-gradient(135deg, rgb(255 240 205 / 0.2), rgb(255 226 170 / 0.12));
+  background: linear-gradient(135deg, rgb(255 240 205 / 0.3), rgb(255 226 170 / 0.2));
   border: 2px solid rgb(255 236 190 / 0.4);
   border-radius: 6px;
   box-shadow: 0 2vmax 5vmax rgb(0 0 0 / 0.5), inset 0 0 6vmax rgb(255 220 150 / 0.12);
