@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type RefObject } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock, LayoutGrid, LogIn, Play, Plus, Shuffle, Smartphone, Tv, Users, X } from "lucide-react";
 import { useProfile } from "../../lib/profile";
+import { cachedRect, writeNextFrame } from "../../lib/pointerFrame";
 import { Avatar } from "../avatar/AvatarView";
 import { gameFontStyle } from "../../games/gameFont";
 import { TileCover } from "../dashboard/GameTile";
@@ -66,20 +67,17 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
-/** Pointer-driven parallax for the stage art: writes two CSS vars, once per frame. */
+/** Pointer-driven parallax for the stage art: writes two CSS vars, once per frame, with no layout read in the handler. */
 function stageParallax(e: React.PointerEvent<HTMLElement>) {
   if (e.pointerType !== "mouse") return;
   const el = e.currentTarget;
-  const r = el.getBoundingClientRect();
+  const r = cachedRect(el);
   const x = ((e.clientX - r.left) / r.width - 0.5) * 2;
   const y = ((e.clientY - r.top) / r.height - 0.5) * 2;
-  cancelAnimationFrame(Number(el.dataset.raf ?? 0));
-  el.dataset.raf = String(
-    requestAnimationFrame(() => {
-      el.style.setProperty("--px", x.toFixed(3));
-      el.style.setProperty("--py", y.toFixed(3));
-    }),
-  );
+  writeNextFrame(el, () => {
+    el.style.setProperty("--px", x.toFixed(3));
+    el.style.setProperty("--py", y.toFixed(3));
+  });
 }
 
 /**

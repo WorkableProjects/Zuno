@@ -21,9 +21,16 @@ const SPARK_MS = 1200;
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+const LAUNCH_FLAG = "data-launching";
+/** While the launch overlay plays, the ambient backdrop holds still (see backdrop.css) and screen changes skip their view transition. */
+function setLaunching(on: boolean) {
+  document.documentElement.toggleAttribute(LAUNCH_FLAG, on);
+  if (!on) window.dispatchEvent(new Event("zuno:launch-end"));
+}
+
 /** Camera shake: a short transform animation on the app root. */
 function shakeRoot() {
-  const root = document.getElementById("root");
+  const root = document.querySelector<HTMLElement>(".app-stage") ?? document.getElementById("root");
   if (!root) return;
   root.classList.remove("pb-camshake");
   void root.offsetWidth;
@@ -119,6 +126,7 @@ export function PlayButton({ onOpen, accent, title, className = "", children, di
   useEffect(
     () => () => {
       timers.current.forEach((t) => window.clearTimeout(t));
+      setLaunching(false);
     },
     [],
   );
@@ -162,12 +170,14 @@ export function PlayButton({ onOpen, accent, title, className = "", children, di
     const font = getComputedStyle(el).getPropertyValue("--game-font").trim();
     setBurst({ id: Date.now(), x: r.left + r.width / 2, y: r.top + r.height / 2, color, font });
     playSfx("launch");
+    setLaunching(true);
     shakeRoot();
     timers.current.push(window.setTimeout(shakeRoot, OPEN_AFTER_MS - 30));
     timers.current.push(
       window.setTimeout(() => open.current(), OPEN_AFTER_MS),
       window.setTimeout(() => {
         setBurst(null);
+        setLaunching(false);
         busy.current = false;
       }, CLEAN_UP_MS),
     );

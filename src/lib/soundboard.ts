@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import * as db from "firebase/database";
+import { lobbiesAvailable, database } from "../games/headbands/lobby";
 import { getRoom, subscribeRoom } from "./room";
 import { getSfxContext, playSfx, playSfxBuffer, unlockSfx, type Sfx } from "./sfx";
 
@@ -110,7 +112,6 @@ export function useSoundboardListener(): void {
 }
 
 export async function backend() {
-  const [{ lobbiesAvailable, database }, db] = await Promise.all([import("../games/headbands/lobby"), import("firebase/database")]);
   return lobbiesAvailable() ? { d: database(), db } : null;
 }
 

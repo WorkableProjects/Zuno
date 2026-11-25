@@ -26,7 +26,7 @@
 }
 .game.game-scope::after {
   background: conic-gradient(from 180deg at 50% -10%, transparent 40%, color-mix(in oklab, var(--game) 14%, transparent) 46%, transparent 52%, transparent 60%, color-mix(in oklab, var(--game) 10%, transparent) 66%, transparent 72%);
-  transform-origin: 50% 0; will-change: transform; animation: atm-sweep 14s ease-in-out infinite alternate;
+  transform-origin: 50% 0; will-change: transform; animation: atm-sweep 14s var(--ease-in-out) infinite alternate;
 }
 
 /* Headbands: slow tide bands rising from the bottom. */
@@ -39,7 +39,7 @@
 .hb-game::after {
   inset: auto -10% -6% -10%; height: 46vh;
   background: radial-gradient(60% 100% at 25% 100%, color-mix(in oklab, var(--game) 14%, transparent) 0 55%, transparent 56%), radial-gradient(60% 100% at 75% 100%, color-mix(in oklab, #38bdf8 10%, transparent) 0 52%, transparent 53%);
-  will-change: transform; animation: atm-tide 11s ease-in-out infinite alternate;
+  will-change: transform; animation: atm-tide 11s var(--ease-in-out) infinite alternate;
 }
 
 /* LIAR: aurora fog drifting behind the table. */
@@ -53,7 +53,7 @@
 .liar-game::after {
   inset: -15%;
   background: radial-gradient(40% 25% at 30% 40%, rgb(255 255 255 / 0.05), transparent 70%), radial-gradient(45% 30% at 70% 65%, color-mix(in oklab, var(--game) 10%, transparent), transparent 70%);
-  filter: blur(24px); will-change: transform; animation: atm-fog 18s ease-in-out infinite alternate;
+  filter: blur(24px); will-change: transform; animation: atm-fog 18s var(--ease-in-out) infinite alternate;
 }
 
 /* Rock Paper Gamble: neon Vegas, magenta and cyan tubes over a dark room. */
@@ -68,7 +68,7 @@
 }
 .rpg-game::after {
   background: linear-gradient(100deg, transparent 30%, color-mix(in oklab, #22d3ee 10%, transparent) 50%, transparent 70%);
-  will-change: transform, opacity; animation: atm-neon 6s ease-in-out infinite alternate;
+  will-change: transform, opacity; animation: atm-neon 6s var(--ease-in-out) infinite alternate;
 }
 
 /* Import / setup screens: one shared accent glow so the first screen after PLAY already feels like the game. */
@@ -105,7 +105,7 @@
 .feud-main { background: radial-gradient(120% 80% at 50% 0%, color-mix(in oklab, #2563eb 22%, var(--surface)) 0%, color-mix(in oklab, #172554 30%, var(--surface)) 80%); }
 .feud-main::before {
   background: conic-gradient(from 160deg at 50% -6%, transparent 0 8%, rgb(250 204 21 / 0.14) 11%, transparent 14%, transparent 22%, rgb(255 255 255 / 0.1) 25%, transparent 28%, transparent 38%, rgb(250 204 21 / 0.12) 41%, transparent 44%);
-  transform-origin: 50% 0; will-change: transform; animation: atm-sweep 9s ease-in-out infinite alternate;
+  transform-origin: 50% 0; will-change: transform; animation: atm-sweep 9s var(--ease-in-out) infinite alternate;
 }
 .feud-main::after { background: radial-gradient(100% 70% at 50% 110%, rgb(0 0 0 / 0.4), transparent 65%), radial-gradient(circle, rgb(250 204 21 / 0.4) 1px, transparent 1.5px) 0 0 / 34px 34px; -webkit-mask-image: linear-gradient(180deg, transparent 70%, #000); mask-image: linear-gradient(180deg, transparent 70%, #000); opacity: 0.6; }
 

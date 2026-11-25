@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { ChevronLeft, ChevronRight, House, LayoutGrid, Plus, Search, Settings, X } from "lucide-react";
 import { loadRecent, loadSidebarCollapsed, saveSidebarCollapsed } from "../../app/storage";
 import { playSfx } from "../../lib/sfx";
+import { cachedRect, cancelWrite, forgetRect, writeNextFrame } from "../../lib/pointerFrame";
 import { gameFontStyle } from "../../games/gameFont";
 import { getEngine } from "../../games/registry";
 import { TileCover } from "../dashboard/GameTile";
@@ -120,28 +121,26 @@ export function LauncherShell({ section, onSection, onSettings, onOpenGame, chil
   );
 }
 
-/** Pointer-tracked tilt and sheen: writes CSS vars straight to the tile, once per frame, no re-render. */
+/** Pointer-tracked tilt and sheen: writes CSS vars straight to the tile, once per frame, no re-render, no layout reads. */
 function tilt(e: React.PointerEvent<HTMLElement>) {
   if (e.pointerType !== "mouse") return;
   const el = e.currentTarget;
-  const r = el.getBoundingClientRect();
+  const r = cachedRect(el);
   const x = (e.clientX - r.left) / r.width;
   const y = (e.clientY - r.top) / r.height;
-  cancelAnimationFrame(Number(el.dataset.raf ?? 0));
-  el.dataset.raf = String(
-    requestAnimationFrame(() => {
-      el.style.setProperty("--mx", `${(x * 100).toFixed(1)}%`);
-      el.style.setProperty("--my", `${(y * 100).toFixed(1)}%`);
-      el.style.setProperty("--rx", `${((0.5 - y) * 10).toFixed(2)}deg`);
-      el.style.setProperty("--ry", `${((x - 0.5) * 12).toFixed(2)}deg`);
-      el.style.setProperty("--py-x", ((0.5 - x) * 2).toFixed(3));
-      el.style.setProperty("--py-y", ((0.5 - y) * 2).toFixed(3));
-    }),
-  );
+  writeNextFrame(el, () => {
+    el.style.setProperty("--mx", `${(x * 100).toFixed(1)}%`);
+    el.style.setProperty("--my", `${(y * 100).toFixed(1)}%`);
+    el.style.setProperty("--rx", `${((0.5 - y) * 10).toFixed(2)}deg`);
+    el.style.setProperty("--ry", `${((x - 0.5) * 12).toFixed(2)}deg`);
+    el.style.setProperty("--py-x", ((0.5 - x) * 2).toFixed(3));
+    el.style.setProperty("--py-y", ((0.5 - y) * 2).toFixed(3));
+  });
 }
 function untilt(e: React.PointerEvent<HTMLElement>) {
   const el = e.currentTarget;
-  cancelAnimationFrame(Number(el.dataset.raf ?? 0));
+  cancelWrite(el);
+  forgetRect(el);
   el.style.removeProperty("--rx");
   el.style.removeProperty("--ry");
   el.style.removeProperty("--py-x");

@@ -3,11 +3,11 @@
 .draw-main { gap: 12px; }
 .draw-top { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
 .draw-word { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 6px; min-height: 40px; font: 700 clamp(17px, 2.5vw, 23.8px) / 1 var(--font-display); }
-.draw-word-full { color: var(--rpg-green-ink); letter-spacing: 0.04em; animation: rpg-pop-big 400ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.draw-word-full { color: var(--rpg-green-ink); letter-spacing: 0.04em; animation: rpg-pop-big 400ms var(--ease-pop) backwards; }
 .draw-letter { display: inline-grid; place-items: end center; width: 0.9em; height: 1.2em; text-transform: lowercase; }
 .draw-letter.is-blank { border-bottom: 3px solid var(--text-2); }
 .draw-letter.is-space { width: 0.5em; }
-.draw-letter.is-shown { animation: rpg-pop-big 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; color: var(--rpg-amber-ink); }
+.draw-letter.is-shown { animation: rpg-pop-big 420ms var(--ease-pop) backwards; color: var(--rpg-amber-ink); }
 .draw-count { align-self: flex-start; }
 
 .draw-stage { position: relative; }
@@ -24,7 +24,7 @@
 .draw-tool, .draw-size { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-ctl); border: 2px solid transparent; background: var(--surface-3); color: var(--text); cursor: pointer; transition: transform 140ms var(--ease), border-color 200ms var(--ease), background-color 200ms var(--ease); }
 .draw-tool.is-on, .draw-size.is-on { border-color: var(--game); background: color-mix(in oklab, var(--game) 20%, var(--surface-3)); }
 .draw-size span { display: block; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.2); transition: background-color 200ms var(--ease); }
-.draw-swatch { width: 28px; height: 28px; border-radius: 50%; background: var(--sw); border: 2px solid rgba(0, 0, 0, 0.25); cursor: pointer; transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms var(--ease); }
+.draw-swatch { width: 28px; height: 28px; border-radius: 50%; background: var(--sw); border: 2px solid rgba(0, 0, 0, 0.25); cursor: pointer; transition: transform 160ms var(--ease-pop), box-shadow 200ms var(--ease); }
 .draw-swatch.is-on { transform: scale(1.22); box-shadow: 0 0 0 3px var(--surface-2), 0 0 0 5px var(--game); }
 .draw-tool:hover:not(:disabled), .draw-size:hover:not(:disabled) { transform: translateY(-2px); }
 .draw-swatch:hover:not(:disabled):not(.is-on) { transform: scale(1.12); }

@@ -141,7 +141,10 @@
 
 @media (max-width: 760px) {
   .st-layout { grid-template-columns: 1fr; }
-  .st-nav { position: static; display: flex; overflow-x: auto; }
+  /* One row of sections that scrolls sideways; the fade on the right says there is more. */
+  .st-nav { position: static; display: flex; gap: 6px; margin-inline: -4px; padding: 2px 28px 6px 4px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
+  .st-nav::-webkit-scrollbar { display: none; }
+  .st-nav-btn { flex: none; white-space: nowrap; scroll-snap-align: start; }
   .st-motion { grid-template-columns: 1fr; }
   .st-themes { grid-template-columns: 1fr 1fr; }
 }

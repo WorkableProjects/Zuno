@@ -49,7 +49,7 @@
 .scene-aurora .light {
   width: 110vmax;
   height: 44vmax;
-  animation: drift-x 36s ease-in-out infinite alternate;
+  animation: drift-x 36s var(--ease-in-out) infinite alternate;
 }
 .scene-aurora .light-a {
   top: -14vmax;
@@ -74,7 +74,7 @@
 .scene-tide .light {
   width: 96vmax;
   height: 56vmax;
-  animation: drift-y 32s ease-in-out infinite alternate;
+  animation: drift-y 32s var(--ease-in-out) infinite alternate;
 }
 .scene-tide .light-a {
   bottom: -30vmax;
@@ -99,7 +99,7 @@
   width: 44vmax;
   height: 130vmax;
   transform-origin: 50% 0%;
-  animation: sway 28s ease-in-out infinite alternate;
+  animation: sway 28s var(--ease-in-out) infinite alternate;
 }
 .scene-spotlight .light-a {
   right: 30vmax;
@@ -116,7 +116,7 @@
   height: 44vmax;
   bottom: -24vmax;
   right: -10vmax;
-  animation: drift-y 40s ease-in-out infinite alternate;
+  animation: drift-y 40s var(--ease-in-out) infinite alternate;
 }
 
 /* Horizon: a banded sun going down on the right */
@@ -125,21 +125,21 @@
   height: 70vmax;
   right: -22vmax;
   bottom: -34vmax;
-  animation: drift-y 44s ease-in-out infinite alternate;
+  animation: drift-y 44s var(--ease-in-out) infinite alternate;
 }
 .scene-horizon .light-b {
   width: 70vmax;
   height: 40vmax;
   right: -6vmax;
   bottom: -4vmax;
-  animation: drift-x 52s ease-in-out infinite alternate;
+  animation: drift-x 52s var(--ease-in-out) infinite alternate;
 }
 .scene-horizon .light-c {
   width: 120vmax;
   height: 40vmax;
   right: -30vmax;
   bottom: -26vmax;
-  animation: drift-x 60s ease-in-out infinite alternate-reverse;
+  animation: drift-x 60s var(--ease-in-out) infinite alternate-reverse;
 }
 .sun {
   position: absolute;
@@ -176,7 +176,7 @@
     #000 88.5% 93.5%,
     transparent 93.5%
   );
-  animation: sun-set 46s ease-in-out infinite alternate;
+  animation: sun-set 46s var(--ease-in-out) infinite alternate;
 }
 @keyframes sun-set {
   from {
@@ -201,17 +201,11 @@
 .g3d-space {
   position: absolute;
   inset: 0;
-  animation: g3d-turn 48s ease-in-out infinite;
-}
-@keyframes g3d-turn {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  33% { transform: translate3d(-2%, 1.5%, 0) scale(1.04); }
-  66% { transform: translate3d(1.5%, -1%, 0) scale(0.98); }
 }
 .g3d .scene { inset: 0; overflow: visible; }
-.g3d .light-a { animation: g3d-orbit-a 30s ease-in-out infinite !important; }
-.g3d .light-b { animation: g3d-orbit-b 38s ease-in-out infinite !important; }
-.g3d .light-c { animation: g3d-orbit-c 46s ease-in-out infinite !important; }
+.g3d .light-a { animation: g3d-orbit-a 30s var(--ease-in-out) infinite !important; }
+.g3d .light-b { animation: g3d-orbit-b 38s var(--ease-in-out) infinite !important; }
+.g3d .light-c { animation: g3d-orbit-c 46s var(--ease-in-out) infinite !important; }
 @keyframes g3d-orbit-a {
   0%, 100% { transform: translate3d(-6%, 0, 0) rotate(var(--rot, 0deg)) scale(1); }
   33% { transform: translate3d(4%, -6%, 0) rotate(calc(var(--rot, 0deg) + 10deg)) scale(1.12); }
@@ -236,14 +230,9 @@
   border-radius: 50%;
   background: radial-gradient(closest-side, var(--c2), transparent);
   opacity: calc(var(--field-opacity) * 0.35);
-  animation: g3d-sheen 40s ease-in-out infinite alternate;
-}
-@keyframes g3d-sheen {
-  from { transform: translate3d(-4%, 2%, 0) scale(0.95); }
-  to { transform: translate3d(4%, -2%, 0) scale(1.08); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .g3d-space, .g3d .light, .g3d-sheen { animation: none !important; }
+  .g3d .light { animation: none !important; }
 }
 
 /* Vegas: violet, cyan and amber lights, a soft dot grid and an occasional flash */
@@ -271,7 +260,7 @@
   background-image: radial-gradient(circle, rgb(255 255 255 / 0.5) 1.2px, transparent 1.6px);
   background-size: 32px 32px;
   opacity: 0.06;
-  animation: vegas-dots 20s ease-in-out infinite;
+  animation: vegas-dots 20s var(--ease-in-out) infinite;
   -webkit-mask-image: linear-gradient(90deg, transparent 20%, #000 70%);
   mask-image: linear-gradient(90deg, transparent 20%, #000 70%);
 }

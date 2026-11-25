@@ -117,7 +117,7 @@
   animation: wr-pop 600ms var(--ease) both;
 }
 .wr-col.is-drum {
-  animation: wr-rise 700ms var(--ease) both, wr-shake 120ms linear 700ms infinite, wr-pulse 480ms ease-in-out 700ms infinite;
+  animation: wr-rise 700ms var(--ease) both, wr-shake 120ms linear 700ms infinite, wr-pulse 480ms var(--ease-in-out) 700ms infinite;
 }
 .wr-col.is-winner .wr-block {
   box-shadow: var(--top-light), 0 0 48px var(--accent-glow), var(--shadow-float);

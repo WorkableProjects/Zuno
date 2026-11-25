@@ -7,14 +7,11 @@
   pointer-events: none;
 }
 
+/* A plain wrapper. It used to drift a few pixels, but moving the whole scene's parent forces every
+   light inside it to be re-composited as part of one big moving group; the lights move on their own. */
 .bg-parallax {
   position: absolute;
-  inset: -16px;
-  animation: bg-drift 38s ease-in-out infinite alternate;
-}
-@keyframes bg-drift {
-  from { transform: translate3d(-8px, -4px, 0) scale(1); }
-  to { transform: translate3d(8px, 4px, 0) scale(1.012); }
+  inset: 0;
 }
 
 .bg-layer {
@@ -51,19 +48,20 @@
 /* ---------- Overlays ---------- */
 .backdrop-drift {
   position: absolute;
-  inset: -20%;
+  inset: 0;
   opacity: 0;
   background:
     radial-gradient(40% 36% at 20% 30%, rgb(255 255 255 / 0.07), transparent 70%),
     radial-gradient(34% 30% at 78% 70%, rgb(255 255 255 / 0.06), transparent 70%);
   transition: opacity 3s var(--ease);
-  animation: bg-sweep 46s linear infinite;
+  animation: bg-sweep 46s var(--ease-in-out) infinite alternate;
 }
 .backdrop.is-lingering .backdrop-drift {
   opacity: 1;
 }
 @keyframes bg-sweep {
-  to { transform: rotate(360deg); }
+  from { transform: translate3d(-4%, -2%, 0); }
+  to { transform: translate3d(4%, 2%, 0); }
 }
 .backdrop-grain {
   position: absolute;
@@ -86,8 +84,9 @@
   opacity: 0;
   transition: opacity var(--t-slow) var(--ease);
 }
-.backdrop.is-paused,
-.backdrop.is-paused * { animation-play-state: paused !important; }
+/* Paused means a held still frame. The scene's one-shot entrance (.bg-layer) is left running, or a scene
+   that arrives while paused would be held at its first frame, which is invisible. */
+.backdrop.is-paused *:not(.bg-layer) { animation-play-state: paused !important; }
 .backdrop.is-dim .backdrop-dim {
   opacity: 1;
 }
@@ -151,7 +150,28 @@
 :root[data-scene="focus"] .g3d .light {
   animation-play-state: paused !important;
 }
-:root[data-motion="off"] .backdrop *,
+:root[data-motion="off"] .backdrop *:not(.bg-layer),
 :root[data-motion="off"] .backdrop *::before {
   animation-play-state: paused !important;
 }
+
+/* While a screen change or the PLAY launch is playing, the ambient scene holds still. Nothing
+   on screen is watching it, and every animated layer is a full-screen repaint competing with the
+   transition for the same frames. It resumes the moment the change lands. */
+html[data-launching] .backdrop *:not(.bg-layer),
+html[data-launching] .backdrop *::before,
+html[data-launching] .backdrop *::after,
+html[data-vt] .backdrop *:not(.bg-layer),
+html[data-vt] .backdrop *::before,
+html[data-vt] .backdrop *::after { animation-play-state: paused !important; }
+
+/* The motion governor (lib/motionGovernor.ts) found this machine too slow to animate the scene. */
+:root[data-motion-auto="still"] .backdrop *:not(.bg-layer),
+:root[data-motion-auto="still"] .backdrop *::before,
+:root[data-motion-auto="still"] .backdrop *::after { animation-play-state: paused !important; }
+/* A still scene has no crossfade either: a new one simply appears, rather than blending two full scenes for 760ms. */
+:root[data-motion-auto="still"] .bg-layer,
+:root[data-motion="off"] .bg-layer { animation: none; }
+/* Elements the governor pinned at their current pose: no animation, so no layer of their own. */
+:root[data-motion-auto="still"] .backdrop [data-frozen],
+:root[data-motion="off"] .backdrop [data-frozen] { animation: none !important; will-change: auto !important; }

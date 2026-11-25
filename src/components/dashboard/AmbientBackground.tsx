@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { BackgroundPreset } from "../../game-files/schema/common";
 import { GradientField, scenePalette } from "../backdrop/GradientField";
 import { Parts3D } from "../backdrop/Parts3D";
+import { freezeBackdrop } from "../../lib/motionGovernor";
 import "./backdrop.css";
 
 export interface BackdropSpec {
@@ -60,13 +61,24 @@ export function AmbientBackground({ spec, dim, paused = false }: { spec: Backdro
 
   useEffect(() => {
     // Wait a beat so racing across the rail does not start a fade per tile.
-    const settle = window.setTimeout(() => {
+    const swap = () =>
       setLayers((prev) => {
         const top = prev[prev.length - 1];
         return top.key === spec.key ? prev : [top, spec];
       });
-    }, SETTLE_MS);
-    return () => window.clearTimeout(settle);
+    // While the PLAY launch overlay covers the screen the new scene would only be built behind it
+    // and compete with the overlay for frames, so it is brought in once the launch has finished.
+    const launching = () => document.documentElement.hasAttribute("data-launching");
+    let settle = 0;
+    const onEnd = () => {
+      settle = window.setTimeout(swap, SETTLE_MS);
+    };
+    if (launching()) window.addEventListener("zuno:launch-end", onEnd, { once: true });
+    else settle = window.setTimeout(swap, SETTLE_MS);
+    return () => {
+      window.clearTimeout(settle);
+      window.removeEventListener("zuno:launch-end", onEnd);
+    };
   }, [spec]);
 
   // The scene grows richer the longer it stays on screen. Time only, never the pointer.
@@ -75,6 +87,21 @@ export function AmbientBackground({ spec, dim, paused = false }: { spec: Backdro
     const t = window.setTimeout(() => setLingered(true), 12000);
     return () => window.clearTimeout(t);
   }, [spec.key]);
+
+  // When the scene is held still, a layer that has just arrived is pinned at its first pose too, so it
+  // costs one flat layer instead of a dozen paused ones.
+  useEffect(() => {
+    const d = document.documentElement.dataset;
+    if (d.motionAuto !== "still" && d.motion !== "off") return;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(freezeBackdrop);
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [layers]);
 
   useEffect(() => {
     if (layers.length < 2) return;

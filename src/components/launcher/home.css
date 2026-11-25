@@ -68,6 +68,8 @@
 .hm-stage-dot:hover::before { background: color-mix(in oklab, var(--stage-fg) 50%, transparent); }
 .hm-stage-fill { position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: var(--stage-fg); transform-origin: 0 50%; animation: hm-fill linear forwards; }
 .hm-stage.is-paused .hm-stage-fill { animation-play-state: paused; }
+/* On a machine the motion governor found slow, the rotation timer ticks in coarse steps instead of redrawing the stage every frame. */
+:root[data-motion-auto="still"] .hm-stage-fill { animation-timing-function: steps(42, end); }
 .hm-stage.is-still .hm-stage-fill { animation: none; }
 .hm-stage :focus-visible { outline: 2px solid var(--stage-fg); outline-offset: 3px; }
 @keyframes hm-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
@@ -78,7 +80,7 @@
 html[data-theme="light"] .hm-stage {
   --stage-ink: color-mix(in oklab, var(--game) 12%, color-mix(in oklab, var(--accent) 4%, var(--surface)));
   --stage-fg: var(--text); --stage-fg-2: color-mix(in oklab, var(--text) 82%, var(--stage-ink)); --stage-fg-3: color-mix(in oklab, var(--text) 78%, var(--stage-ink));
-  --stage-chip: color-mix(in oklab, var(--game) 16%, var(--surface)); --stage-line: color-mix(in oklab, var(--text) 30%, transparent); --stage-fill: color-mix(in oklab, var(--surface) 70%, transparent);
+  --stage-chip: color-mix(in oklab, var(--text) 9%, var(--stage-ink)); --stage-line: color-mix(in oklab, var(--text) 30%, transparent); --stage-fill: color-mix(in oklab, var(--surface) 70%, transparent);
   --stage-btn-bg: var(--text); --stage-btn-fg: var(--surface); --stage-glow: 38%; --stage-shade: transparent; --stage-grain: 0.04; --stage-title-shadow: none;
   --stage-art-shadow: color-mix(in oklab, var(--game) 40%, rgb(0 0 0 / 0.25));
   box-shadow: var(--elev-3);

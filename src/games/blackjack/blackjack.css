@@ -29,7 +29,7 @@
 .bj-hand-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; }
 .bj-total { display: inline-grid; place-items: center; min-width: 32px; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); font-weight: 700; font-variant-numeric: tabular-nums; }
 .bj-total.is-bust { background: color-mix(in oklab, var(--rpg-red) 25%, transparent); color: var(--rpg-red-ink); }
-.bj-result { padding: 2px 10px; border-radius: 999px; font-weight: 700; animation: rpg-pop-big 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.bj-result { padding: 2px 10px; border-radius: 999px; font-weight: 700; animation: rpg-pop-big 420ms var(--ease-pop) backwards; }
 .bj-result.is-win, .bj-result.is-blackjack { background: color-mix(in oklab, var(--rpg-green) 20%, transparent); color: var(--rpg-green-ink); }
 .bj-result.is-blackjack { background: color-mix(in oklab, var(--rpg-amber) 25%, transparent); color: var(--rpg-amber-ink); }
 .bj-result.is-push { background: var(--surface-3); }
@@ -40,7 +40,7 @@
 .bj-chip {
   width: 58px; height: 58px; border-radius: 50%; cursor: pointer; font: 700 14px / 1 var(--font-ui); color: #fff;
   background: radial-gradient(circle, var(--game) 52%, #fff 53% 60%, var(--game) 61%); border: 3px dashed rgba(255, 255, 255, 0.75);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); transition: transform 160ms var(--ease-pop);
 }
 .bj-chip.is-all { background: radial-gradient(circle, var(--rpg-amber) 52%, #fff 53% 60%, var(--rpg-amber) 61%); color: #1a1300; font-size: 12px; }
 .bj-chip:hover:not(:disabled) { transform: translateY(-4px) rotate(-8deg); }

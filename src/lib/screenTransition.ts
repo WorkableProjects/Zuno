@@ -67,7 +67,17 @@ export interface TransitionOptions {
  */
 export function withScreenTransition(direction: NavDirection, update: () => void, options: TransitionOptions = {}): boolean {
   const doc = document as ViewTransitionDoc;
-  if (!doc.startViewTransition || document.visibilityState !== "visible") {
+  // A PLAY launch already covers the screen change with its own overlay, so a view transition
+  // would only snapshot and animate the same pixels twice behind it.
+  const covered = document.documentElement.hasAttribute("data-launching");
+  if (!doc.startViewTransition || document.visibilityState !== "visible" || (covered && direction === "forward")) {
+    if (current) {
+      try {
+        current.skipTransition();
+      } catch {
+        /* already done */
+      }
+    }
     update();
     return false;
   }
