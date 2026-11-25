@@ -553,6 +553,7 @@ const pitchFor = (name: Sfx) => (VARIED.has(name) ? 1 + (Math.random() * 2 - 1) 
 const TRIM: Partial<Record<Sfx, number>> = {
   hover: 4, click: 3, back: 3, select: 3, navigate: 3, open: 3, close: 3, toggleOn: 3, toggleOff: 3,
   vote: 2.5, tick: 2.5, skip: 2.5, pause: 1.8, turn: 1.5, join: 1.5, correct: 1.4, welcome: 1.5, applause: 4, boing: 1.5,
+  launchBlackjack: 1.9, launchDrawit: 2, launchFeud: 2, launchHeadbands: 1.6, launchLiar: 1.3, launchRpg: 1.3, launchJeopardy: 1.15,
 };
 const trim = (name: Sfx) => TRIM[name] ?? 1;
 
