@@ -45,7 +45,8 @@ Priority / complexity in brackets. ✅ = shipped in this pass.
 **Phase 3 — Motion**
 - ✅ Screen/header entrances (≤320 ms, out-expo), staggered panels/cards, nav indicator grow, bar fills, card hover lifts, press scale [High / S]
 - ✅ `prefers-reduced-motion` collapses all Gridiron animation [Critical / S]
-- Next: animated score ticks on the bug, first-down line flash [Medium / M]
+- ✅ Score pop on the scorebug when points change [Medium / S]
+- Next: first-down line flash [Medium / M]
 
 **Phase 4 — Sound**
 - ✅ Everything in the sound table [Critical / M]
@@ -53,7 +54,9 @@ Priority / complexity in brackets. ✅ = shipped in this pass.
 
 **Phase 5 — Functional polish**
 - ✅ Two-step delete, mobile overflow, mobile nav reachability, stat-leaders empty state [Critical / S]
-- Next: keyboard shortcuts for play calls (1–9) [Medium / S]; focus return to the triggering row when the player card closes [Medium / S]
+- ✅ Keyboard play calling: 1–9 pick a card, 0 the coordinator call, key hints on cards (hidden on touch) [Medium / S]
+- ✅ Phone game day: full-width scorebug, swipeable playback controls, two-column play cards, no horizontal overflow [High / M]
+- Next: focus return to the triggering row when the player card closes [Medium / S]
 
 **Phase 6 — QA**
 - ✅ Before/after screenshot tour at desktop and phone, no console errors, `tsc` clean, 258 unit tests pass

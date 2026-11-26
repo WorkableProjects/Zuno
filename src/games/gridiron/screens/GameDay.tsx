@@ -112,6 +112,22 @@ export function GameDay({ game, userSide, onDone, onExit }: Props) {
     return () => window.clearTimeout(id);
   }); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Number keys call the matching play card (0 = coordinator call).
+  useEffect(() => {
+    if (status !== "await") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || !/^[0-9]$/.test(e.key)) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      const btn = document.querySelector<HTMLButtonElement>(`.gr-call .gr-card[data-key="${e.key}"]`);
+      if (!btn) return;
+      e.preventDefault();
+      btn.click();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [status]);
+
   // Play clock for your call.
   useEffect(() => {
     if (status !== "await" || decision.kind !== "play" || paused) return;
@@ -380,7 +396,7 @@ function Scorebug({ g, down }: { g: GameState; down: string }) {
       <div className={`gr-bug-team${g.poss === s && g.phase !== "final" ? " has-ball" : ""}`} style={{ "--tc": t.colors[0] } as React.CSSProperties}>
         <TeamLogo team={t} size={22} />
         <span className="gr-bug-abbr">{t.abbr}</span>
-        <span className="gr-bug-score">{g.score[s]}</span>
+        <span className="gr-bug-score" key={g.score[s]}>{g.score[s]}</span>
         <span className="gr-bug-to" aria-label={`${g.timeouts[s]} timeouts`}>
           {[0, 1, 2].map((i) => (
             <i key={i} className={i < g.timeouts[s] ? "on" : ""} />
@@ -468,31 +484,31 @@ function CallSheet({ g, d, userSide, clock, fourthGo, onFourthGo, onCall, onTime
       {head}
       {onOffense ? (
         <div className="gr-cards">
-          {OFF_PLAYS.map((p) => (
-            <button key={p.name} type="button" className="gr-card" onClick={() => onCall({ ...extra, off: { ...p, side: 1 } })}>
-              <strong>{p.name}</strong>
+          {OFF_PLAYS.map((p, i) => (
+            <button key={p.name} type="button" className="gr-card" data-key={i < 9 ? i + 1 : undefined} aria-keyshortcuts={i < 9 ? String(i + 1) : undefined} onClick={() => onCall({ ...extra, off: { ...p, side: 1 } })}>
+              <strong>{i < 9 && <kbd className="gr-kbd">{i + 1}</kbd>}{p.name}</strong>
               <span className="meta">
                 {p.formation} · {p.personnel} · {p.type === "playaction" ? "Play action" : p.type}
               </span>
             </button>
           ))}
-          <button type="button" className="gr-card is-auto" onClick={() => onCall(extra)}>
-            <strong>Coordinator call</strong>
+          <button type="button" className="gr-card is-auto" data-key="0" aria-keyshortcuts="0" onClick={() => onCall(extra)}>
+            <strong><kbd className="gr-kbd">0</kbd>Coordinator call</strong>
             <span className="meta">Let the OC pick</span>
           </button>
         </div>
       ) : (
         <div className="gr-cards">
-          {DEF_PLAYS.map((p) => (
-            <button key={p.name} type="button" className="gr-card" onClick={() => onCall({ def: p })}>
-              <strong>{p.name}</strong>
+          {DEF_PLAYS.map((p, i) => (
+            <button key={p.name} type="button" className="gr-card" data-key={i < 9 ? i + 1 : undefined} aria-keyshortcuts={i < 9 ? String(i + 1) : undefined} onClick={() => onCall({ def: p })}>
+              <strong>{i < 9 && <kbd className="gr-kbd">{i + 1}</kbd>}{p.name}</strong>
               <span className="meta">
                 {p.pkg} · {p.call}
               </span>
             </button>
           ))}
-          <button type="button" className="gr-card is-auto" onClick={() => onCall({})}>
-            <strong>Coordinator call</strong>
+          <button type="button" className="gr-card is-auto" data-key="0" aria-keyshortcuts="0" onClick={() => onCall({})}>
+            <strong><kbd className="gr-kbd">0</kbd>Coordinator call</strong>
             <span className="meta">Let the DC pick</span>
           </button>
         </div>
