@@ -214,7 +214,7 @@ const engines: GameEngine[] = [
     schemaVersions: [1],
     hasBuilder: false,
     appearance: { accentColor: "#22C55E", backgroundPreset: "tide" },
-    font: { id: "anton", family: "Anton" },
+    font: { id: "graduate", family: "Graduate" },
     validate: validateGridiron as GameEngine["validate"],
     artwork: null,
     players: "solo",

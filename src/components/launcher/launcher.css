@@ -249,6 +249,15 @@ html[data-theme="light"] .lx-stage::after { background: linear-gradient(90deg, c
 .lx-rules-title { margin: 0 0 22px; font: 700 clamp(28px, 3.4vw, 44px) / 1.05 var(--font-display); }
 .lx-shot { margin: 0 0 22px; }
 .lx-shot img { display: block; width: 100%; height: auto; border-radius: var(--r-round); border: 1px solid var(--hairline); box-shadow: 0 18px 50px rgb(0 0 0 / 0.35); background: var(--surface); }
+.lx-gallery { list-style: none; margin: 28px 0 24px; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.lx-gallery figure { margin: 0; }
+.lx-gallery img { display: block; width: 100%; height: auto; border-radius: var(--r-card); border: 1px solid var(--hairline); background: var(--surface); }
+.lx-gallery figcaption { margin-top: 8px; color: var(--text-2); font-size: 13px; }
+.lx-thumbs { display: flex; gap: 8px; margin-top: 16px; }
+.lx-thumb { padding: 0; border: 1px solid rgb(255 255 255 / 0.18); border-radius: 10px; overflow: hidden; background: #000; cursor: pointer; transition: transform var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease); }
+.lx-thumb:hover, .lx-thumb:focus-visible { transform: translateY(-2px); border-color: rgb(255 255 255 / 0.6); }
+.lx-thumb img { display: block; width: 120px; height: 75px; object-fit: cover; }
+@media (max-width: 640px) { .lx-thumb img { width: 88px; height: 55px; } }
 .lx-shot figcaption { margin-top: 10px; color: var(--text-2); font-size: 14px; }
 .lx-rule-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
 .lx-rule {

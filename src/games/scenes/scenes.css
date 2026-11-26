@@ -191,6 +191,26 @@ html[data-theme="light"] .gs-ink { stroke-width: 2.6; }
 @keyframes gs-fall { from { transform: translate3d(0, -50%, 0); } to { transform: translate3d(0, 0, 0); } }
 @keyframes gs-pulse { from { opacity: 0.45; } to { opacity: 1; } }
 
+/* ---------- Gridiron GM: stadium under the lights ---------- */
+.gs-gridiron .gs-base { background: linear-gradient(180deg, #05070d 0%, color-mix(in oklab, var(--g1) 18%, #070b12) 46%, #0c1a10 100%); }
+.gs-gridiron .gs-crowd { inset: 0 0 50% 0; filter: blur(0.4vmax); opacity: 0.7; -webkit-mask-image: linear-gradient(180deg, transparent, #000 25%, #000 85%, transparent); mask-image: linear-gradient(180deg, transparent, #000 25%, #000 85%, transparent); }
+.gs-gridiron .gs-field, .gs-gridiron .gs-towers, .gs-gridiron .gs-ball { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gs-beams {
+  inset: -10% 0 0 0;
+  background:
+    conic-gradient(from 148deg at 10% 8%, transparent 0deg, rgb(255 250 225 / 0.16) 10deg, transparent 24deg),
+    conic-gradient(from 188deg at 90% 8%, transparent 0deg, rgb(255 250 225 / 0.16) 14deg, transparent 28deg);
+  mix-blend-mode: screen;
+  animation: gs-sway 14s var(--ease-in-out, ease-in-out) infinite alternate;
+}
+.gs-flashes { position: absolute; inset: 0; }
+.gs-flashes i { position: absolute; display: block; border-radius: 50%; background: #fff; box-shadow: 0 0 1.2vmax 0.3vmax rgb(255 255 255 / 0.7); opacity: 0; animation: gs-flash 6s steps(1, end) infinite; }
+.gs-gridiron .gs-c { animation: gs-arc 9s var(--ease-in-out, ease-in-out) infinite alternate; }
+@keyframes gs-sway { from { transform: translate3d(-1.5%, 0, 0); opacity: 0.8; } to { transform: translate3d(1.5%, 0, 0); opacity: 1; } }
+@keyframes gs-flash { 0% { opacity: 0; } 2% { opacity: 1; } 4% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes gs-arc { from { transform: translate3d(0, 1.5%, 0); } to { transform: translate3d(0, -1.5%, 0); } }
+html[data-theme="light"] .gs-gridiron .gs-base { background: linear-gradient(180deg, #2a3a5c 0%, #3d5a7a 46%, #1f4a2b 100%); }
+
 /* ---------- Generic ---------- */
 .gs-generic .gs-base { background: radial-gradient(100% 80% at 50% 30%, color-mix(in oklab, var(--gs-lite) 80%, transparent), color-mix(in oklab, var(--gs-deep) 85%, transparent) 80%); }
 .gs-generic .gs-a { animation: gs-drift 30s var(--ease-in-out, ease-in-out) infinite alternate; }

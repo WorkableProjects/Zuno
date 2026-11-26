@@ -114,6 +114,15 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
               </>
             )}
           </div>
+          {info?.gallery && (
+            <div className="lx-thumbs">
+              {info.gallery.slice(0, 3).map((g) => (
+                <button key={g.file} type="button" className="lx-thumb" onClick={() => document.getElementById("how-to-play")?.scrollIntoView({ behavior: "smooth" })} aria-label={`See screenshot: ${g.caption}`}>
+                  <img src={`${import.meta.env.BASE_URL}screens/${g.file}`} width={160} height={100} loading="lazy" decoding="async" alt="" />
+                </button>
+              ))}
+            </div>
+          )}
           <p className="lx-note meta">
             {online ? (
               <>
@@ -121,7 +130,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
               </>
             ) : (
               <>
-                {gameType === "jeopardy" ? <Monitor size={14} strokeWidth={2} /> : <FolderOpen size={14} strokeWidth={2} />} Play loads a game file that holds {engine.fileHolds}.
+                {gameType === "jeopardy" || gameType === "gridiron" ? <Monitor size={14} strokeWidth={2} /> : <FolderOpen size={14} strokeWidth={2} />} {gameType === "gridiron" ? "Play opens your three career save slots. Careers save in this browser." : `Play loads a game file that holds ${engine.fileHolds}.`}
               </>
             )}
             {online && !onHostOnline && " Online rooms are not set up for this site."}
@@ -157,6 +166,18 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
               </article>
             ))}
           </div>
+          {info.gallery && (
+            <ul className="lx-gallery" aria-label={`${engine.title} screenshots`}>
+              {info.gallery.map((g) => (
+                <li key={g.file}>
+                  <figure>
+                    <img src={`${import.meta.env.BASE_URL}screens/${g.file}`} width={1440} height={900} loading="lazy" decoding="async" alt={g.caption} />
+                    <figcaption>{g.caption}</figcaption>
+                  </figure>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="lx-actions lx-actions-end">
             <PlayButton gameType={gameType} className="btn btn-primary lx-play" title={engine.title} onOpen={() => (online ? onHostOnline?.(gameType) : onLoad(gameType))} disabled={online && !onHostOnline}>
               <Play size={20} strokeWidth={2} fill="currentColor" />

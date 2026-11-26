@@ -23,6 +23,7 @@ const STYLES: Record<string, Style> = {
   liar: { sfx: "launchLiar", fx: 760, openAt: 700 },
   rpg: { sfx: "launchRpg", fx: 720, openAt: 660 },
   feud: { sfx: "launchFeud", fx: 720, openAt: 660 },
+  gridiron: { sfx: "launchGridiron", fx: 820, openAt: 760 },
 };
 
 /** Whole effect, and the moment the screen changes. */

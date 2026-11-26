@@ -10,11 +10,19 @@ export interface GameInfo {
   rules: Array<{ heading: string; points: string[] }>;
   /** Caption under the in-game screenshot (public/screens/<gameType>.webp). */
   shot: string;
+  /** More gameplay screenshots shown beside the Play button (paths under public/screens). */
+  gallery?: Array<{ file: string; caption: string }>;
 }
 
 export const GAME_INFO: Record<string, GameInfo> = {
   gridiron: {
     shot: "Game Day: all 22 players on the field, the scoreboard bug, win probability and the play caller.",
+    gallery: [
+      { file: "gridiron-live.webp", caption: "Live snap with routes drawn, following the ball" },
+      { file: "gridiron-all22.webp", caption: "All-22 camera with coverage shells" },
+      { file: "gridiron-hub.webp", caption: "The hub: this week's matchup, the league and your inbox" },
+      { file: "gridiron-draft.webp", caption: "Draft room with scouting ranges and combine numbers" },
+    ],
     players: "1",
     mode: "One screen",
     length: "Career",

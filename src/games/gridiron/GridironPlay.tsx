@@ -14,6 +14,7 @@ import { Hub } from "./screens/Hub";
 import { History, Leaders, Standings } from "./screens/League";
 import { DepthChart, GamePlan, PlayerCard, Roster, Staff } from "./screens/Team";
 import { Ctx, Ovr, TeamLogo, type GmCtx } from "./screens/ui";
+import { gameFontStyle } from "../gameFont";
 import "./gridiron.css";
 
 interface Props {
@@ -78,7 +79,7 @@ export function GridironPlay({ file, onExit }: Props) {
 
   const ctx: GmCtx | null = useMemo(() => (career ? { c: career, update, openPlayer: setPlayer, go: setScreen } : null), [career, update]);
 
-  if (!career || !ctx) return <Saves file={file} onExit={onExit} onLoad={(c) => { setCareer(c); setScreen("hub"); }} />;
+  if (!career || !ctx) return <div className="gr-app" style={gameFontStyle("gridiron")}><Saves file={file} onExit={onExit} onLoad={(c) => { setCareer(c); setScreen("hub"); }} /></div>;
 
   const t = userTeam(career);
   const unread = career.inbox.filter((m) => !m.read).length;
@@ -96,7 +97,7 @@ export function GridironPlay({ file, onExit }: Props) {
 
   return (
     <Ctx.Provider value={ctx}>
-      <div className="gr-app" style={{ "--team": t.colors[0], "--team-2": t.colors[1] } as React.CSSProperties}>
+      <div className="gr-app" style={{ ...gameFontStyle("gridiron"), "--team": t.colors[0], "--team-2": t.colors[1] } as React.CSSProperties}>
         {live ? (
           <GameDay
             key={live.game.id}
