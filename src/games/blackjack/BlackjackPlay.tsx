@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Hand as HandIcon, Layers, Minus, Plus, Split, Square, Trophy } from "lucide-react";
 import { Avatar } from "../../components/avatar/AvatarView";
+import { StyledUsername } from "../../components/cosmetics/Cosmetics";
 import { useSoundOnChange } from "../../lib/useGameSounds";
 import { Coins } from "../rpg/motion";
 import { FeedList, PartyTimer, Standings } from "../party/PartyBits";
@@ -129,7 +130,7 @@ export function BlackjackPlay({ me, game, send, busy, host, avatarOf }: PlayProp
                     <li key={p.id} className={`bj-seat${game.turn?.id === p.id ? " is-turn" : ""}${p.id === me ? " is-me" : ""}`}>
                       <span className="bj-seat-name">
                         <Avatar name={p.name} avatar={avatarOf(p.id)} size={28} />
-                        <strong>{p.name}</strong>
+                        <StyledUsername as="strong" name={p.name} styleId={(avatarOf(p.id))?.style} />
                         {p.id === me && <span className="meta">you</span>}
                       </span>
                       <div className="bj-hands">

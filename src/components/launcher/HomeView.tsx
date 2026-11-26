@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type RefObject } from "react";
+import { StyledUsername } from "../cosmetics/Cosmetics";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock, LayoutGrid, LogIn, Play, Plus, Shuffle, Smartphone, Tv, Users, X } from "lucide-react";
 import { useProfile } from "../../lib/profile";
 import { cachedRect, writeNextFrame } from "../../lib/pointerFrame";
@@ -124,11 +125,11 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
           {profile ? <Avatar name={profile.username} avatar={profile.avatar} size={52} /> : null}
           <div>
             <p className="lx-eyebrow">{greeting()}</p>
-            <h1 className="hm-name">{profile ? profile.username : "Welcome to Zuno"}</h1>
+            <h1 className="hm-name">{profile ? <StyledUsername name={profile.username} styleId={profile.nameStyle} /> : "Welcome to Zuno"}</h1>
           </div>
         </div>
         {profile === null && ctaGone && (
-          <button type="button" className="hm-signin" onClick={() => onSection("settings")} data-nav-row="0">
+          <button type="button" className="hm-signin" onClick={() => onSection("profile")} data-nav-row="0">
             <Users size={16} strokeWidth={2} />
             Make a profile
             <span className="hm-signin-sub">Keep your name and picture</span>
@@ -146,7 +147,7 @@ export function HomeView({ engines, files, build, selectedId, onSelect, onOpen, 
             <p className="hm-cta-sub">Keep your name and picture across games and devices.</p>
           </div>
           <div className="hm-cta-actions">
-            <button type="button" className="btn btn-primary" onClick={() => onSection("settings")}>
+            <button type="button" className="btn btn-primary" onClick={() => onSection("profile")}>
               Yes, set it up
             </button>
             <button

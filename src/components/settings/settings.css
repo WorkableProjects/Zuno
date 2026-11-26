@@ -151,3 +151,39 @@
 .st-google { justify-content: center; gap: 10px; }
 .st-or { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--text-3); font-size: 13px; }
 .st-or::before, .st-or::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
+
+/* ---------- 4.7 compact Settings: one tight column, paired cards, slim footer strip ---------- */
+.st .st-cards { max-width: 980px; gap: 12px; }
+.st-head { margin-bottom: 12px; }
+.st-head .lx-title { font-size: clamp(32px, 4vw, 48px); }
+.st .st-card { padding: 16px 18px; }
+.st .st-card-title { margin-bottom: 10px; font-size: 18px; }
+.st .st-themes { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 0; }
+.st .st-theme { gap: 6px; padding: 6px; border-radius: 14px; }
+.st .st-theme-preview { height: 52px; padding: 6px; gap: 4px; }
+.st .st-theme-label { font-size: 13px; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 14px; margin-top: 14px; }
+.st-pair-cards { margin-top: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.st-field { display: grid; gap: 6px; min-width: 0; }
+.st .segment { height: 36px; padding: 0 8px; gap: 6px; font-size: 13px; }
+.st .st-switch { padding: 8px 2px; font-size: 15px; }
+.st .st-motion { gap: 8px; }
+.st .st-option { padding: 10px; border-radius: 12px; }
+.st .st-option strong { font-size: 14px; }
+.st .st-option small { font-size: 12px; }
+.st-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 10px 14px 10px 18px;
+  border-radius: 999px; border: 1px solid var(--hairline); background: color-mix(in oklab, var(--surface) 70%, transparent); backdrop-filter: blur(12px);
+}
+.st-strip .settings-version { margin: 0; color: var(--text-2); font-weight: 600; text-align: left; }
+.st-strip-note { color: var(--text-3); font-size: 13px; }
+.st-strip .st-signout { margin-left: auto; min-height: 38px; }
+@media (max-width: 900px) {
+  .st .st-themes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .st-pair, .st-pair-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .st .st-themes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st .st-motion { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .st-strip { border-radius: 18px; }
+}

@@ -2,6 +2,7 @@ import { CircleCheck } from "lucide-react";
 import type { HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
 import { IdentityCard } from "./IdentityCard";
 import { Avatar } from "../../components/avatar/AvatarView";
+import { StyledUsername } from "../../components/cosmetics/Cosmetics";
 import type { AvatarSpec } from "../../components/avatar/avatarData";
 
 export interface Seat {
@@ -45,7 +46,7 @@ export function HeadbandsTable({ seats, mode }: Props) {
           </div>
           <Avatar name={s.name} avatar={s.avatar} className="hb-seat-avatar" />
           <p className="hb-seat-name">
-            {s.name}
+            <StyledUsername name={s.name} styleId={(s.avatar)?.style} />
             {s.solved && <CircleCheck size={14} strokeWidth={1.5} aria-label="Solved" />}
           </p>
         </li>

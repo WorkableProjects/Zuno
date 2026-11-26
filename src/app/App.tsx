@@ -20,6 +20,11 @@ import { withScreenTransition } from "../lib/screenTransition";
 import { installMotionGovernor } from "../lib/motionGovernor";
 import { installRipples } from "../lib/ripple";
 import { SettingsPage } from "../components/settings/SettingsPanel";
+import { ProfilePage } from "../components/profile/ProfilePage";
+import { AdminPage } from "../components/admin/AdminPage";
+import { AchievementToasts } from "../components/profile/AchievementToasts";
+import { track } from "../lib/achievements";
+import { saveSidebarRemote, useProfile } from "../lib/profile";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
 import { RPG_TYPE, blankRpgFile, type RpgFile } from "../game-files/schema/rpg";
@@ -53,7 +58,7 @@ import { JeopardyGame } from "../games/jeopardy/JeopardyGame";
 import type { TeamSetup } from "../games/jeopardy/jeopardyEngine";
 import { JeopardySetup } from "../games/jeopardy/JeopardySetup";
 import { getEngine } from "../games/registry";
-import { forgetGame, loadDevice, loadLastTile, loadRecent, loadTheme, rememberGame, saveDevice, saveLastTile, saveTheme, type Device, type Theme } from "./storage";
+import { applyRail, forgetGame, loadDevice, loadLastTile, loadRail, loadRecent, loadTheme, rememberGame, saveDevice, saveLastTile, saveRail, saveTheme, type Device, type RailPosition, type Theme } from "./storage";
 import { themeDef } from "./themes";
 
 type Screen =
@@ -104,6 +109,38 @@ function backdropTheme(screen: Screen, tileGameType: string): SoundTheme {
   return "headbands";
 }
 
+/** Launcher pages with their own address: #/profile, #/profile/<uid> and #/admin. */
+function routeFromHash(hash: string): { section: Section; viewUid: string | null } | null {
+  const m = /^#\/(profile|admin)(?:\/([A-Za-z0-9_-]{1,128}))?$/.exec(hash);
+  if (!m) return null;
+  return m[1] === "admin" ? { section: "admin", viewUid: null } : { section: "profile", viewUid: m[2] ?? null };
+}
+function writeHash(section: Section, viewUid: string | null) {
+  const next = section === "admin" ? "#/admin" : section === "profile" ? (viewUid ? `#/profile/${viewUid}` : "#/profile") : "";
+  if (window.location.hash === next) return;
+  history.replaceState(null, "", window.location.pathname + window.location.search + next);
+}
+
+/** Which game a screen is playing, for achievements. */
+function playingNow(screen: Screen): { gameType: string; online: boolean } | null {
+  switch (screen.name) {
+    case "play":
+      return { gameType: "jeopardy", online: false };
+    case "hbPlay":
+      return { gameType: "headbands", online: !!screen.lobbyCode };
+    case "liarPlay":
+      return { gameType: "liar", online: false };
+    case "liarOnline":
+      return { gameType: "liar", online: true };
+    case "rpgOnline":
+      return { gameType: "rpg", online: true };
+    case "partyOnline":
+      return { gameType: partyByKind(screen.kind).gameType, online: true };
+    default:
+      return null;
+  }
+}
+
 /** Each theme is a base palette plus an optional skin; see themes.ts. */
 function applyTheme(t: Theme) {
   const root = document.documentElement;
@@ -140,7 +177,11 @@ export function App() {
   const [loaded, setLoaded] = useState<LoadedGame | null>(null);
   const [draftBackdrop, setDraftBackdrop] = useState<BackdropSpec | null>(null);
   const [buildType, setBuildType] = useState(JEOPARDY_TYPE);
-  const [section, setSection] = useState<Section>("home");
+  const initialRoute = useMemo(() => routeFromHash(window.location.hash), []);
+  const [section, setSection] = useState<Section>(initialRoute?.section ?? "home");
+  /** On the Profile page: another player's uid, or null for your own. */
+  const [viewUid, setViewUid] = useState<string | null>(initialRoute?.viewUid ?? null);
+  const profile = useProfile();
 
   const items = useMemo(() => buildRailItems(recent), [recent]);
   const [selectedId, setSelectedId] = useState(() => {
@@ -170,7 +211,7 @@ export function App() {
   /** Sidebar moves: slide up or down by nav order; leaving a game page morphs it back into its tile. */
   const goSection = useCallback(
     (next: Section) => {
-      const order: Section[] = ["home", "library", "settings"];
+      const order: Section[] = ["home", "library", "settings", "admin", "profile"];
       const top = stack[stack.length - 1];
       if (top.name === "dashboard" && next === section) return;
       const dir = top.name !== "dashboard" ? "back" : order.indexOf(next) > order.indexOf(section) ? "down" : "up";
@@ -178,6 +219,8 @@ export function App() {
         dir,
         () => {
           setSection(next);
+          setViewUid(null);
+          writeHash(next, null);
           if (top.name !== "dashboard") setStack([{ name: "dashboard" }]);
         },
         { morph: top.name === "game" ? `game:${top.gameType}` : undefined },
@@ -185,6 +228,50 @@ export function App() {
     },
     [stack, section],
   );
+  /** Opens a player's profile (null: your own). */
+  const openProfile = useCallback(
+    (uid: string | null) => {
+      setViewUid(uid);
+      writeHash("profile", uid);
+      if (section !== "profile" || stack.length > 1) goSection("profile");
+    },
+    [goSection, section, stack.length],
+  );
+  // Typing or following a #/profile or #/admin address.
+  useEffect(() => {
+    const onHash = () => {
+      const r = routeFromHash(window.location.hash);
+      if (!r) return;
+      setViewUid(r.viewUid);
+      if (r.section !== section || stack.length > 1) goSection(r.section);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [goSection, section, stack.length]);
+  // Route guard: the admin page is only for the verified admin. (The data itself is guarded by the database rules.)
+  useEffect(() => {
+    if (section === "admin" && profile !== undefined && !profile?.admin) {
+      setSection("home");
+      writeHash("home", null);
+    }
+  }, [section, profile]);
+
+  // Sidebar placement: localStorage for an instant first paint, the profile for other devices.
+  const [rail, setRail] = useState<RailPosition>(loadRail);
+  useEffect(() => applyRail(rail), [rail]);
+  const remoteRail = profile?.sidebar ?? null;
+  useEffect(() => {
+    if (remoteRail && remoteRail !== loadRail()) {
+      saveRail(remoteRail);
+      setRail(remoteRail);
+    }
+  }, [remoteRail]);
+  const chooseRail = useCallback((next: RailPosition) => {
+    withScreenTransition("theme", () => setRail(next));
+    saveRail(next);
+    saveSidebarRemote(next);
+    playSfx("select");
+  }, []);
 
   const select = useCallback((id: string) => {
     setSelectedId(id);
@@ -197,6 +284,8 @@ export function App() {
     if (root.dataset.theme === def.base && (root.dataset.skin ?? "") === (def.skin ?? "")) return;
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", def.themeColor);
     saveTheme(next);
+    playSfx(def.sfx);
+    track({ type: "themeChanged", theme: next });
     // A circular wipe from the toggle. When no view transition runs, the update happens
     // synchronously, so the colour cross-fade class must already be on.
     root.classList.add("theme-shift");
@@ -236,6 +325,18 @@ export function App() {
       return;
     }
     playSfx("navigate");
+  }, [screenName, stack.length]);
+
+  // Gameplay events for achievements (non-blocking; see lib/achievements.ts).
+  useEffect(() => {
+    const s = stack[stack.length - 1];
+    const playing = playingNow(s);
+    if (playing) track({ type: "gameStarted", ...playing });
+    if (s.name === "hbLobby" || s.name === "liarLobby" || s.name === "rpgLobby") track({ type: "roomHosted", gameType: s.name.replace("Lobby", "") });
+    if (s.name === "partyLobby") track({ type: "roomHosted", gameType: partyByKind(s.kind).gameType });
+    if (s.name === "builder") track({ type: "builderOpened" });
+    // Only fires when a new screen is pushed or replaced.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenName, stack.length]);
 
   /** A validated file is about to be hosted: remember it, then set up the session. */
@@ -350,11 +451,15 @@ export function App() {
         <LauncherShell
           section={screen.name === "dashboard" ? section : null}
           accent={screen.name === "game" ? (getEngine(screen.gameType)?.appearance.accentColor ?? selected.backdrop.accent) : selected.backdrop.accent}
-          onSection={goSection}
-          onSettings={() => goSection("settings")}
+          onSection={(s) => (s === "profile" ? openProfile(null) : goSection(s))}
+          rail={rail}
         >
           {screen.name === "dashboard" && section === "settings" ? (
-            <SettingsPage theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} />
+            <SettingsPage theme={theme} onTheme={changeTheme} device={device ?? (document.documentElement.dataset.device as Device) ?? "desktop"} onDevice={chooseDevice} rail={rail} onRail={chooseRail} />
+          ) : screen.name === "dashboard" && section === "profile" ? (
+            <ProfilePage key={viewUid ?? "me"} viewUid={viewUid} onOpenProfile={openProfile} />
+          ) : screen.name === "dashboard" && section === "admin" ? (
+            profile?.admin ? <AdminPage onOpenProfile={openProfile} /> : null
           ) : screen.name === "dashboard" ? (
             <LauncherHome
               section={section}
@@ -554,6 +659,7 @@ export function App() {
       </div>
       {pending && <ConfirmDialog title={pending.title} text={pending.text} confirmLabel={pending.label} danger onConfirm={pending.run} onClose={() => setPending(null)} />}
       <CornerControls docked={screen.name === "dashboard" || screen.name === "game"} />
+      <AchievementToasts />
       <StartupIntro />
       {device === null && <DevicePrompt onChoose={chooseDevice} />}
     </>

@@ -1,0 +1,94 @@
+/* Profile portal, achievement toasts and the admin panel. Built on the theme tokens (--surface, --text,
+   --accent, --hairline…), so every preset restyles them. */
+.pf { display: grid; gap: 14px; max-width: 1100px; }
+.pf .st-card { padding: 18px 20px; }
+.pf .st-card-title { margin-bottom: 12px; font-size: 19px; }
+.pf-hero { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; padding: 6px 4px 8px; }
+.pf-hero-text { flex: 1; min-width: 0; }
+.pf-name { margin: 2px 0 8px; font: 700 clamp(30px, 4vw, 48px) / 1.05 var(--font-display); letter-spacing: -0.02em; }
+.pf-name .uname { max-width: 100%; }
+.pf-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.pf-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--hairline); background: color-mix(in oklab, var(--surface) 70%, transparent); color: var(--text-2); font: 600 13px var(--font-ui); }
+.pf-badge-admin { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 45%, transparent); }
+.pf-share { flex: none; }
+.pf-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.pf-saved { display: inline-flex; align-items: center; gap: 6px; color: var(--positive, #5cc98a); font: 600 14px var(--font-ui); animation: lx-item-in 260ms var(--ease) both; }
+.pf-facts { display: grid; gap: 10px; margin: 0 0 12px; }
+.pf-facts div { display: grid; gap: 2px; }
+.pf-facts dt { display: inline-flex; align-items: center; gap: 6px; color: var(--text-3); font: 600 12px var(--font-ui); text-transform: uppercase; letter-spacing: 0.06em; }
+.pf-facts dd { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--text); font-size: 15px; overflow-wrap: anywhere; }
+.pf-mono { font-family: var(--font-mono, ui-monospace, monospace); font-size: 13px !important; color: var(--text-2) !important; }
+.pf-verified { color: var(--accent); flex: none; }
+.pf-auth { max-width: 560px; }
+.pf-sub { margin: 14px 0 8px; color: var(--text-2); font: 600 14px var(--font-ui); }
+.pf-sub:first-of-type { margin-top: 2px; }
+
+.pf-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+.pf-item {
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); grid-template-rows: auto auto; gap: 6px 12px; align-items: center;
+  padding: 12px; border-radius: 16px; border: 2px solid var(--hairline); background: color-mix(in oklab, var(--surface) 60%, transparent);
+  transition: border-color var(--t-fast) var(--ease);
+}
+.pf-item.is-on { border-color: var(--accent); }
+.pf-item.is-locked { opacity: 0.62; }
+.pf-item-preview { grid-row: 1 / 3; display: grid; place-items: center; min-height: 56px; overflow: visible; font: 600 15px var(--font-ui); }
+.pf-item-preview .uname { max-width: 64px; font-size: 13px; }
+.pf-item-text { display: grid; gap: 2px; min-width: 0; }
+.pf-item-text strong { font: 600 15px var(--font-ui); }
+.pf-item-text small { color: var(--text-3); font-size: 12px; line-height: 1.35; }
+.pf .pf-item-btn { justify-self: start; min-height: 34px; padding-inline: 16px; font-size: 13px; }
+.pf-lock { display: inline-flex; align-items: center; gap: 6px; color: var(--text-3); font: 600 12px var(--font-ui); }
+
+.pf-achs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.pf-ach { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto; gap: 6px 12px; align-items: center; padding: 12px; border-radius: 16px; border: 1px solid var(--hairline); background: color-mix(in oklab, var(--surface) 60%, transparent); }
+.pf-ach-icon { grid-row: 1 / 3; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: color-mix(in oklab, var(--text) 8%, transparent); color: var(--text-3); }
+.pf-ach.is-done .pf-ach-icon { background: color-mix(in oklab, var(--accent) 20%, transparent); color: var(--accent); }
+.pf-ach-text { display: grid; gap: 2px; min-width: 0; }
+.pf-ach-text strong { font: 600 15px var(--font-ui); }
+.pf-ach-text small { color: var(--text-3); font-size: 12px; }
+.pf-ach-meter { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+.pf-ach-meter small { color: var(--text-2); font: 600 12px var(--font-ui); font-variant-numeric: tabular-nums; }
+.pf-bar { display: block; height: 6px; border-radius: 999px; background: color-mix(in oklab, var(--text) 10%, transparent); overflow: hidden; }
+.pf-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width 500ms var(--ease); }
+
+@media (max-width: 900px) { .pf-grid { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .pf-hero { gap: 14px; }
+  .pf-hero .deco, .pf-hero > .avatar { transform: scale(0.8); transform-origin: left center; }
+}
+
+/* Achievement toasts: top centre, above everything but dialogs. */
+.ach-toasts { position: fixed; z-index: 90; top: 18px; left: 50%; transform: translateX(-50%); display: grid; gap: 8px; pointer-events: none; }
+.ach-toast {
+  display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid color-mix(in oklab, var(--accent) 50%, var(--hairline)); color: var(--text);
+  box-shadow: 0 14px 40px rgb(0 0 0 / 0.35), 0 0 0 4px color-mix(in oklab, var(--accent) 12%, transparent);
+  animation: ach-in 520ms var(--ease-pop) both, ach-out 400ms var(--ease) 4.3s forwards;
+}
+.ach-toast span:last-child { display: grid; }
+.ach-toast small { color: var(--text-3); font: 600 11px var(--font-ui); text-transform: uppercase; letter-spacing: 0.08em; }
+.ach-toast strong { font: 700 16px var(--font-ui); }
+.ach-toast-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--surface); }
+@keyframes ach-in { from { opacity: 0; transform: translateY(-16px) scale(0.92); } }
+@keyframes ach-out { to { opacity: 0; transform: translateY(-10px); } }
+@media (prefers-reduced-motion: reduce) { .ach-toast { animation-duration: 1ms, 1ms; } }
+
+/* Admin panel. */
+.ad-search { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.ad-search .input { flex: 1; }
+.ad-layout { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.ad-users { display: grid; gap: 4px; max-height: 68vh; overflow: auto; margin: 0; padding: 0; list-style: none; }
+.ad-user { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 14px; border: 1px solid transparent; background: none; color: var(--text); text-align: left; cursor: pointer; }
+.ad-user:hover { background: color-mix(in oklab, var(--text) 6%, transparent); }
+.ad-user.is-on { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, transparent); }
+.ad-user-text { display: grid; min-width: 0; }
+.ad-user-text small { color: var(--text-3); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-rows { display: grid; gap: 6px; }
+.ad-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--hairline); }
+.ad-row-text { display: grid; min-width: 0; }
+.ad-row-text small { color: var(--text-3); font-size: 12px; }
+.ad-row .btn { min-height: 34px; padding-inline: 14px; font-size: 13px; }
+.ad-state { display: inline-flex; align-items: center; gap: 4px; color: var(--text-3); font: 600 12px var(--font-ui); }
+.ad-state.is-yes { color: var(--positive, #5cc98a); }
+.ad-opts { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; color: var(--text-2); font-size: 14px; }
+@media (max-width: 900px) { .ad-layout { grid-template-columns: 1fr; } .ad-users { max-height: 40vh; } }

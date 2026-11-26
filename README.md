@@ -9,13 +9,14 @@
 
 Zuno is a browser-based party game launcher and builder. Pick a game, play it on one screen or with everyone on their phones, or build your own game file. It runs entirely in the browser; online rooms and profiles use an optional free Firebase project.
 
-**Version 3.0.0**
+**Version 4.7.0**
 
 ## Highlights
 
 - **Games**: Jeopardy, Headbands, LIAR, Rock Paper Gamble, Blackjack, Draw It and Survey Feud, played on one shared screen, online with phones, or both.
 - **Builder**: a visual editor and an AI prompt guide that produce a `.zuno.json` game file. Files are validated before hosting and never executed.
 - **Online rooms**: room codes, QR join links, profile pictures and per-player notepads.
+- **Profiles**: a Profile page (`#/profile`, or `#/profile/<id>` for another player) with your name and picture, account details, avatar decorations, name styles and achievements. Equipped cosmetics show everywhere you appear: the sidebar, lobbies, player lists and chat.
 - **Interface**: console-style launcher with animated transitions, keyboard and controller-style navigation, Dark, Light and Vice themes, synthesized sound, and reduced-motion support.
 
 ## Run it
@@ -33,6 +34,7 @@ npm run dev
 | `npm run build` | Type-checks and builds the static site into `dist/` |
 | `npm run preview` | Serves the production build |
 | `npm test` | Runs the validator and engine tests |
+| `npm run test:rules` | Runs the database security-rules tests in the Firebase emulator (needs Java) |
 | `npm run logo:export` | Re-renders the PNG app icons from `public/ZunoLogosv2` (needs Playwright) |
 
 The build is fully static, so any static host works. Sample games are in `public/samples/`.
@@ -46,6 +48,10 @@ Online rooms use Firebase Realtime Database on the free Spark plan. Without it, 
 3. Add a Web app and put its `apiKey`, `databaseURL`, `projectId` and `appId` in `.env.production`, or in `.env.local` for local work (see `.env.example`).
 
 To test without a project, run `npx firebase-tools emulators:start --only database --project demo-zuno` and build with `VITE_FIREBASE_EMULATOR=127.0.0.1:9000`.
+
+## Admin
+
+The account `itzdutchs@gmail.com` (with a verified email) is the Zuno admin. It gets an Admin page (`#/admin`) to search accounts and grant or revoke avatar decorations and name styles, and it owns the exclusive Zuno decoration and Zuno Logo name style. Zuno has no app server: every admin check is in `database.rules.json`, which Firebase enforces on its servers, so hiding the page is only a convenience. After changing cosmetics in `src/lib/cosmetics.ts`, run `python3 scripts/rules-cosmetics.py` to regenerate the matching rules, run `npm run test:rules`, and republish the rules.
 
 ## Adding a game
 

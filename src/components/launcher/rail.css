@@ -66,7 +66,7 @@
 /* Active indicator: a soft accent tile with an edge bar, one element each, sprung by --idx. */
 .lx-nav-pill {
   position: absolute; top: 50%; left: 0; width: 52px; height: 52px;
-  margin-top: calc(-52px * 1.5 - 10px);
+  margin-top: calc((var(--count, 3) * 52px + (var(--count, 3) - 1) * 10px) / -2);
   border-radius: 50%;
   background: color-mix(in oklab, var(--accent) 16%, transparent);
   border: 1px solid color-mix(in oklab, var(--accent) 38%, transparent);
@@ -156,12 +156,12 @@
   .lx-plate, .lx-shadow { border-radius: 999px; }
   /* Content scrolls under the bottom bar, so the plate must hold text back. */
   .lx-plate { background: var(--surface); }
-  .lx-shadow-mini, .lx-collapse, .lx-profile, .lx-tip { display: none; }
+  .lx-shadow-mini, .lx-collapse, .lx-tip { display: none; }
   .lx-mark { width: 40px; height: 40px; }
   .lx-mark svg { width: 34px; height: 34px; }
   .lx-body { flex-direction: row; gap: 10px; justify-content: center; }
   .lx-nav { flex-direction: row; justify-content: center; }
-  .lx-nav-pill { top: 50%; left: 50%; margin-top: -26px; margin-left: calc(-52px * 1.5 - 10px); transform: translateX(calc(var(--idx, 0) * 62px)); }
+  .lx-nav-pill { top: 50%; left: 50%; margin-top: -26px; margin-left: calc((var(--count, 3) * 52px + (var(--count, 3) - 1) * 10px) / -2); transform: translateX(calc(var(--idx, 0) * 62px)); }
   .lx-nav-pill.is-hidden { transform: translateX(calc(var(--idx, 0) * 62px)) scale(0.6); }
   .lx-nav-pill::before { left: 15px; top: auto; bottom: -9px; width: 20px; height: 4px; border-radius: 4px 4px 0 0; }
 }
@@ -172,3 +172,81 @@
   .lx-mark svg, .lx-nav-btn.is-on svg { animation: none; }
 }
 [data-motion="off"] :is(.lx-mark svg, .lx-nav-btn.is-on svg) { animation: none !important; }
+
+/* ==========================================================================
+   4.7 rail placement: html[data-rail] = left (default) | right | top | bottom.
+   Horizontal rails reuse the phone bar's row layout. Phones: left/right fall
+   back to the bottom bar; top stays on top.
+   ========================================================================== */
+
+/* The profile entry inside a horizontal bar (and on phones): a plain row item at the end. */
+.lx-side > .lx-profile.is-row, :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-side > .lx-profile {
+  position: relative; left: auto; top: auto; margin: 0 72px 0 0; width: auto; height: 52px; padding: 0 12px 0 6px;
+  flex-direction: row; gap: 8px; transform: none; border-radius: 999px; order: 3;
+}
+:is(html[data-rail="top"], html[data-rail="bottom"]) .lx-profile-name { max-width: 160px; font-size: 13px; }
+
+@media (min-width: 761px) {
+  /* Right: a mirror of the left rail. */
+  html[data-rail="right"] .lx-side { left: auto; right: 16px; }
+  html[data-rail="right"] .lx-main { padding-left: var(--page-x); padding-right: calc(var(--side-w) + 32px - var(--page-x)); }
+  html[data-rail="right"] .lx-detail { --lx-left: var(--page-x); padding-right: calc(var(--side-w) + 32px); }
+  html[data-rail="right"] .lx-tip { left: auto; right: calc(100% + 14px); transform: translate(6px, -50%) scale(0.96); transform-origin: right center; }
+  html[data-rail="right"] :is(.lx-mark, .lx-collapse, .lx-nav-btn, .lx-profile):is(:hover, :focus-visible) > .lx-tip { transform: translate(0, -50%); }
+  html[data-rail="right"] .lx-nav-pill::before { left: auto; right: -16px; border-radius: 4px 0 0 4px; }
+  html[data-rail="right"] .corner.is-docked { left: auto; right: calc(16px + (var(--side-w, 84px) - 48px) / 2); }
+  html[data-rail="right"] .corner.is-docked .corner-panel { left: auto; right: calc(100% + 14px); }
+
+  /* Top and bottom: a full-width bar. */
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-side {
+    left: 16px; right: 16px; width: auto; height: 72px; flex-direction: row; padding: 0 12px; gap: 12px;
+  }
+  html[data-rail="top"] .lx-side { top: 16px; bottom: auto; }
+  html[data-rail="bottom"] .lx-side { top: auto; bottom: 16px; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) :is(.lx-plate, .lx-shadow) { border-radius: 999px; clip-path: none; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-shadow-mini { display: none; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-body { flex-direction: row; justify-content: center; gap: 10px; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-nav { flex-direction: row; justify-content: center; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-nav-pill {
+    top: 50%; left: 50%; margin-top: -26px; margin-left: calc((var(--count, 3) * 52px + (var(--count, 3) - 1) * 10px) / -2);
+    transform: translateX(calc(var(--idx, 0) * 62px));
+  }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-nav-pill.is-hidden { transform: translateX(calc(var(--idx, 0) * 62px)) scale(0.6); }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-nav-pill::before { left: 15px; top: auto; bottom: -9px; width: 20px; height: 4px; border-radius: 4px 4px 0 0; }
+  html[data-rail="top"] .lx-nav-pill::before { bottom: auto; top: -9px; border-radius: 0 0 4px 4px; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-dock { display: none; }
+  /* Tooltips sit below a top bar and above a bottom bar. */
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-tip { left: 50%; top: calc(100% + 12px); transform: translate(-50%, -4px) scale(0.96); transform-origin: center top; }
+  html[data-rail="bottom"] .lx-tip { top: auto; bottom: calc(100% + 12px); transform-origin: center bottom; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) :is(.lx-mark, .lx-nav-btn, .lx-profile):is(:hover, :focus-visible) > .lx-tip { transform: translate(-50%, 0); }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-main { padding-left: var(--page-x); }
+  html[data-rail="top"] .lx-main { padding-top: 96px; }
+  html[data-rail="bottom"] .lx-main { padding-bottom: 104px; }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .lx-detail { --lx-left: var(--page-x); }
+  /* The multi-action button sits in the bar's right end. */
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .corner.is-docked { left: auto; right: 28px; }
+  html[data-rail="bottom"] .corner.is-docked { bottom: 28px; }
+  /* The dock grows upward from its button, so a top bar anchors the button's bottom edge. */
+  html[data-rail="top"] .corner.is-docked { bottom: calc(100dvh - 28px - 48px); }
+  :is(html[data-rail="top"], html[data-rail="bottom"]) .corner.is-docked .corner-panel { left: auto; right: 0; bottom: calc(100% + 14px); }
+  html[data-rail="top"] .corner.is-docked .corner-panel { bottom: auto; top: calc(100% + 14px); }
+}
+
+@media (max-width: 760px) {
+  /* Phones: the profile entry is a compact avatar in the bar; the logo gives way on narrow screens. */
+  .lx-side > .lx-profile { position: relative; left: auto; top: auto; margin: 0 56px 0 0; width: 44px; height: 44px; padding: 0; transform: none; flex: none; order: 3; }
+  .launcher.is-collapsed .lx-side > .lx-profile { transform: none; }
+  .lx-profile-name { display: none; }
+  .lx-nav-btn { width: 46px; height: 46px; }
+  .lx-nav { gap: 6px; }
+  .lx-nav-pill { width: 46px; height: 46px; margin-top: -23px; margin-left: calc((var(--count, 3) * 46px + (var(--count, 3) - 1) * 6px) / -2); transform: translateX(calc(var(--idx, 0) * 52px)); }
+  .lx-nav-pill.is-hidden { transform: translateX(calc(var(--idx, 0) * 52px)) scale(0.6); }
+  .lx-nav-pill::before { left: 13px; }
+  html[data-rail="top"] .lx-side { top: 12px; bottom: auto; }
+  html[data-rail="top"] .lx-main { padding-top: 92px; padding-bottom: 24px; }
+  html[data-rail="top"] .lx-nav-pill::before { bottom: auto; top: -9px; border-radius: 0 0 4px 4px; }
+  html[data-rail="top"] .corner.is-docked { bottom: calc(100dvh - 22px - 48px); }
+}
+@media (max-width: 420px) {
+  .lx-side .lx-mark { display: none; }
+}

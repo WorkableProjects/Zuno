@@ -48,6 +48,21 @@ export function saveSidebarCollapsed(collapsed: boolean) {
   write(KEYS.sidebar, collapsed ? "collapsed" : "expanded");
 }
 
+/** Where the launcher's navigation rail sits. */
+export type RailPosition = "left" | "top" | "right" | "bottom";
+export const RAIL_POSITIONS: readonly RailPosition[] = ["left", "top", "right", "bottom"];
+export function loadRail(): RailPosition {
+  const v = read("zuno.rail");
+  return (RAIL_POSITIONS as readonly string[]).includes(v ?? "") ? (v as RailPosition) : "left";
+}
+export function saveRail(pos: RailPosition) {
+  write("zuno.rail", pos);
+}
+/** Puts the rail placement on the root element, where the layout CSS reads it. */
+export function applyRail(pos: RailPosition) {
+  document.documentElement.dataset.rail = pos;
+}
+
 export type Device = "mobile" | "desktop";
 /** Null until the user has answered the launch question. */
 export function loadDevice(): Device | null {

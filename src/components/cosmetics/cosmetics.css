@@ -1,0 +1,43 @@
+/* Avatar decorations and name styles. Colours come from theme tokens (--accent, --text…), so every
+   preset (Dark, Light, Vice, Ocean, Zuno Special, Anthropical) restyles them. Motion stops for
+   reduced motion and the Still setting. */
+.deco { position: relative; display: inline-grid; place-items: center; flex: none; isolation: isolate; border-radius: 50%; }
+.deco > .avatar { position: relative; z-index: 1; }
+.deco::before, .deco::after { content: ""; position: absolute; inset: calc(var(--deco-size) * -0.09); border-radius: 50%; pointer-events: none; z-index: 0; }
+.deco::after { display: none; }
+
+.deco-ring::before { border: 2px solid var(--accent); box-shadow: 0 0 10px var(--accent-glow, transparent); }
+.deco-dashed::before { border: 2px dashed color-mix(in oklab, var(--accent) 80%, var(--text)); animation: deco-spin 14s linear infinite; }
+.deco-first-game::before { background: radial-gradient(closest-side, transparent 78%, color-mix(in oklab, var(--accent) 70%, transparent) 92%, transparent); animation: deco-pulse 2.4s var(--ease-in-out, ease-in-out) infinite; inset: calc(var(--deco-size) * -0.16); }
+.deco-regular::before { background: conic-gradient(from 200deg, #ff8a66, #ffd166, #ff5d8f, #ff8a66); -webkit-mask: radial-gradient(closest-side, transparent 86%, #000 88%); mask: radial-gradient(closest-side, transparent 86%, #000 88%); }
+.deco-explorer::before { background: conic-gradient(#ff5d8f, #ffd23f, #3ddc97, #4cc9f0, #a877f0, #ff5d8f); -webkit-mask: radial-gradient(closest-side, transparent 86%, #000 88%); mask: radial-gradient(closest-side, transparent 86%, #000 88%); animation: deco-spin 6s linear infinite; }
+.deco-neon::before { border: 2px solid #22e1ff; box-shadow: 0 0 8px #22e1ff, 0 0 18px #ff3ea5, inset 0 0 8px #ff3ea5; animation: deco-flicker 5s steps(1, end) infinite; }
+.deco-gold::before { background: conic-gradient(from 30deg, #8a6a1f, #f8e08e, #b8892c, #fff3c4, #8a6a1f); -webkit-mask: radial-gradient(closest-side, transparent 82%, #000 85%); mask: radial-gradient(closest-side, transparent 82%, #000 85%); box-shadow: 0 2px 10px rgb(0 0 0 / 0.35); }
+.deco-zuno::before { background: conic-gradient(from 0deg, var(--mark-a, #ff8a66), var(--mark-b, #a893ff), var(--mark-a, #ff8a66)); -webkit-mask: radial-gradient(closest-side, transparent 84%, #000 87%); mask: radial-gradient(closest-side, transparent 84%, #000 87%); animation: deco-spin 8s linear infinite; }
+.deco-zuno::after { display: block; inset: calc(var(--deco-size) * -0.2); box-shadow: 0 0 calc(var(--deco-size) * 0.3) color-mix(in oklab, var(--mark-b, #a893ff) 40%, transparent); }
+.deco-orbit { position: absolute; inset: calc(var(--deco-size) * -0.16); z-index: 2; pointer-events: none; animation: deco-spin 8s linear infinite; }
+.deco-orbit svg { position: absolute; top: 0; left: 50%; transform: translate(-50%, -30%); filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.5)); }
+
+@keyframes deco-spin { to { transform: rotate(360deg); } }
+@keyframes deco-pulse { 50% { opacity: 0.45; transform: scale(1.04); } }
+@keyframes deco-flicker { 0%, 100% { opacity: 1; } 92% { opacity: 0.55; } 94% { opacity: 1; } 96% { opacity: 0.7; } }
+
+/* Name styles. */
+.uname { display: inline-flex; align-items: center; gap: 0.3em; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uname-bold { font-weight: 800; }
+.uname-accent { color: var(--accent); }
+.uname-host { color: var(--text); text-shadow: 0 0 10px var(--accent-glow, var(--accent)); }
+.uname-builder { font-family: var(--font-mono, ui-monospace, monospace); color: color-mix(in oklab, #4cc9f0 70%, var(--text)); letter-spacing: 0.02em; }
+.uname-stylist, .uname-sunset, .uname-chrome, .uname-zuno { -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.uname-stylist { background-image: linear-gradient(90deg, #ff5d8f, #ffd23f, #3ddc97, #4cc9f0, #a877f0, #ff5d8f); background-size: 200% 100%; animation: uname-shift 6s linear infinite; }
+.uname-sunset { background-image: linear-gradient(90deg, #ff7a59, #ff3ea5, #7a1d6e); font-weight: 700; }
+.uname-chrome { background-image: linear-gradient(180deg, #fff 0%, #9aa3b5 48%, #e9edf5 52%, #6b7385 100%); font-weight: 800; }
+html[data-theme="light"] .uname-chrome { background-image: linear-gradient(180deg, #6b7385 0%, #2b3140 48%, #8a93a6 52%, #1b2130 100%); }
+.uname-zuno { background-image: linear-gradient(90deg, var(--mark-a, #ff8a66), var(--mark-b, #a893ff)); font-weight: 800; letter-spacing: -0.01em; text-transform: lowercase; }
+.uname-zuno svg { flex: none; -webkit-text-fill-color: initial; }
+@keyframes uname-shift { to { background-position: 200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .deco::before, .deco-orbit, .uname-stylist { animation: none !important; }
+}
+[data-motion="off"] :is(.deco::before, .deco-orbit, .uname-stylist) { animation: none !important; }

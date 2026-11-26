@@ -7,6 +7,7 @@ import {
   type AvatarSpec,
 } from "./avatarData";
 import "./avatar.css";
+import { DecorationFrame } from "../cosmetics/Cosmetics";
 
 export function Avatar({
   name,
@@ -20,9 +21,9 @@ export function Avatar({
   className?: string;
 }) {
   const initial = name.trim().charAt(0).toUpperCase() || "?";
-  return (
+  const face = (
     <span
-      className={`avatar ${className}`}
+      className={`avatar ${avatar?.deco ? "" : className}`}
       aria-hidden="true"
       style={{
         width: size,
@@ -38,6 +39,20 @@ export function Avatar({
       )}
     </span>
   );
+  // An equipped decoration wraps the picture; the caller's layout class moves to the wrapper.
+  return avatar?.deco ? (
+    <DecorationFrame id={avatar.deco} size={size} className={className}>
+      {face}
+    </DecorationFrame>
+  ) : (
+    face
+  );
+}
+
+/** A player's picture with their equipped decoration. Same as Avatar, with the decoration given explicitly. */
+export function UserAvatar({ name, avatar, decoration, size = 44, className = "" }: { name: string; avatar?: AvatarSpec | null; decoration?: string | null; size?: number; className?: string }) {
+  const spec = avatar ? { ...avatar, deco: decoration === undefined ? avatar.deco : decoration } : decoration ? { color: "#8A94A6", emoji: null, photo: null, deco: decoration } : null;
+  return <Avatar name={name} avatar={spec} size={size} className={className} />;
 }
 
 /** Pick a colour, an emoji or a photo. Shows a live preview. */

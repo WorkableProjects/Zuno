@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { backend } from "./soundboard";
+import { cleanCosmeticId } from "./cosmetics";
+import { loadAvatar } from "../components/avatar/avatarData";
 import type { Room } from "./room";
 
 /**
@@ -14,7 +16,8 @@ export const CHAT_HISTORY = 50;
 export const CHAT_FEED_MAX = 4;
 export const CHAT_FEED_MS = 8000;
 
-export type ChatMessage = { key: string; n: string; t: string; at: number; own: boolean };
+/** `s` is the sender's equipped name style, when they have one. */
+export type ChatMessage = { key: string; n: string; t: string; at: number; own: boolean; s?: string };
 
 /**
  * Takes whole code points while the UTF-16 length stays within `max` units,
@@ -47,10 +50,11 @@ export function chatCooldownReady(lastAt: number, now: number, ms = CHAT_COOLDOW
 /** Validates a database value; anything malformed is dropped. */
 export function parseChatMessage(key: string, v: unknown): Omit<ChatMessage, "own"> | null {
   if (!v || typeof v !== "object") return null;
-  const { n, t, at } = v as Record<string, unknown>;
+  const { n, t, at, s } = v as Record<string, unknown>;
   if (typeof n !== "string" || n.length < 1 || n.length > CHAT_NAME_MAX) return null;
   if (typeof t !== "string" || t.length < 1 || t.length > CHAT_MAX) return null;
-  return { key, n, t, at: typeof at === "number" ? at : 0 };
+  const style = cleanCosmeticId(s);
+  return { key, n, t, at: typeof at === "number" ? at : 0, ...(style ? { s: style } : {}) };
 }
 
 export type SendResult = "ok" | "empty" | "cooldown" | "error";
@@ -137,7 +141,8 @@ export function useChat(room: Room | null, panelOpen: boolean) {
       const item = push(ref(b.d, `${r.path}/chat`));
       // Mark as ours before the write so the optimistic local event is recognised.
       if (item.key) sent.current.add(item.key);
-      await set(item, { n: sanitizeChatName(r.name), t: text, at: serverTimestamp() });
+      const style = loadAvatar().style;
+      await set(item, { n: sanitizeChatName(r.name), t: text, at: serverTimestamp(), ...(style ? { s: style } : {}) });
       return "ok";
     } catch {
       // A failed write should not hold the cooldown, so a retry goes straight through.

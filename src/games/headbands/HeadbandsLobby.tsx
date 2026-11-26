@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Play, RotateCcw, Shuffle, UserMinus } from "lucide-react";
 import type { HeadbandsFile, HeadbandsIdentity, HeadbandsMode } from "../../game-files/schema/headbands";
 import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
+import { StyledUsername } from "../../components/cosmetics/Cosmetics";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";
@@ -277,7 +278,7 @@ export function HeadbandsLobby({ base, code: initialCode, onCode, onBack, onStar
                     <li key={id} className="hb-circle-row" data-nav-row={10 + writer}>
                       <span className="team-index">{writer + 1}</span>
                       <span className="hb-circle-who">
-                        <Avatar name={nameOf(id)} avatar={lobby?.players[id]?.avatar} size={24} /> <strong>{nameOf(id)}</strong>
+                        <Avatar name={nameOf(id)} avatar={lobby?.players[id]?.avatar} size={24} /> <StyledUsername as="strong" name={nameOf(id)} styleId={(lobby?.players[id]?.avatar)?.style} />
                         {id === me && <span className="meta"> (you)</span>} writes for {nameOf(circle[target])}
                       </span>
                       {phase === "writing" ? (
