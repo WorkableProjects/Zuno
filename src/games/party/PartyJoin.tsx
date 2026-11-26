@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useJoinedGameTracking } from "../../lib/useJoinedGameTracking";
 import { ArrowLeft, Check, CircleAlert, LogIn } from "lucide-react";
 import { useRegisterRoom } from "../../lib/room";
 import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
@@ -108,6 +109,7 @@ export function PartyJoin({ def, code: linkCode, name: givenName, onExit }: Prop
   const players = lobby ? orderedPartyPlayers(lobby) : [];
   const mine = lobby?.players[me];
 
+  useJoinedGameTracking(def.gameType, !!(playing && lobby?.game));
   return (
     <main className={`screen game-scope party-scope${playing ? " rpg-online-screen" : ""}`} style={{ "--game": def.accent, ...gameFontStyle(def.gameType) } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useJoinedGameTracking } from "../../lib/useJoinedGameTracking";
 import { useRegisterRoom } from "../../lib/room";
 import { ArrowLeft, Check, CircleAlert, LogIn } from "lucide-react";
 import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
@@ -110,6 +111,7 @@ export function RpgJoin({ code: linkCode, name: givenName, onExit }: Props) {
   const players = lobby ? orderedPlayers(lobby) : [];
   const mine = lobby?.players[me];
 
+  useJoinedGameTracking("rpg", !!(playing && lobby?.game));
   return (
     <main className={`screen game-scope${playing ? " rpg-online-screen" : ""}`} style={{ "--game": "#7C3AED", ...gameFontStyle("rpg") } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">

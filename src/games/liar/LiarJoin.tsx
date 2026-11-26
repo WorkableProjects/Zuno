@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useJoinedGameTracking } from "../../lib/useJoinedGameTracking";
 import { useRegisterRoom } from "../../lib/room";
 import { ArrowLeft, CircleAlert, LogIn } from "lucide-react";
 import { AvatarPicker } from "../../components/avatar/AvatarView";
@@ -106,6 +107,7 @@ export function LiarJoin({ code: linkCode, name: givenName, onExit }: Props) {
   const playing =
     joined && lobby && !removed && lobby.phase === "playing" && lobby.game;
 
+  useJoinedGameTracking("liar", !!(playing && lobby?.game));
   return (
     <main
       className={`screen game-scope${playing ? " liar-online-screen" : ""}`}
