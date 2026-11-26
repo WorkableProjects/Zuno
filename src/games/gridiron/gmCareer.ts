@@ -535,7 +535,7 @@ function startPlayoffs(c: Career) {
     const seeds = playoffSeeds(conf, c.teams, st, c.schedule, c.seed);
     const pairs: Array<[number, number]> = [[1, 6], [2, 5], [3, 4]];
     for (const [a, b] of pairs) c.schedule.push({ id: c.year * 1000 + 900 + conf * 10 + a, week: 19, home: seeds[a], away: seeds[b], round: "WC" });
-    if (seeds.includes(c.userTeam)) inbox(c, "news", "League office", "Playoff berth!", `${userTeam(c).name} are the ${["AT", "PA"][conf]}C #${seeds.indexOf(c.userTeam) + 1} seed.`);
+    if (seeds.includes(c.userTeam)) inbox(c, "news", "League office", "Playoff berth!", `${userTeam(c).name} are the ${["American", "National"][conf]} Conference #${seeds.indexOf(c.userTeam) + 1} seed.`);
   }
   c.log.push(`${c.year} playoffs set.`);
 }

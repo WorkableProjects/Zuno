@@ -16,7 +16,7 @@ export interface GameInfo {
 
 export const GAME_INFO: Record<string, GameInfo> = {
   gridiron: {
-    shot: "Game Day: all 22 players on the field, the scoreboard bug, win probability and the play caller.",
+    shot: "Game Day: a deep ball picked off, with routes drawn, the scoreboard bug and live stats.",
     gallery: [
       { file: "gridiron-live.webp", caption: "Live snap with routes drawn, following the ball" },
       { file: "gridiron-all22.webp", caption: "All-22 camera with coverage shells" },

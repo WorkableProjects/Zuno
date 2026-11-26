@@ -11,45 +11,51 @@ export interface TeamSeed {
   colors: [string, string];
 }
 
-/** 32 fictional franchises. No real league's names, marks or colour pairs are copied. */
+/**
+ * 32 franchises in the real pro football markets, laid out like the real divisions,
+ * with nicknames and colours of their own (no real team names or marks).
+ */
 export const DEFAULT_TEAMS: TeamSeed[] = [
-  { city: "Portland", name: "Timberwolves", abbr: "POR", colors: ["#1f6f43", "#e8c547"] },
-  { city: "Austin", name: "Comets", abbr: "AUS", colors: ["#d9622b", "#1d2b53"] },
-  { city: "San Antonio", name: "Marshals", abbr: "SAT", colors: ["#3b3f46", "#c9a227"] },
-  { city: "Salt Lake", name: "Summit", abbr: "SLC", colors: ["#2b6cb0", "#e2e8f0"] },
-  { city: "Oklahoma City", name: "Twisters", abbr: "OKC", colors: ["#7b2cbf", "#ffb703"] },
-  { city: "Omaha", name: "Stampede", abbr: "OMA", colors: ["#8c1c13", "#f2e8cf"] },
-  { city: "Birmingham", name: "Forge", abbr: "BIR", colors: ["#e85d04", "#212529"] },
-  { city: "Memphis", name: "Blues", abbr: "MEM", colors: ["#1e40af", "#93c5fd"] },
-  { city: "Louisville", name: "Thoroughbreds", abbr: "LOU", colors: ["#065f46", "#fde68a"] },
-  { city: "Columbus", name: "Navigators", abbr: "CBS", colors: ["#0f172a", "#ef4444"] },
-  { city: "Sacramento", name: "Gold Rush", abbr: "SAC", colors: ["#b8860b", "#14213d"] },
-  { city: "San Diego", name: "Tidebreakers", abbr: "SDT", colors: ["#0891b2", "#f8fafc"] },
-  { city: "St. Louis", name: "Archers", abbr: "STL", colors: ["#9d174d", "#f9a8d4"] },
-  { city: "Albuquerque", name: "Roadrunners", abbr: "ABQ", colors: ["#c2410c", "#fef3c7"] },
-  { city: "Boise", name: "Peaks", abbr: "BOI", colors: ["#334155", "#38bdf8"] },
-  { city: "Honolulu", name: "Breakers", abbr: "HNL", colors: ["#0d9488", "#fcd34d"] },
-  { city: "Anchorage", name: "Glaciers", abbr: "ANC", colors: ["#1e3a8a", "#bae6fd"] },
-  { city: "Raleigh", name: "Oaks", abbr: "RAL", colors: ["#3f6212", "#fef9c3"] },
-  { city: "Richmond", name: "Ironclads", abbr: "RIC", colors: ["#44403c", "#f97316"] },
-  { city: "Hartford", name: "Whalers", abbr: "HFD", colors: ["#155e75", "#a3e635"] },
-  { city: "Providence", name: "Anchors", abbr: "PRV", colors: ["#172554", "#fbbf24"] },
-  { city: "Toronto", name: "Northmen", abbr: "TOR", colors: ["#991b1b", "#e5e7eb"] },
-  { city: "Montreal", name: "Voyageurs", abbr: "MTL", colors: ["#1d4ed8", "#dc2626"] },
-  { city: "Vancouver", name: "Orcas", abbr: "VAN", colors: ["#111827", "#22d3ee"] },
-  { city: "Mexico City", name: "Aztecas", abbr: "MEX", colors: ["#15803d", "#b91c1c"] },
-  { city: "Orlando", name: "Thunder", abbr: "ORL", colors: ["#6d28d9", "#22c55e"] },
-  { city: "Tulsa", name: "Roughnecks", abbr: "TUL", colors: ["#78350f", "#facc15"] },
-  { city: "Milwaukee", name: "Brewmasters", abbr: "MIL", colors: ["#1e3a5f", "#f59e0b"] },
-  { city: "Des Moines", name: "Cyclones", abbr: "DSM", colors: ["#be123c", "#fde047"] },
-  { city: "Spokane", name: "Falcons", abbr: "SPK", colors: ["#4c1d95", "#d1d5db"] },
-  { city: "El Paso", name: "Sun Devils", abbr: "ELP", colors: ["#ea580c", "#0c4a6e"] },
-  { city: "Norfolk", name: "Admirals", abbr: "NOR", colors: ["#0c4a6e", "#e0f2fe"] },
+  { city: "Buffalo", name: "Blizzard", abbr: "BUF", colors: ["#1d4ed8", "#e0f2fe"] },
+  { city: "Miami", name: "Barracudas", abbr: "MIA", colors: ["#0d9488", "#fb923c"] },
+  { city: "New England", name: "Clippers", abbr: "NE", colors: ["#172554", "#cbd5e1"] },
+  { city: "New York", name: "Empire", abbr: "NYE", colors: ["#065f46", "#f8fafc"] },
+  { city: "Baltimore", name: "Admirals", abbr: "BAL", colors: ["#3b0764", "#facc15"] },
+  { city: "Cincinnati", name: "Rivermen", abbr: "CIN", colors: ["#c2410c", "#111827"] },
+  { city: "Cleveland", name: "Hounds", abbr: "CLE", colors: ["#7c2d12", "#fdba74"] },
+  { city: "Pittsburgh", name: "Ironmen", abbr: "PIT", colors: ["#27272a", "#eab308"] },
+  { city: "Houston", name: "Wildcatters", abbr: "HOU", colors: ["#7f1d1d", "#93c5fd"] },
+  { city: "Indianapolis", name: "Speedsters", abbr: "IND", colors: ["#1e40af", "#f1f5f9"] },
+  { city: "Jacksonville", name: "Sharks", abbr: "JAX", colors: ["#0e7490", "#f5d0a9"] },
+  { city: "Tennessee", name: "Outlaws", abbr: "TEN", colors: ["#1e3a5f", "#ef4444"] },
+  { city: "Denver", name: "Mountaineers", abbr: "DEN", colors: ["#ea580c", "#1e293b"] },
+  { city: "Kansas City", name: "Monarchs", abbr: "KC", colors: ["#b91c1c", "#fde047"] },
+  { city: "Las Vegas", name: "High Rollers", abbr: "LV", colors: ["#0f172a", "#d4af37"] },
+  { city: "Los Angeles", name: "Stars", abbr: "LAS", colors: ["#4338ca", "#fcd34d"] },
+  { city: "Dallas", name: "Wranglers", abbr: "DAL", colors: ["#334155", "#e2e8f0"] },
+  { city: "New York", name: "Knights", abbr: "NYK", colors: ["#1e3a8a", "#dc2626"] },
+  { city: "Philadelphia", name: "Liberty", abbr: "PHI", colors: ["#14532d", "#fde68a"] },
+  { city: "Washington", name: "Sentinels", abbr: "WAS", colors: ["#7f1d1d", "#fbbf24"] },
+  { city: "Chicago", name: "Gales", abbr: "CHI", colors: ["#0c4a6e", "#f97316"] },
+  { city: "Detroit", name: "Motormen", abbr: "DET", colors: ["#374151", "#38bdf8"] },
+  { city: "Green Bay", name: "Lumberjacks", abbr: "GB", colors: ["#166534", "#fef3c7"] },
+  { city: "Minnesota", name: "Northstars", abbr: "MIN", colors: ["#4c1d95", "#a3e635"] },
+  { city: "Atlanta", name: "Firebirds", abbr: "ATL", colors: ["#991b1b", "#111827"] },
+  { city: "Carolina", name: "Copperheads", abbr: "CAR", colors: ["#b45309", "#0f172a"] },
+  { city: "New Orleans", name: "Krewe", abbr: "NO", colors: ["#581c87", "#facc15"] },
+  { city: "Tampa Bay", name: "Storm", abbr: "TB", colors: ["#0369a1", "#e5e7eb"] },
+  { city: "Arizona", name: "Scorpions", abbr: "ARI", colors: ["#9a3412", "#fde68a"] },
+  { city: "Los Angeles", name: "Tremors", abbr: "LAT", colors: ["#0f766e", "#f472b6"] },
+  { city: "San Francisco", name: "Goldmen", abbr: "SF", colors: ["#b8860b", "#1c1917"] },
+  { city: "Seattle", name: "Sasquatch", abbr: "SEA", colors: ["#14532d", "#94a3b8"] },
 ];
 
-export const CONF_NAMES = ["Atlantic Conference", "Pacific Conference"] as const;
-export const CONF_SHORT = ["ATL", "PAC"] as const;
-export const DIV_NAMES = ["North", "South", "East", "West"] as const;
+/** Default-league markets that play indoors (domes and roofs). */
+const DOMES = new Set(["ATL", "DET", "MIN", "NO", "IND", "LV", "ARI", "HOU", "DAL", "LAS", "LAT"]);
+
+export const CONF_NAMES = ["American Conference", "National Conference"] as const;
+export const CONF_SHORT = ["AC", "NC"] as const;
+export const DIV_NAMES = ["East", "North", "South", "West"] as const;
 const SHAPES = ["shield", "circle", "diamond", "hex", "star", "bolt"] as const;
 const COACH_FIRST = ["Bill", "Andy", "Sean", "Kyle", "Mike", "Dan", "Ron", "Pete", "Gus", "Hal", "Lou", "Vic", "Ray", "Joe", "Ed", "Frank", "Tom", "Wes"];
 const COACH_LAST = ["Holcomb", "Price", "Bergstrom", "Kincaid", "Mancuso", "Okonkwo", "Reilly", "Strand", "Tolbert", "Vasquez", "Whitaker", "Yoder", "Lindqvist", "Ferris"];
@@ -96,7 +102,8 @@ export function generateLeague(seed: number, seeds: TeamSeed[] = DEFAULT_TEAMS):
       conf,
       div,
       stadium: `${s.name} Field`,
-      dome: r() < 0.28,
+      // Custom leagues roll for a roof; the default league uses the real indoor markets.
+      dome: r() < 0.28 && seeds !== DEFAULT_TEAMS ? true : seeds === DEFAULT_TEAMS && DOMES.has(s.abbr),
       ownerPatience: randInt(r, 25, 90),
       market: pick(r, ["Small", "Medium", "Medium", "Large"] as const),
       offScheme: off ?? pick(r, OFF_SCHEMES),
