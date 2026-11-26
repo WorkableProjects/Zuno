@@ -15,6 +15,7 @@ const loaders: Record<string, () => Promise<unknown>> = {
   "playfair-display": () => import("@fontsource/playfair-display/latin-700.css"),
   caveat: () => import("@fontsource/caveat/latin-700.css"),
   "alfa-slab-one": () => import("@fontsource/alfa-slab-one/latin-400.css"),
+  graduate: () => import("@fontsource/graduate/latin-400.css"),
 };
 
 const requested = new Set<string>();

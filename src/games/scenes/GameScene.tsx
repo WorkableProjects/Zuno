@@ -6,9 +6,9 @@ import "./scenes.css";
  * It paints above the global 3D backdrop and below the content. Colour comes from the inherited `--game`. At most three layers per scene move
  * (transform and opacity only, see scenes.css); everything else is a static composition.
  */
-export type SceneId = "jeopardy" | "headbands" | "liar" | "rpg" | "blackjack" | "drawit" | "feud" | "generic";
+export type SceneId = "jeopardy" | "headbands" | "liar" | "rpg" | "blackjack" | "drawit" | "feud" | "gridiron" | "generic";
 
-const KNOWN: SceneId[] = ["jeopardy", "headbands", "liar", "rpg", "blackjack", "drawit", "feud"];
+const KNOWN: SceneId[] = ["jeopardy", "headbands", "liar", "rpg", "blackjack", "drawit", "feud", "gridiron"];
 
 /** Deterministic pseudo-random so a scene looks the same on every render. */
 function rng(seed: number) {
@@ -466,6 +466,78 @@ function FeudScene() {
   );
 }
 
+/* ------------------------------------------------------------------ Gridiron GM */
+
+/** Friday-night stadium: a turf field in perspective under light towers, the crowd's camera flashes and a ball on its arc. */
+function GridironScene() {
+  const r = rng(31);
+  const flashes = Array.from({ length: 40 }, () => ({ left: (r() * 100).toFixed(1), top: (6 + r() * 26).toFixed(1), d: (r() * 6).toFixed(2), s: (0.25 + r() * 0.35).toFixed(2) }));
+  // Field drawn in a 1600x900 box: near edge wide at the bottom, far edge narrow at the horizon.
+  const far = 440;
+  const near = 900;
+  const xAt = (u: number, y: number) => {
+    const t = (y - far) / (near - far);
+    const half = 360 + t * 940;
+    return 800 + (u - 0.5) * 2 * half;
+  };
+  const yAt = (v: number) => far + (near - far) * Math.pow(v, 1.6);
+  const lines = Array.from({ length: 13 }, (_, i) => i / 12);
+  return (
+    <>
+      <div className="gs-base" />
+      <div className="gs-layer gs-crowd" style={{ background: bokeh(60, 9, [G1, "#ffffff", G2, "#ffd36a"], 0.6, 2.4, 0.55) }} />
+      <svg className="gs-layer gs-field" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+        <defs>
+          <linearGradient id="grturf" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#173d22" />
+            <stop offset="1" stopColor="#2f7a3f" />
+          </linearGradient>
+        </defs>
+        <polygon points={`${xAt(0, far)},${far} ${xAt(1, far)},${far} ${xAt(1, near)},${near} ${xAt(0, near)},${near}`} fill="url(#grturf)" />
+        {lines.slice(0, -1).map((v, i) => (
+          <polygon key={`s${i}`} points={`${xAt(0, yAt(v))},${yAt(v)} ${xAt(1, yAt(v))},${yAt(v)} ${xAt(1, yAt(lines[i + 1]))},${yAt(lines[i + 1])} ${xAt(0, yAt(lines[i + 1]))},${yAt(lines[i + 1])}`} fill="#000" fillOpacity={i % 2 ? 0.08 : 0} />
+        ))}
+        {lines.map((v, i) => (
+          <line key={i} x1={xAt(0, yAt(v))} y1={yAt(v)} x2={xAt(1, yAt(v))} y2={yAt(v)} stroke="#fff" strokeOpacity={0.55} strokeWidth={1 + v * 3} />
+        ))}
+        <line x1={xAt(0, far)} y1={far} x2={xAt(0, near)} y2={near} stroke="#fff" strokeOpacity=".7" strokeWidth="4" />
+        <line x1={xAt(1, far)} y1={far} x2={xAt(1, near)} y2={near} stroke="#fff" strokeOpacity=".7" strokeWidth="4" />
+        <line x1={xAt(0.08, yAt(0.62))} y1={yAt(0.62)} x2={xAt(0.92, yAt(0.62))} y2={yAt(0.62)} stroke="#5096ff" strokeWidth="5" />
+        <line x1={xAt(0.08, yAt(0.4))} y1={yAt(0.4)} x2={xAt(0.92, yAt(0.4))} y2={yAt(0.4)} stroke="#fad63c" strokeWidth="4" />
+        {/* Goal post at the far end. */}
+        <g stroke="#fad63c" strokeWidth="5" fill="none" strokeLinecap="round">
+          <path d="M800 440 V398 M760 398 H840 M760 398 V320 M840 398 V320" />
+        </g>
+      </svg>
+      <div className="gs-layer gs-beams gs-a" />
+      <svg className="gs-layer gs-towers" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+        {[160, 1440].map((x) => (
+          <g key={x}>
+            <rect x={x - 6} y="120" width="12" height="330" fill="#0b0f0c" />
+            <rect x={x - 70} y="70" width="140" height="56" rx="6" fill="#0b0f0c" />
+            {Array.from({ length: 12 }, (_, i) => (
+              <circle key={i} cx={x - 56 + (i % 6) * 22} cy={86 + Math.floor(i / 6) * 22} r="8" fill="#fffbe6" />
+            ))}
+          </g>
+        ))}
+      </svg>
+      <div className="gs-flashes gs-b">
+        {flashes.map((f, i) => (
+          <i key={i} style={{ left: `${f.left}%`, top: `${f.top}%`, width: `${f.s}vmax`, height: `${f.s}vmax`, animationDelay: `${f.d}s` }} />
+        ))}
+      </div>
+      <svg className="gs-layer gs-ball gs-c" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+        <path d="M520 760 Q 800 120 1080 620" fill="none" stroke="#fff" strokeOpacity=".22" strokeWidth="3" strokeDasharray="10 12" />
+        <g transform="translate(905 300) rotate(28)">
+          <ellipse rx="34" ry="20" fill="#8a4f22" stroke="#f3e7d3" strokeWidth="3" />
+          <path d="M-12 0 H12 M-6 -5 V5 M0 -5 V5 M6 -5 V5" stroke="#f3e7d3" strokeWidth="2.5" />
+        </g>
+      </svg>
+      <div className="gs-vig" />
+    </>
+  );
+}
+
 /* ------------------------------------------------------------------ Generic */
 
 function GenericScene() {
@@ -495,6 +567,7 @@ const SCENES: Record<SceneId, () => ReactNode> = {
   blackjack: BlackjackScene,
   drawit: DrawScene,
   feud: FeudScene,
+  gridiron: GridironScene,
   generic: GenericScene,
 };
 

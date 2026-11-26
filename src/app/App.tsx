@@ -28,6 +28,8 @@ import { saveSidebarRemote, useProfile } from "../lib/profile";
 import type { BackgroundPreset } from "../game-files/schema/common";
 import { LIAR_TYPE, blankLiarFile, type LiarFile } from "../game-files/schema/liar";
 import { RPG_TYPE, blankRpgFile, type RpgFile } from "../game-files/schema/rpg";
+import { GRIDIRON_TYPE, blankGridironFile, type GridironFile } from "../game-files/schema/gridiron";
+import { GridironPlay } from "../games/gridiron/GridironPlay";
 import type { RpgSettings } from "../game-files/schema/rpg";
 import { HEADBANDS_TYPE, blankHeadbandsFile, type HeadbandsFile } from "../game-files/schema/headbands";
 import { JEOPARDY_TYPE, type JeopardyFile } from "../game-files/schema/jeopardy";
@@ -84,7 +86,8 @@ type Screen =
   | { name: "partyJoin"; kind: PartyKind; code: string | null; playerName?: string }
   | { name: "builder" }
   | { name: "editor"; gameType: string }
-  | { name: "ai"; gameType: string };
+  | { name: "ai"; gameType: string }
+  | { name: "gridiron"; file: GridironFile };
 
 function backdropForGame(game: LoadedGame): BackdropSpec {
   const { metadata, appearance } = game.file;
@@ -105,6 +108,7 @@ function backdropTheme(screen: Screen, tileGameType: string): SoundTheme {
   if (screen.name === "setup" || screen.name === "play") return "jeopardy";
   if (screen.name.startsWith("liar")) return "liar";
   if (screen.name.startsWith("rpg")) return "rpg";
+  if (screen.name === "gridiron") return "gridiron";
   if (screen.name.startsWith("party")) return pick(partyByKind((screen as { kind: PartyKind }).kind).gameType);
   return "headbands";
 }
@@ -134,6 +138,8 @@ function playingNow(screen: Screen): { gameType: string; online: boolean } | nul
       return { gameType: "liar", online: true };
     case "rpgOnline":
       return { gameType: "rpg", online: true };
+    case "gridiron":
+      return { gameType: "gridiron", online: false };
     case "partyOnline":
       return { gameType: partyByKind(screen.kind).gameType, online: true };
     default:
@@ -362,6 +368,7 @@ export function App() {
       if (file.gameType === RPG_TYPE) push({ name: "rpgLobby", file: file as RpgFile, code: null });
       else if (file.gameType === LIAR_TYPE) push({ name: "liarSetup", game: game as LoadedGame<LiarFile> });
       else if (file.gameType === HEADBANDS_TYPE) push({ name: "hbSetup", game: game as LoadedGame<HeadbandsFile> });
+      else if (file.gameType === GRIDIRON_TYPE) push({ name: "gridiron", file: file as GridironFile });
       else push({ name: "setup", game: game as LoadedGame<JeopardyFile> });
     },
     [push],
@@ -410,6 +417,7 @@ export function App() {
   else if (screen.name === "builder") backdrop = buildBackdrop;
   else if (screen.name === "ai") backdrop = loaded ? backdropForGame(loaded) : buildBackdrop;
   else if (screen.name === "setup" || screen.name === "play" || screen.name === "hbSetup" || screen.name === "hbPlay" || screen.name === "liarSetup" || screen.name === "liarPlay") backdrop = backdropForGame(screen.game);
+  else if (screen.name === "gridiron") backdrop = backdropForGame({ file: screen.file, filename: "gridiron", text: "", warnings: [] });
   else if (screen.name === "rpgJoin") backdrop = backdropForGame({ file: blankRpgFile(), filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "rpgLobby" || screen.name === "rpgOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
   else if (screen.name === "liarLobby" || screen.name === "liarOnline") backdrop = backdropForGame({ file: screen.file, filename: "lobby", text: "", warnings: [] });
@@ -482,7 +490,7 @@ export function App() {
               key={screen.gameType}
               gameType={screen.gameType}
               onBack={() => pop(`game:${screen.gameType}`)}
-              onLoad={(gameType) => push({ name: "import", gameType })}
+              onLoad={(gameType) => push(gameType === GRIDIRON_TYPE ? { name: "gridiron", file: blankGridironFile() } : { name: "import", gameType })}
               onBuild={(gameType) => toBuilder(gameType)}
               onJoin={lobbiesAvailable() ? () => push({ name: "hbJoin", code: null }) : undefined}
               onHostOnline={
@@ -639,6 +647,7 @@ export function App() {
           onLobby={lobbiesAvailable() ? (options) => push({ name: "liarLobby", file: screen.game.file, code: null, defaults: options }) : undefined}
         />
       )}
+      {screen.name === "gridiron" && <GridironPlay key={stack.length} file={screen.file} onExit={home} />}
       {screen.name === "liarPlay" && <LiarGame key={stack.length} file={screen.game.file} names={screen.names} options={screen.options} onAgain={pop} onExit={exitGame} />}
       {screen.name === "builder" && (
         <BuilderHome

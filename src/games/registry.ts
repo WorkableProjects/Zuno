@@ -3,6 +3,7 @@ import { HEADBANDS_TYPE, eligibleIdentities, validateHeadbands, type HeadbandsFi
 import { LIAR_TYPE, validateLiar, type LiarFile } from "../game-files/schema/liar";
 import { RPG_TYPE, formatCoins, validateRpg, type RpgFile } from "../game-files/schema/rpg";
 import { BLACKJACK_TYPE, DRAWIT_TYPE, FEUD_TYPE, validateBlackjack, validateDrawIt, validateFeud } from "../game-files/schema/party";
+import { GRIDIRON_TYPE, validateGridiron, type GridironFile } from "../game-files/schema/gridiron";
 import { JEOPARDY_TYPE, countClues, validateJeopardy, type JeopardyFile } from "../game-files/schema/jeopardy";
 
 /**
@@ -205,6 +206,38 @@ const engines: GameEngine[] = [
     summarize: () => "Online only",
     stats: (f) => Object.entries(f.settings as Record<string, unknown>).filter(([, v]) => typeof v === "number").slice(0, 3).map(([k, v]) => [k, v as number]),
     listing: () => null,
+  },
+  {
+    gameType: GRIDIRON_TYPE,
+    title: "Gridiron GM",
+    description: "Run a pro football franchise as GM and head coach. Draft, sign and trade, set the depth chart, then call plays as every snap plays out live on the field.",
+    schemaVersions: [1],
+    hasBuilder: false,
+    appearance: { accentColor: "#22C55E", backgroundPreset: "tide" },
+    font: { id: "graduate", family: "Graduate" },
+    validate: validateGridiron as GameEngine["validate"],
+    artwork: null,
+    players: "solo",
+    sampleFile: "gridiron-league.zuno.json",
+    fileHolds: "a custom league or a saved career",
+    buildTitle: "Build a Gridiron league",
+    summarize: (f) => {
+      const file = f as GridironFile;
+      const k = file.content.career as { year?: number } | null;
+      return k ? `Saved career · ${k.year ?? ""}` : file.content.league ? "Custom league · 32 teams" : "Default league · 32 teams";
+    },
+    stats: (f) => {
+      const file = f as GridironFile;
+      return [
+        ["Teams", 32],
+        ["League", file.content.league ? "Custom" : "Default"],
+        ["Saved career", file.content.career ? "Yes" : "No"],
+      ];
+    },
+    listing: (f) => {
+      const t = (f as GridironFile).content.league?.teams;
+      return t ? { label: "Teams", items: t.map((x) => `${x.city} ${x.name}`) } : null;
+    },
   },
 ];
 

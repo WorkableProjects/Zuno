@@ -10,9 +10,29 @@ export interface GameInfo {
   rules: Array<{ heading: string; points: string[] }>;
   /** Caption under the in-game screenshot (public/screens/<gameType>.webp). */
   shot: string;
+  /** More gameplay screenshots shown beside the Play button (paths under public/screens). */
+  gallery?: Array<{ file: string; caption: string }>;
 }
 
 export const GAME_INFO: Record<string, GameInfo> = {
+  gridiron: {
+    shot: "Game Day: a deep ball picked off, with routes drawn, the scoreboard bug and live stats.",
+    gallery: [
+      { file: "gridiron-live.webp", caption: "Live snap with routes drawn, following the ball" },
+      { file: "gridiron-all22.webp", caption: "All-22 camera with coverage shells" },
+      { file: "gridiron-hub.webp", caption: "The hub: this week's matchup, the league and your inbox" },
+      { file: "gridiron-draft.webp", caption: "Draft room with scouting ranges and combine numbers" },
+    ],
+    players: "1",
+    mode: "One screen",
+    length: "Career",
+    rules: [
+      { heading: "Your franchise", points: ["Pick one of 32 fictional teams and take over as GM and head coach.", "Set the depth chart, schemes and game plan. Manage the salary cap, sign free agents, make trades and run the draft."] },
+      { heading: "Game day", points: ["Every snap plays out live in 2D with all 22 players. Call each play from the playbook, or let your coordinators call them.", "Use timeouts, challenges and 4th-down calls. Replay any play, change the camera or skip ahead."] },
+      { heading: "Seasons", points: ["17 games, then a 14-team playoff and the Zuno Bowl.", "Each offseason: re-sign, scout the combine, free agency, the draft, camp and cutdown to 53."] },
+      { heading: "Keep the job", points: ["The owner sets a goal every season. Meet it to keep your job and build a dynasty in the history books."] },
+    ],
+  },
   jeopardy: {
     shot: "The host screen: pick a clue from the board; team scores sit underneath.",
     players: "Teams",

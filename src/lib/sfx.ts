@@ -42,6 +42,7 @@ export type Sfx =
   | "launchLiar"
   | "launchRpg"
   | "launchFeud"
+  | "launchGridiron"
   | "themeDark"
   | "themeLight"
   | "themeVice"
@@ -542,6 +543,16 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
     glass(c, D6, 0.5, 0.6, 0.14, 2.2);
     glass(c, A6, 0.56, 0.5, 0.1, 2.2);
   },
+  launchGridiron: (c) => {
+    // Ready, hike: a referee's whistle trill, the snap, a boot on the ball, and the stadium rising.
+    for (let i = 0; i < 5; i++) nz(c, i * 0.045, 0.05, 3100, 3000, 0.09, 28, "bandpass", 0.004);
+    wood(c, 150, 0.28, 0.08, 0.45);
+    sub(c, 130, 55, 0.28, 0.14, 0.35);
+    sub(c, 190, 45, 0.48, 0.3, 0.65);
+    nz(c, 0.48, 0.12, 2400, 700, 0.18, 1, "bandpass", 0.002);
+    nz(c, 0.5, 0.9, 900, 1400, 0.1, 0.6, "bandpass", 0.18);
+    glass(c, A5, 0.56, 0.5, 0.12, 1.4);
+  },
   launchFeud: (c) => {
     // Survey says: two bright bells and a short crowd cheer.
     glass(c, A5, 0.1, 0.5, 0.28, 1.2);
@@ -614,7 +625,7 @@ const pitchFor = (name: Sfx) => (VARIED.has(name) ? 1 + (Math.random() * 2 - 1) 
 const TRIM: Partial<Record<Sfx, number>> = {
   hover: 4, click: 3, back: 3, select: 3, navigate: 3, open: 3, close: 3, toggleOn: 3, toggleOff: 3,
   vote: 2.5, tick: 2.5, skip: 2.5, pause: 1.8, turn: 1.5, join: 1.5, correct: 1.4, welcome: 1.5, applause: 4, boing: 1.5,
-  launchBlackjack: 1.9, launchDrawit: 2, launchFeud: 2, launchHeadbands: 1.6, launchLiar: 1.3, launchRpg: 1.3, launchJeopardy: 1.15,
+  launchBlackjack: 1.9, launchDrawit: 2, launchFeud: 2, launchGridiron: 1.6, launchHeadbands: 1.6, launchLiar: 1.3, launchRpg: 1.3, launchJeopardy: 1.15,
   themeDark: 2, themeLight: 2, themeVice: 1.6, themeOcean: 1.8, themeZunoSpecial: 1.6, themeAnthropical: 2.2, equip: 2.2, unequip: 2.2,
 };
 const trim = (name: Sfx) => TRIM[name] ?? 1;
