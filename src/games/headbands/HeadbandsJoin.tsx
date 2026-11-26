@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useJoinedGameTracking } from "../../lib/useJoinedGameTracking";
 import { useRegisterRoom } from "../../lib/room";
 import { ArrowLeft, CircleAlert, CircleCheck, EyeOff, LogIn } from "lucide-react";
 import { HEADBANDS_LIMITS } from "../../game-files/schema/headbands";
@@ -114,6 +115,7 @@ export function HeadbandsJoin({ code: linkCode, onExit, onOtherRoom }: Props) {
   const target = lobby && inCircle !== -1 && lobby.circle.length >= 2 ? lobby.circle[(inCircle + 1) % lobby.circle.length] : null;
   const targetName = target && lobby ? (lobby.players[target]?.name ?? "the next player") : null;
 
+  useJoinedGameTracking("headbands", !!joined && !!lobby && !removed && lobby.phase === "playing" && !!lobby.game);
   return (
     <main className="screen game-scope" style={{ "--game": "#FFB454", ...gameFontStyle("headbands") } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">

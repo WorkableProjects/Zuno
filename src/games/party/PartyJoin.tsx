@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useJoinedGameTracking } from "../../lib/useJoinedGameTracking";
 import { ArrowLeft, Check, CircleAlert, LogIn } from "lucide-react";
 import { useRegisterRoom } from "../../lib/room";
 import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
+import { StyledUsername } from "../../components/cosmetics/Cosmetics";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { adoptSeatId, clearSeat, loadSeat, saveSeat } from "../../lib/rejoin";
@@ -107,6 +109,7 @@ export function PartyJoin({ def, code: linkCode, name: givenName, onExit }: Prop
   const players = lobby ? orderedPartyPlayers(lobby) : [];
   const mine = lobby?.players[me];
 
+  useJoinedGameTracking(def.gameType, !!(playing && lobby?.game));
   return (
     <main className={`screen game-scope party-scope${playing ? " rpg-online-screen" : ""}`} style={{ "--game": def.accent, ...gameFontStyle(def.gameType) } as React.CSSProperties}>
       <header className="screen-bar" data-nav-row="0">
@@ -186,7 +189,7 @@ export function PartyJoin({ def, code: linkCode, name: givenName, onExit }: Prop
                     <span className="rpg-rank">{i + 1}</span>
                     <Avatar name={p.name} avatar={p.avatar} size={34} />
                     <span className="rpg-grow">
-                      {p.name}
+                      <StyledUsername name={p.name} styleId={(p.avatar)?.style} />
                       {p.id === me && <span className="meta"> · you</span>}
                     </span>
                     <span className={`rpg-status${p.ready ? " is-ready" : ""}`}>{p.ready ? "Ready" : "Not ready"}</span>

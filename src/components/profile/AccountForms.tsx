@@ -1,20 +1,13 @@
 import { useState, type FormEvent } from "react";
-import { LogOut, Mail } from "lucide-react";
+import { Check } from "lucide-react";
 import { loadAvatar, type AvatarSpec } from "../avatar/avatarData";
-import { Avatar, AvatarPicker } from "../avatar/AvatarView";
-import { logOut, profilesAvailable, resetPassword, signIn, signInWithGoogle, signUp, updateProfile, useProfile } from "../../lib/profile";
+import { AvatarPicker } from "../avatar/AvatarView";
+import { resetPassword, signIn, signInWithGoogle, signUp, updateProfile, useProfile } from "../../lib/profile";
 
 type Mode = "signin" | "signup";
 
-/** Sign in, make a profile, or edit the signed-in one. */
-export function ProfileCard() {
-  const profile = useProfile();
-  if (!profilesAvailable()) return <p className="field-hint">Profiles need the online service, which isn't set up for this site.</p>;
-  if (profile === undefined) return <p className="field-hint">Loading your profile…</p>;
-  return profile ? <ProfileEditor key={profile.uid} /> : <AuthForm />;
-}
-
-function AuthForm() {
+/** Sign in, or make a new profile. */
+export function AuthForm() {
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -131,14 +124,16 @@ function AuthForm() {
   );
 }
 
-function ProfileEditor() {
+/** Username and picture (photo upload, emoji or initial), with a save confirmation. */
+export function IdentityEditor() {
   const profile = useProfile()!;
   const [username, setUsername] = useState(profile.username);
-  const [avatar, setAvatar] = useState<AvatarSpec>(profile.avatar);
+  // The picker edits the picture only; cosmetics are equipped below.
+  const [avatar, setAvatar] = useState<AvatarSpec>(() => ({ color: profile.avatar.color, emoji: profile.avatar.emoji, photo: profile.avatar.photo }));
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const dirty = username.trim() !== profile.username || JSON.stringify(avatar) !== JSON.stringify(profile.avatar);
+  const dirty = username.trim() !== profile.username || avatar.color !== profile.avatar.color || avatar.emoji !== profile.avatar.emoji || avatar.photo !== profile.avatar.photo;
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -147,7 +142,7 @@ function ProfileEditor() {
     try {
       await updateProfile({ username, avatar });
       setSaved(true);
-      window.setTimeout(() => setSaved(false), 2000);
+      window.setTimeout(() => setSaved(false), 2500);
     } catch (err) {
       setProblem(err instanceof Error ? err.message : "Couldn't save.");
     } finally {
@@ -157,22 +152,10 @@ function ProfileEditor() {
 
   return (
     <form className="st-auth" onSubmit={save}>
-      <div className="st-me">
-        <Avatar name={username} avatar={avatar} size={64} />
-        <div>
-          <strong>{profile.username}</strong>
-          <small>
-            <Mail size={13} /> {profile.email}
-          </small>
-        </div>
-        <button type="button" className="btn btn-quiet st-signout" onClick={() => void logOut()}>
-          <LogOut size={16} />
-          Sign out
-        </button>
-      </div>
       <label className="field">
-        <span className="field-label">Username</span>
-        <input className="input" value={username} maxLength={24} onChange={(e) => setUsername(e.target.value)} />
+        <span className="field-label">Display name</span>
+        <input className="input" value={username} maxLength={24} onChange={(e) => setUsername(e.target.value)} data-nav-row="11" />
+        <span className="field-hint">2–24 letters, numbers, spaces, dots, dashes or underscores. Names are unique.</span>
       </label>
       <AvatarPicker name={username} value={avatar} onChange={setAvatar} />
       {problem && (
@@ -182,8 +165,13 @@ function ProfileEditor() {
       )}
       <div className="st-row">
         <button type="submit" className="btn btn-primary" disabled={busy || !dirty}>
-          {saved ? "Saved" : busy ? "Saving…" : "Save profile"}
+          {busy ? "Saving…" : "Save changes"}
         </button>
+        {saved && (
+          <span className="pf-saved" role="status">
+            <Check size={16} /> Saved
+          </span>
+        )}
       </div>
     </form>
   );

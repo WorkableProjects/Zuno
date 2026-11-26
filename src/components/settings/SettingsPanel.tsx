@@ -1,10 +1,10 @@
 import { useState, useSyncExternalStore, type ReactNode } from "react";
-import { Info, Leaf, Monitor, Moon, Palette, Smartphone, Sparkles, Star, Sun, Sunset, Waves, UserRound, Volume2, VolumeX } from "lucide-react";
+import { ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, Leaf, LogOut, Monitor, Moon, Smartphone, Star, Sun, Sunset, Waves, Volume2, VolumeX } from "lucide-react";
 import { THEMES } from "../../app/themes";
-import { applyMotion, loadMotion, loadSfxOn, saveMotion, saveSfxOn, type Device, type Motion, type Theme } from "../../app/storage";
+import { applyMotion, loadMotion, loadSfxOn, saveMotion, saveSfxOn, type Device, type Motion, type RailPosition, type Theme } from "../../app/storage";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
 import { setSfxEnabled } from "../../lib/sfx";
-import { ProfileCard } from "./ProfileCard";
+import { logOut, useProfile } from "../../lib/profile";
 import "./settings.css";
 
 interface Props {
@@ -12,19 +12,13 @@ interface Props {
   onTheme: (theme: Theme) => void;
   device: Device;
   onDevice: (device: Device) => void;
+  rail: RailPosition;
+  onRail: (rail: RailPosition) => void;
 }
 
-const SECTIONS = [
-  { id: "profile", label: "Profile", Icon: UserRound },
-  { id: "look", label: "Look", Icon: Palette },
-  { id: "sound", label: "Sound", Icon: Volume2 },
-  { id: "motion", label: "Motion", Icon: Sparkles },
-  { id: "about", label: "About", Icon: Info },
-] as const;
-
-function Card({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+function Card({ id, title, children, className = "" }: { id: string; title: string; children: ReactNode; className?: string }) {
   return (
-    <section id={`st-${id}`} className="st-card" aria-labelledby={`st-${id}-h`}>
+    <section id={`st-${id}`} className={`st-card ${className}`} aria-labelledby={`st-${id}-h`}>
       <h2 id={`st-${id}-h`} className="st-card-title">
         {title}
       </h2>
@@ -44,14 +38,41 @@ function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange:
   );
 }
 
-/** The Settings page, a section of the launcher. */
-const THEME_ICONS: Record<Theme, typeof Moon> = { dark: Moon, light: Sun, vice: Sunset, ocean: Waves, "zuno-special": Star, anthropical: Leaf };
+function Segmented<T extends string>({ label, value, options, onChange, row }: { label: string; value: T; options: ReadonlyArray<readonly [T, string, typeof Moon]>; onChange: (v: T) => void; row: string }) {
+  return (
+    <div className="st-field">
+      <span className="field-label">{label}</span>
+      <div className="segmented" role="radiogroup" aria-label={label} data-nav-row={row}>
+        {options.map(([v, text, Icon]) => (
+          <button key={v} type="button" role="radio" aria-checked={value === v} className={`segment${value === v ? " is-on" : ""}`} onClick={() => onChange(v)}>
+            <Icon size={16} strokeWidth={1.75} />
+            {text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
+const THEME_ICONS: Record<Theme, typeof Moon> = { dark: Moon, light: Sun, vice: Sunset, ocean: Waves, "zuno-special": Star, anthropical: Leaf };
+const RAIL_OPTIONS = [
+  ["left", "Left", ArrowLeftToLine],
+  ["top", "Top", ArrowUpToLine],
+  ["right", "Right", ArrowRightToLine],
+  ["bottom", "Bottom", ArrowDownToLine],
+] as const;
+const DEVICE_OPTIONS = [
+  ["desktop", "Desktop", Monitor],
+  ["mobile", "Mobile", Smartphone],
+] as const;
+
+/** The Settings page, a section of the launcher. Profile editing lives on the Profile page. */
+export function SettingsPage({ theme, onTheme, device, onDevice, rail, onRail }: Props) {
   const muted = useSyncExternalStore(subscribeMuted, isMuted);
   const [volume, setVol] = useState(getVolume);
   const [sfxOn, setSfxOn] = useState(loadSfxOn);
   const [motion, setMotion] = useState<Motion>(loadMotion);
+  const profile = useProfile();
 
   const chooseMotion = (m: Motion) => {
     setMotion(m);
@@ -63,65 +84,39 @@ export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
     saveSfxOn(on);
     setSfxEnabled(on);
   };
-  const jump = (id: string) => document.getElementById(`st-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
     <main className="lx-page st">
-      <header className="lx-head">
+      <header className="lx-head st-head">
         <h1 className="lx-title">Settings</h1>
       </header>
-      <div className="st-layout">
-        <nav className="st-nav" aria-label="Settings sections" data-nav-row="1">
-          {SECTIONS.map(({ id, label, Icon }) => (
-            <button key={id} type="button" className="st-nav-btn" onClick={() => jump(id)}>
-              <Icon size={18} strokeWidth={1.75} />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="st-cards">
-          <Card id="profile" title="Profile">
-            <ProfileCard />
-          </Card>
-
-          <Card id="look" title="Look">
-            <span className="field-label">Theme</span>
-            <div className="st-themes" role="radiogroup" aria-label="Theme" data-nav-row="20">
-              {THEMES.map(({ id, label, swatch }) => {
-                const Icon = THEME_ICONS[id];
-                return (
-                  <button key={id} type="button" role="radio" aria-checked={theme === id} className={`st-theme st-theme-${id}${theme === id ? " is-on" : ""}`} style={{ "--sw-bg": swatch.bg, "--sw-panel": swatch.panel, "--sw-accent": swatch.accent } as React.CSSProperties} onClick={() => onTheme(id)}>
-                    <span className="st-theme-preview" aria-hidden="true">
-                      <span />
-                      <span />
-                      <span />
-                    </span>
-                    <span className="st-theme-label">
-                      <Icon size={16} strokeWidth={1.75} />
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <span className="field-label st-gap">Layout</span>
-            <div className="segmented" role="radiogroup" aria-label="Layout" data-nav-row="21">
-              {(
-                [
-                  ["desktop", "Desktop", Monitor],
-                  ["mobile", "Mobile", Smartphone],
-                ] as const
-              ).map(([value, label, Icon]) => (
-                <button key={value} type="button" role="radio" aria-checked={device === value} className={`segment${device === value ? " is-on" : ""}`} onClick={() => onDevice(value)}>
-                  <Icon size={18} strokeWidth={1.5} />
-                  {label}
+      <div className="st-cards">
+        <Card id="look" title="Look">
+          <div className="st-themes" role="radiogroup" aria-label="Theme" data-nav-row="20">
+            {THEMES.map(({ id, label, swatch }) => {
+              const Icon = THEME_ICONS[id];
+              return (
+                <button key={id} type="button" role="radio" aria-checked={theme === id} className={`st-theme st-theme-${id}${theme === id ? " is-on" : ""}`} style={{ "--sw-bg": swatch.bg, "--sw-panel": swatch.panel, "--sw-accent": swatch.accent } as React.CSSProperties} onClick={() => onTheme(id)}>
+                  <span className="st-theme-preview" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                  <span className="st-theme-label">
+                    <Icon size={15} strokeWidth={1.75} />
+                    {label}
+                  </span>
                 </button>
-              ))}
-            </div>
-            <p className="field-hint">Desktop uses the full width. Mobile stays compact and vertical.</p>
-          </Card>
+              );
+            })}
+          </div>
+          <div className="st-pair">
+            <Segmented label="Layout" value={device} options={DEVICE_OPTIONS} onChange={onDevice} row="21" />
+            <Segmented label="Sidebar position" value={rail} options={RAIL_OPTIONS} onChange={onRail} row="22" />
+          </div>
+        </Card>
 
+        <div className="st-pair st-pair-cards">
           <Card id="sound" title="Sound">
             <div className="st-list" data-nav-row="30">
               <Toggle on={!muted} label="Music" onChange={(on) => setMuted(!on)} />
@@ -135,7 +130,7 @@ export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
                 max={100}
                 step={5}
                 value={Math.round(volume * 100)}
-                aria-label="Music volume"
+                aria-label="Volume"
                 disabled={muted}
                 onChange={(e) => {
                   const v = Number(e.target.value) / 100;
@@ -152,7 +147,7 @@ export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
               {(
                 [
                   ["full", "Full 3D", "Everything moves."],
-                  ["calm", "Calm", "Gradients drift, no 3D turning."],
+                  ["calm", "Calm", "Gradients drift."],
                   ["off", "Still", "A frozen backdrop."],
                 ] as const
               ).map(([value, label, hint]) => (
@@ -163,12 +158,18 @@ export function SettingsPage({ theme, onTheme, device, onDevice }: Props) {
               ))}
             </div>
           </Card>
-
-          <Card id="about" title="About">
-            <p className="field-hint">Theme, layout and sound are saved on this device. Your name and picture follow your profile.</p>
-            <p className="settings-version">Zuno v{__APP_VERSION__}</p>
-          </Card>
         </div>
+
+        <footer id="st-about" className="st-strip" aria-label="About">
+          <span className="settings-version">Zuno v{__APP_VERSION__}</span>
+          <span className="st-strip-note">Look, layout and sound are saved on this device{profile ? " and with your profile" : ""}.</span>
+          {profile && (
+            <button type="button" className="btn btn-quiet st-signout" onClick={() => void logOut()} data-nav-row="50">
+              <LogOut size={16} />
+              Sign out
+            </button>
+          )}
+        </footer>
       </div>
     </main>
   );

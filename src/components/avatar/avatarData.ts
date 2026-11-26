@@ -1,8 +1,16 @@
-/** A player's picture: an uploaded photo, an emoji, or their initial, on a colour. */
+import { cleanCosmeticId } from "../../lib/cosmetics";
+
+/**
+ * A player's picture: an uploaded photo, an emoji, or their initial, on a colour.
+ * `deco` and `style` are the equipped avatar decoration and name style. They ride along
+ * with the avatar into every room, so cosmetics show everywhere a player appears.
+ */
 export interface AvatarSpec {
   color: string;
   emoji: string | null;
   photo: string | null;
+  deco?: string | null;
+  style?: string | null;
 }
 
 export const AVATAR_COLORS = [
@@ -77,7 +85,9 @@ export function parseAvatar(raw: unknown): AvatarSpec | null {
     /^data:image\/(jpeg|webp|png);base64,/.test(r.photo)
       ? r.photo
       : null;
-  return { color, emoji, photo };
+  const deco = cleanCosmeticId(r.deco);
+  const style = cleanCosmeticId(r.style);
+  return { color, emoji, photo, ...(deco ? { deco } : {}), ...(style ? { style } : {}) };
 }
 
 export function loadAvatar(): AvatarSpec {

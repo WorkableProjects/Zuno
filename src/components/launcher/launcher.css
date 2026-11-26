@@ -221,6 +221,7 @@ html[data-theme="light"] .lx-stage::after { background: linear-gradient(90deg, c
 .lx-play:hover svg { transform: scale(1.2) translateX(2px); }
 @keyframes lx-play-breathe { 50% { box-shadow: 0 12px 40px color-mix(in oklab, var(--game) 70%, transparent), 0 0 0 6px color-mix(in oklab, var(--game) 16%, transparent); } }
 @keyframes lx-play-shine { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
+.lx-play[data-firing]::before { animation: none; opacity: 0; }
 .lx-note { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
 .lx-scroll {
   justify-self: center;
@@ -240,6 +241,9 @@ html[data-theme="light"] .lx-stage::after { background: linear-gradient(90deg, c
 
 .lx-rules { padding: 40px 0 120px; scroll-margin-top: 24px; }
 .lx-rules-title { margin: 0 0 22px; font: 700 clamp(28px, 3.4vw, 44px) / 1.05 var(--font-display); }
+.lx-shot { margin: 0 0 22px; }
+.lx-shot img { display: block; width: 100%; height: auto; border-radius: var(--r-round); border: 1px solid var(--hairline); box-shadow: 0 18px 50px rgb(0 0 0 / 0.35); background: var(--surface); }
+.lx-shot figcaption { margin-top: 10px; color: var(--text-2); font-size: 14px; }
 .lx-rule-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
 .lx-rule {
   position: relative;

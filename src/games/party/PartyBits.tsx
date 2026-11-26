@@ -1,4 +1,5 @@
 import { Avatar } from "../../components/avatar/AvatarView";
+import { StyledUsername } from "../../components/cosmetics/Cosmetics";
 import type { AvatarSpec } from "../../components/avatar/avatarData";
 import { useSoundOnChange } from "../../lib/useGameSounds";
 import { Coins } from "../rpg/motion";
@@ -59,7 +60,7 @@ export function Standings({ players, me, avatarOf, money = false, keepOrder = fa
           {!keepOrder && <span className="rpg-rank">{i + 1}</span>}
           <Avatar name={p.name} avatar={avatarOf(p.id) ?? null} size={30} />
           <span className="rpg-grow">
-            {p.name}
+            <StyledUsername name={p.name} styleId={(avatarOf(p.id))?.style} />
             {p.id === me && <span className="meta"> · you</span>}
             {(p.tag || p.removed) && <span key={p.removed ? "left" : p.tag} className="meta rpg-status ru-reveal">{p.removed ? "Left" : p.tag}</span>}
           </span>

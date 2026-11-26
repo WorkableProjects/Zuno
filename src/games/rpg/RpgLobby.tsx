@@ -4,6 +4,7 @@ import { useRegisterRoom } from "../../lib/room";
 import QRCode from "qrcode";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, CircleAlert, Copy, Crown, Play, UserMinus } from "lucide-react";
 import { Avatar, AvatarPicker } from "../../components/avatar/AvatarView";
+import { StyledUsername } from "../../components/cosmetics/Cosmetics";
 import { loadAvatar, saveAvatar } from "../../components/avatar/avatarData";
 import { useEscape } from "../../components/navigation/spatialNav";
 import { ConfirmDialog } from "../../components/ui/Dialog";
@@ -229,7 +230,7 @@ export function RpgLobby({ file, code: initialCode, onCode, onBack, onStart }: P
                     <span className="team-index">{i + 1}</span>
                     <span className="hb-circle-who">
                       <Avatar name={p.name} avatar={p.avatar} size={28} />
-                      <strong>{p.name}</strong>
+                      <StyledUsername as="strong" name={p.name} styleId={(p.avatar)?.style} />
                       {p.id === me && (
                         <span className="meta">
                           {" "}

@@ -34,7 +34,7 @@
               ".validate": false
             },
             "avatar": {
-              ".validate": "newData.isString() && newData.val().length <= 21000"
+              ".validate": "newData.isString() && newData.val().length <= 21000 && !newData.val().contains('\\\\') && (!newData.val().contains('\"zuno\"') || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
             }
           }
         },
@@ -109,6 +109,9 @@
             "at": {
               ".validate": "newData.isNumber()"
             },
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,24}$/) && (newData.val() !== 'zuno' || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
+            },
             "$other": {
               ".validate": false
             }
@@ -140,7 +143,7 @@
               ".validate": "newData.isNumber()"
             },
             "avatar": {
-              ".validate": "newData.isString() && newData.val().length <= 21000"
+              ".validate": "newData.isString() && newData.val().length <= 21000 && !newData.val().contains('\\\\') && (!newData.val().contains('\"zuno\"') || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
             },
             "$other": {
               ".validate": false
@@ -199,6 +202,9 @@
             "at": {
               ".validate": "newData.isNumber()"
             },
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,24}$/) && (newData.val() !== 'zuno' || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
+            },
             "$other": {
               ".validate": false
             }
@@ -239,7 +245,7 @@
               ".validate": "newData.isBoolean()"
             },
             "avatar": {
-              ".validate": "newData.isString() && newData.val().length <= 21000"
+              ".validate": "newData.isString() && newData.val().length <= 21000 && !newData.val().contains('\\\\') && (!newData.val().contains('\"zuno\"') || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
             },
             "$other": {
               ".validate": false
@@ -317,6 +323,9 @@
             "at": {
               ".validate": "newData.isNumber()"
             },
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,24}$/) && (newData.val() !== 'zuno' || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
+            },
             "$other": {
               ".validate": false
             }
@@ -354,7 +363,7 @@
               ".validate": "newData.isBoolean()"
             },
             "avatar": {
-              ".validate": "newData.isString() && newData.val().length <= 21000"
+              ".validate": "newData.isString() && newData.val().length <= 21000 && !newData.val().contains('\\\\') && (!newData.val().contains('\"zuno\"') || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
             },
             "$other": {
               ".validate": false
@@ -437,6 +446,9 @@
             "at": {
               ".validate": "newData.isNumber()"
             },
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,24}$/) && (newData.val() !== 'zuno' || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
+            },
             "$other": {
               ".validate": false
             }
@@ -477,7 +489,7 @@
               ".validate": "newData.isBoolean()"
             },
             "avatar": {
-              ".validate": "newData.isString() && newData.val().length <= 21000"
+              ".validate": "newData.isString() && newData.val().length <= 21000 && !newData.val().contains('\\\\') && (!newData.val().contains('\"zuno\"') || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
             },
             "$other": {
               ".validate": false
@@ -560,6 +572,9 @@
             "at": {
               ".validate": "newData.isNumber()"
             },
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,24}$/) && (newData.val() !== 'zuno' || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
+            },
             "$other": {
               ".validate": false
             }
@@ -631,7 +646,7 @@
               ".validate": "newData.isBoolean()"
             },
             "avatar": {
-              ".validate": "newData.isString() && newData.val().length <= 21000"
+              ".validate": "newData.isString() && newData.val().length <= 21000 && !newData.val().contains('\\\\') && (!newData.val().contains('\"zuno\"') || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
             },
             "$other": {
               ".validate": false
@@ -714,6 +729,9 @@
             "at": {
               ".validate": "newData.isNumber()"
             },
+            "s": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,24}$/) && (newData.val() !== 'zuno' || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
+            },
             "$other": {
               ".validate": false
             }
@@ -728,20 +746,73 @@
       }
     },
     "profiles": {
+      ".read": "(auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com')",
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid",
         "username": {
+          ".read": "auth != null",
           ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 24 && root.child('usernames').child(newData.val().toLowerCase()).val() === $uid"
         },
         "avatar": {
-          ".validate": "newData.isString() && newData.val().length <= 21000"
+          ".read": "auth != null",
+          ".validate": "newData.isString() && newData.val().length <= 21000 && !newData.val().contains('\\\\') && (!newData.val().contains('\"zuno\"') || (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com'))"
         },
         "createdAt": {
+          ".read": "auth != null",
           ".validate": "newData.isNumber()"
+        },
+        "email": {
+          ".validate": "newData.isString() && auth != null && auth.token.email != null && newData.val() === auth.token.email.toLowerCase()"
+        },
+        "sidebar": {
+          ".validate": "newData.isString() && newData.val().matches(/^(left|top|right|bottom)$/)"
+        },
+        "equippedDecoration": {
+          ".read": "auth != null",
+          ".write": "(auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com')",
+          ".validate": "newData.isString() && (newData.val().matches(/^(ring|dashed)$/) || (newData.val().matches(/^(first-game|regular|explorer)$/) && newData.parent().child('achievements').child(newData.val()).child('at').isNumber()) || (newData.val() !== 'zuno' && root.child('grants').child($uid).child('decorations').child(newData.val()).val() === true) || (newData.val() === 'zuno' && auth.uid === $uid && (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com')))"
+        },
+        "equippedNameStyle": {
+          ".read": "auth != null",
+          ".write": "(auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com')",
+          ".validate": "newData.isString() && (newData.val().matches(/^(bold|accent)$/) || (newData.val().matches(/^(host|builder|stylist)$/) && newData.parent().child('achievements').child(newData.val()).child('at').isNumber()) || (newData.val() !== 'zuno' && root.child('grants').child($uid).child('nameStyles').child(newData.val()).val() === true) || (newData.val() === 'zuno' && auth.uid === $uid && (auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com')))"
+        },
+        "achievements": {
+          ".read": "auth != null",
+          "$id": {
+            ".validate": "$id.matches(/^[a-z0-9-]{1,24}$/) && newData.hasChild('count')",
+            "count": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "seen": {
+              "$i": {
+                ".validate": "newData.isString() && newData.val().length <= 32"
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
         },
         "$other": {
           ".validate": false
+        }
+      }
+    },
+    "grants": {
+      ".read": "(auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com')",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "(auth != null && auth.token.email_verified === true && auth.token.email.toLowerCase() === 'itzdutchs@gmail.com')",
+        "$kind": {
+          ".validate": "$kind === 'decorations' || $kind === 'nameStyles'",
+          "$id": {
+            ".validate": "newData.val() === true && $id.matches(/^[a-z0-9-]{1,24}$/) && ($id !== 'zuno' || $uid === auth.uid)"
+          }
         }
       }
     },

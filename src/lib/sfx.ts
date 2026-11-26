@@ -41,7 +41,16 @@ export type Sfx =
   | "launchHeadbands"
   | "launchLiar"
   | "launchRpg"
-  | "launchFeud";
+  | "launchFeud"
+  | "themeDark"
+  | "themeLight"
+  | "themeVice"
+  | "themeOcean"
+  | "themeZunoSpecial"
+  | "themeAnthropical"
+  | "achievement"
+  | "equip"
+  | "unequip";
 
 interface Bus {
   ac: BaseAudioContext;
@@ -540,6 +549,58 @@ const DESIGNS: Record<Sfx, (c: Ctx) => void> = {
     for (let i = 0; i < 14; i++) nz(c, 0.32 + i * 0.03, 0.08, 1800 + (i % 4) * 500, 1200, 0.07, 2, "bandpass", 0.01);
     nz(c, 0.32, 0.7, 2500, 1600, 0.08, 0.5, "bandpass", 0.1);
   },
+  // Theme switches: one short signature cue per preset.
+  themeDark: (c) => {
+    // A soft descending pair, lights dimming.
+    glass(c, A5, 0, 0.5, 0.14, 1);
+    glass(c, D5, 0.09, 0.7, 0.12, 1);
+  },
+  themeLight: (c) => {
+    // A bright rising pair, lights on.
+    glass(c, D5, 0, 0.4, 0.14, 1);
+    glass(c, A5, 0.08, 0.6, 0.14, 1.4);
+  },
+  themeVice: (c) => {
+    // Neon buzz into a synth stab.
+    nz(c, 0, 0.12, 120, 120, 0.06, 6, "bandpass", 0.002);
+    fm(c, D4, 0.1, 0.4, { ratio: 2, index: 1.6, peak: 0.12, glide: 1, idx: 0.6 });
+    fm(c, Fs4, 0.1, 0.4, { ratio: 2, index: 1.6, peak: 0.08, glide: 1, idx: 0.6 });
+  },
+  themeOcean: (c) => {
+    // A wave washing in and out, with two droplets.
+    nz(c, 0, 0.9, 300, 1400, 0.14, 0.6, "lowpass", 0.35);
+    glass(c, Fs5, 0.25, 0.35, 0.1, 2.4);
+    glass(c, D6, 0.4, 0.4, 0.08, 2.4);
+  },
+  themeZunoSpecial: (c) => {
+    // The Zuno flourish: a quick major arpeggio into a shimmering chord.
+    [D5, Fs5, A5, D6].forEach((f, i) => mallet(c, f, i * 0.06, 0.4, 0.16));
+    [D4, Fs4, A4].forEach((f) => pad(c, f, 0.24, 0.9, 0.06, 0.05));
+    glass(c, A6, 0.26, 0.8, 0.08, 1.8);
+  },
+  themeAnthropical: (c) => {
+    // Warm wood and a leafy brush.
+    wood(c, 520, 0, 0.12, 0.25);
+    wood(c, 780, 0.08, 0.12, 0.2);
+    nz(c, 0.05, 0.3, 4000, 2500, 0.05, 1, "bandpass", 0.05);
+  },
+  achievement: (c) => {
+    // Unlock fanfare: a bright rising run that lands on a sparkling major chord.
+    [D5, E5, Fs5, A5].forEach((f, i) => mallet(c, f, i * 0.07, 0.3, 0.18));
+    [D4, Fs4, A4, D5].forEach((f) => horn(c, f, 0.3, 0.6, 0.06, { index: 2 }));
+    [D6, A6].forEach((f, i) => glass(c, f, 0.32 + i * 0.05, 0.9, 0.12, 2));
+    sub(c, 140, 50, 0.3, 0.35, 0.3);
+  },
+  equip: (c) => {
+    // A snap-on click with a little shine.
+    wood(c, 1600, 0, 0.04, 0.3);
+    glass(c, A5, 0.03, 0.35, 0.12, 1.6);
+  },
+  unequip: (c) => {
+    // The same click, falling.
+    wood(c, 1200, 0, 0.04, 0.26);
+    glass(c, D5, 0.03, 0.3, 0.08, 1);
+  },
 };
 
 export const SFX_NAMES = Object.keys(DESIGNS) as Sfx[];
@@ -554,6 +615,7 @@ const TRIM: Partial<Record<Sfx, number>> = {
   hover: 4, click: 3, back: 3, select: 3, navigate: 3, open: 3, close: 3, toggleOn: 3, toggleOff: 3,
   vote: 2.5, tick: 2.5, skip: 2.5, pause: 1.8, turn: 1.5, join: 1.5, correct: 1.4, welcome: 1.5, applause: 4, boing: 1.5,
   launchBlackjack: 1.9, launchDrawit: 2, launchFeud: 2, launchHeadbands: 1.6, launchLiar: 1.3, launchRpg: 1.3, launchJeopardy: 1.15,
+  themeDark: 2, themeLight: 2, themeVice: 1.6, themeOcean: 1.8, themeZunoSpecial: 1.6, themeAnthropical: 2.2, equip: 2.2, unequip: 2.2,
 };
 const trim = (name: Sfx) => TRIM[name] ?? 1;
 

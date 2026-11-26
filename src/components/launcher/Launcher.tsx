@@ -1,8 +1,9 @@
 import { ZunoMark } from "../brand/Logo";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, House, LayoutGrid, Plus, Search, Settings, X } from "lucide-react";
-import { loadSidebarCollapsed, saveSidebarCollapsed } from "../../app/storage";
+import { ChevronLeft, ChevronRight, House, LayoutGrid, Plus, Search, Settings, ShieldCheck, X } from "lucide-react";
+import { loadSidebarCollapsed, saveSidebarCollapsed, type RailPosition } from "../../app/storage";
 import { Avatar } from "../avatar/AvatarView";
+import { StyledUsername } from "../cosmetics/Cosmetics";
 import { useProfile } from "../../lib/profile";
 import { playSfx } from "../../lib/sfx";
 import { cachedRect, cancelWrite, forgetRect, writeNextFrame } from "../../lib/pointerFrame";
@@ -17,7 +18,7 @@ import "./launcher.css";
 import "./library.css";
 import "./rail.css";
 
-export type Section = "home" | "library" | "settings";
+export type Section = "home" | "library" | "settings" | "profile" | "admin";
 
 /** Hover/focus tooltip that sits to the right of a rail control. */
 function Tip({ children, keys }: { children: ReactNode; keys?: string }) {
@@ -38,17 +39,20 @@ function localName(): string {
   }
 }
 
-/** The command rail shared by the home, library and game pages. */
-export function LauncherShell({ section, onSection, onSettings, children, accent }: { section: Section | null; onSection: (s: Section) => void; onSettings: () => void; children: ReactNode; accent: string }) {
+/** The command rail shared by the home, library and game pages. It sits on any edge (see rail.css, html[data-rail]). */
+export function LauncherShell({ section, onSection, children, accent, rail }: { section: Section | null; onSection: (s: Section) => void; children: ReactNode; accent: string; rail: RailPosition }) {
+  const profile = useProfile();
   const nav: Array<{ id: Section; label: string; Icon: typeof House }> = [
     { id: "home", label: "Home", Icon: House },
     { id: "library", label: "Library", Icon: LayoutGrid },
+    { id: "settings", label: "Settings", Icon: Settings },
+    // Shortcut only. The admin page and every admin write are guarded by the database rules.
+    ...(profile?.admin ? [{ id: "admin" as Section, label: "Admin", Icon: ShieldCheck }] : []),
   ];
-  const [collapsed, setCollapsed] = useState(loadSidebarCollapsed);
-  const profile = useProfile();
+  const [collapsedPref, setCollapsed] = useState(loadSidebarCollapsed);
   const displayName = profile?.username || localName() || "Guest";
 
-  // Phones keep the bottom bar, where collapsing does not apply.
+  // Phones keep a bar, where collapsing does not apply.
   const [desktop, setDesktop] = useState(() => typeof window === "undefined" || !window.matchMedia("(max-width: 760px)").matches);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 760px)");
@@ -56,6 +60,9 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
     mq.addEventListener("change", on);
     return () => mq.removeEventListener("change", on);
   }, []);
+  const vertical = rail === "left" || rail === "right";
+  // Collapsing folds a vertical rail; a horizontal bar is already compact.
+  const collapsed = collapsedPref && vertical && desktop;
 
   const toggle = useCallback((sound = false) => {
     setCollapsed((c) => {
@@ -66,6 +73,7 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
   }, []);
   // '[' toggles the rail, except while typing.
   useEffect(() => {
+    if (!vertical) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "[" || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
       const t = e.target as HTMLElement | null;
@@ -74,12 +82,12 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [toggle]);
+  }, [toggle, vertical]);
 
-  const Chevron = collapsed ? ChevronRight : ChevronLeft;
-  const idx = section === "home" ? 0 : section === "library" ? 1 : section === "settings" ? 2 : -1;
+  const Chevron = rail === "right" ? (collapsed ? ChevronLeft : ChevronRight) : collapsed ? ChevronRight : ChevronLeft;
+  const idx = nav.findIndex((n) => n.id === section);
   return (
-    <div className={`launcher game-scope${collapsed ? " is-collapsed" : ""}`} style={{ "--game": accent } as React.CSSProperties}>
+    <div className={`launcher game-scope rail-${rail}${collapsed ? " is-collapsed" : ""}`} style={{ "--game": accent } as React.CSSProperties}>
       <aside className="lx-side" aria-label="Zuno">
         <span className="lx-shadow lx-shadow-full" aria-hidden="true" />
         <span className="lx-shadow lx-shadow-mini" aria-hidden="true" />
@@ -88,31 +96,30 @@ export function LauncherShell({ section, onSection, onSettings, children, accent
           <ZunoMark size={40} />
           <Tip>Home</Tip>
         </button>
-        <button type="button" className="lx-collapse" aria-expanded={!collapsed} aria-controls="lx-nav" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => toggle()}>
-          <Chevron size={16} strokeWidth={2} />
-          <Tip keys="[">{collapsed ? "Expand" : "Collapse"}</Tip>
-        </button>
-        <div className="lx-body" inert={collapsed && desktop}>
-          <nav id="lx-nav" className="lx-nav" data-nav-row="0" aria-label="Sections" style={{ "--idx": idx } as React.CSSProperties}>
-            <span className={`lx-nav-pill${section ? "" : " is-hidden"}`} aria-hidden="true" />
+        {vertical && (
+          <button type="button" className="lx-collapse" aria-expanded={!collapsed} aria-controls="lx-nav" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => toggle()}>
+            <Chevron size={16} strokeWidth={2} />
+            <Tip keys="[">{collapsed ? "Expand" : "Collapse"}</Tip>
+          </button>
+        )}
+        <div className="lx-body" inert={collapsed}>
+          <nav id="lx-nav" className="lx-nav" data-nav-row="0" aria-label="Sections" style={{ "--idx": Math.max(0, idx), "--count": nav.length } as React.CSSProperties}>
+            <span className={`lx-nav-pill${idx >= 0 ? "" : " is-hidden"}`} aria-hidden="true" />
             {nav.map(({ id, label, Icon }) => (
               <button key={id} type="button" className={`lx-nav-btn${section === id ? " is-on" : ""}`} aria-current={section === id ? "page" : undefined} aria-label={label} onClick={() => onSection(id)}>
                 <Icon size={20} strokeWidth={1.75} />
                 <Tip>{label}</Tip>
               </button>
             ))}
-            <button type="button" className={`lx-nav-btn${section === "settings" ? " is-on" : ""}`} aria-current={section === "settings" ? "page" : undefined} aria-label="Settings" onClick={onSettings}>
-              <Settings size={20} strokeWidth={1.75} />
-              <Tip>Settings</Tip>
-            </button>
           </nav>
           {/* The multi-action button (soundboard, chat, volume) docks here. */}
           <span className="lx-dock" aria-hidden="true" />
         </div>
-        <button type="button" className={`lx-profile${section === "settings" ? " is-on" : ""}`} aria-label={`${displayName}, open settings`} onClick={onSettings}>
+        {/* The one account entry: picture and styled name, opens the Profile page. */}
+        <button type="button" className={`lx-profile${section === "profile" ? " is-on" : ""}`} aria-current={section === "profile" ? "page" : undefined} aria-label={`${displayName}, open profile`} onClick={() => onSection("profile")}>
           <Avatar name={displayName} avatar={profile?.avatar ?? null} size={40} className="lx-profile-av" />
-          <span className="lx-profile-name">{displayName}</span>
-          <Tip>{displayName}</Tip>
+          <StyledUsername name={displayName} styleId={profile?.nameStyle} className="lx-profile-name" />
+          <Tip>Profile</Tip>
         </button>
       </aside>
       <div className="lx-main">{children}</div>

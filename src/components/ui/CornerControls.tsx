@@ -3,6 +3,7 @@ import { LayoutGrid, MessageCircle, Music2, Send, Volume, Volume1, Volume2, Volu
 import { SoundBoard } from "./SoundBoard";
 import { preloadBoardClips, useSoundboardListener } from "../../lib/soundboard";
 import { useRoom } from "../../lib/room";
+import { StyledUsername } from "../cosmetics/Cosmetics";
 import { CHAT_FEED_MS, CHAT_MAX, useChat, type ChatMessage } from "../../lib/chat";
 import { isSfxEnabled, playSfx, subscribeSfx } from "../../lib/sfx";
 import { getVolume, isMuted, setMuted, setVolume, subscribeMuted } from "../../lib/audio";
@@ -236,7 +237,7 @@ function ChatPanel({
         {messages.length === 0 && <p className="corner-hint">No messages yet.</p>}
         {messages.map((m) => (
           <p key={m.key} className={`chat-msg${m.own ? " chat-own" : ""}`}>
-            <strong className="chat-name">{m.n}</strong>
+            <StyledUsername as="strong" className="chat-name" name={m.n} styleId={m.s} />
             <span className="chat-text">{m.t}</span>
           </p>
         ))}
@@ -314,7 +315,7 @@ function ChatFeedItem({ m, onTimeout, onOpen }: { m: ChatMessage; onTimeout: () 
           {m.n.trim().charAt(0).toUpperCase() || "?"}
         </span>
         <span className="chat-feed-body">
-          <strong className="chat-name">{m.n}</strong>
+          <StyledUsername as="strong" className="chat-name" name={m.n} styleId={m.s} />
           <span className="chat-text">{m.t}</span>
         </span>
         <span className="chat-feed-hint" aria-hidden="true">

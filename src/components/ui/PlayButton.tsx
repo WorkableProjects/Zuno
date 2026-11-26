@@ -28,7 +28,7 @@ const STYLES: Record<string, Style> = {
 /** Whole effect, and the moment the screen changes. */
 const FX_MS = 700;
 const OPEN_AT_MS = 640;
-/** Reduced motion: glow and press only. */
+/** Reduced motion: press only. */
 const CALM_MS = 280;
 const SPARKS = 10;
 
@@ -42,8 +42,8 @@ const SPARK_STYLES: CSSProperties[] = Array.from({ length: SPARKS }, (_, i) => {
 });
 
 /**
- * Energy-charge PLAY button. Everything stays on the button: a conic shimmer and a building glow inside,
- * three shockwave rings and a short spark burst around it, and a squash-and-pop press. Then onOpen runs.
+ * Energy-charge PLAY button. Shockwave rings and a spark burst spread out from behind it (never over its face),
+ * and a squash-and-pop press. Then onOpen runs.
  * Animates transform and opacity only.
  */
 export function PlayButton({ onOpen, accent, title: _title, gameType, className = "", children, disabled, style, ...rest }: Props) {
@@ -88,8 +88,6 @@ export function PlayButton({ onOpen, accent, title: _title, gameType, className 
       <button ref={btn} type="button" className={`${className} pb-btn`} disabled={disabled} style={style} onClick={click} {...rest}>
         <i className="pb-invert" aria-hidden="true" />
         {children}
-        <i className="pb-glow" aria-hidden="true" />
-        <i className="pb-sweep" aria-hidden="true" />
       </button>
       <span className="pb-fx" aria-hidden="true">
         <i className="pb-ring" />

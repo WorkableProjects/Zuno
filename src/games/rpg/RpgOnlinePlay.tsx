@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Check, Gift, Minus, Plus, Swords, Trophy } from "lucide-react";
 import { Avatar } from "../../components/avatar/AvatarView";
+import { StyledUsername } from "../../components/cosmetics/Cosmetics";
 import { formatCoins } from "../../game-files/schema/rpg";
 import { CHOICES, WINS_NEEDED, type Choice } from "./rpgEngine";
 import { BombPhase, ItemFx, ItemShop, ItemTraps, NukeDuelPhase, NukeVotePhase } from "./RpgItems";
@@ -128,7 +129,7 @@ export function RpgOnlinePlay({ code, me, lobby, game, onMove, host, priv: hostP
                 <li key={p.id} className={`${role === "Challenger" ? "is-a" : role === "Challengee" ? "is-b" : role ? "is-turn" : ""}${p.removed ? " is-gone" : p.coins <= 0 ? " is-broke" : ""}`}>
                   <Avatar name={p.name} avatar={avatarOf(p.id)} size={34} />
                   <span className="rpg-grow">
-                    {p.name}
+                    <StyledUsername name={p.name} styleId={(avatarOf(p.id))?.style} />
                     {p.id === me && <span className="meta"> · you</span>}
                     <span className="meta rpg-status">
                       {p.removed ? "Left" : p.coins <= 0 ? "Broke" : role}
@@ -254,7 +255,7 @@ function Select({
             <li key={p.id} className={p.coins <= 0 ? "is-broke" : ""}>
               <Avatar name={p.name} avatar={avatarOf(p.id)} size={40} />
               <span className="rpg-grow">
-                <strong>{p.name}</strong>
+                <StyledUsername as="strong" name={p.name} styleId={(avatarOf(p.id))?.style} />
                 <span className="meta rpg-status">{p.coins <= 0 ? "Broke" : formatCoins(p.coins)}</span>
               </span>
               {myTurn && (
@@ -306,7 +307,7 @@ function Versus({ duel, me, nameOf, avatarOf }: { duel: RpgOnlineDuel; me: strin
     <div className={`rpg-side-card ${cls}`}>
       <Avatar name={nameOf(id)} avatar={avatarOf(id)} size={56} />
       <strong className="rpg-name">
-        {nameOf(id)}
+        <StyledUsername name={nameOf(id)} styleId={(avatarOf(id))?.style} />
         {id === me && <span className="meta"> · you</span>}
       </strong>
       <span className="rpg-tag">{tag}</span>
@@ -540,7 +541,7 @@ function Over({ game, me, avatarOf }: { game: RpgOnline; me: string; avatarOf: (
             <span className="rpg-rank">{i + 1}</span>
             <Avatar name={p.name} avatar={avatarOf(p.id)} size={32} />
             <span className="rpg-grow">
-              {p.name}
+              <StyledUsername name={p.name} styleId={(avatarOf(p.id))?.style} />
               {p.id === me && <span className="meta"> · you</span>}
               {p.removed && <span className="meta"> · left</span>}
             </span>

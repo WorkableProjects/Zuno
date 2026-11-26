@@ -12,7 +12,10 @@
       // Apply the saved theme before first paint so the wrong theme never flashes.
       try {
         var t = localStorage.getItem("zuno.theme");
-        document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
+        document.documentElement.dataset.theme = t === "light" || t === "anthropical" ? "light" : "dark";
+        // The sidebar placement, so the page never jumps when the app starts.
+        var r = localStorage.getItem("zuno.rail");
+        document.documentElement.dataset.rail = r === "top" || r === "right" || r === "bottom" ? r : "left";
       } catch (e) {}
     </script>
   </head>
