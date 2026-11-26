@@ -21,6 +21,15 @@ const TRACKS: Record<SoundTheme, string[]> = {
   feud: ["Survey Feud.mp3"],
 };
 
+/**
+ * Lobby music for the launcher. It loops softly while no game's track is
+ * playing, steps aside for hover and game-page music, and comes back after.
+ * Add the file at public/music/Menu Lofi.mp3; until then this is silence.
+ */
+const MENU_TRACK = "Menu Lofi.mp3";
+/** The menu loop sits under the game tracks. */
+const MENU_LEVEL = 0.5;
+
 export const SOUND_THEMES = Object.keys(TRACKS) as SoundTheme[];
 export const isSoundTheme = (t: string): t is SoundTheme => t in TRACKS;
 
@@ -53,6 +62,8 @@ let hoveringTile = false;
 let held = false;
 let level = 1;
 const gain = () => perceptualGain(volume) * MUSIC_MAX * level;
+let menuOn = false;
+let menuAudio: HTMLAudioElement | null | undefined;
 const players = new Map<SoundTheme, HTMLAudioElement | null>();
 const listeners = new Set<() => void>();
 
@@ -95,6 +106,7 @@ export function setVolume(next: number) {
     /* storage unavailable: the level lasts for this visit */
   }
   if (playing) fadeTo(playing, gain(), 120);
+  if (menuAudio && !menuAudio.paused) fadeTo(menuAudio, menuGain(), 120);
   // Dragging the level up from zero turns sound back on.
   if (muted && volume > 0) setMuted(false);
   else listeners.forEach((l) => l());
@@ -108,12 +120,65 @@ export function setMuted(next: boolean) {
     /* storage unavailable: the choice lasts for this visit */
   }
   if (next) stopMusic(FADE_OUT_MS, true);
+  syncMenu(next ? FADE_OUT_MS : FADE_IN_MS);
   listeners.forEach((l) => l());
 }
 
 export function subscribeMuted(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+const menuGain = () => perceptualGain(volume) * MUSIC_MAX * MENU_LEVEL;
+
+function menuPlayer(): HTMLAudioElement | null {
+  if (menuAudio !== undefined) return menuAudio;
+  try {
+    const a = new Audio(`${import.meta.env.BASE_URL}music/${encodeURIComponent(MENU_TRACK)}`);
+    a.preload = "auto";
+    a.loop = true;
+    a.volume = 0;
+    a.addEventListener("error", () => {
+      // Missing file: the menu stays silent.
+      menuAudio = null;
+    });
+    menuAudio = a;
+  } catch {
+    menuAudio = null;
+  }
+  return menuAudio;
+}
+
+/** Play the menu loop when it should be heard; otherwise fade it out (keeping its place). */
+function syncMenu(fadeMs = CROSSFADE_MS) {
+  if (typeof window === "undefined") return;
+  const want = menuOn && !muted && !playing && !held;
+  const a = want ? menuPlayer() : menuAudio;
+  if (!a) return;
+  if (!want) {
+    if (!a.paused) fadeTo(a, 0, fadeMs, () => {
+      if (!(menuOn && !muted && !playing && !held)) a.pause();
+    });
+    return;
+  }
+  try {
+    if (a.paused) {
+      a.volume = 0;
+      a.play()?.catch(() => {
+        blocked = true;
+      });
+    }
+    fadeTo(a, menuGain(), fadeMs);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** The launcher turns the lobby music on; game screens turn it off. */
+export function setMenuMusic(on: boolean) {
+  if (menuOn === on) return;
+  menuOn = on;
+  syncMenu(on ? FADE_IN_MS : FADE_OUT_MS);
 }
 
 export function setSoundTheme(next: SoundTheme) {
@@ -200,6 +265,7 @@ export function startMusic(fadeMs = FADE_IN_MS) {
     audio.volume = 0;
     audio.currentTime = 0;
     playing = audio;
+    syncMenu(CROSSFADE_MS);
     audio.play()?.catch(() => {
       // The browser refused: no click or key press on the page yet. Try again on the next one.
       if (playing === audio) playing = null;
@@ -219,6 +285,7 @@ export function stopMusic(fadeMs = FADE_OUT_MS, force = false) {
   const audio = playing;
   playing = null;
   if (!audio) return;
+  syncMenu(fadeMs + 300);
   fadeTo(audio, 0, fadeMs, () => {
     if (playing !== audio) audio.pause();
   });
@@ -297,6 +364,7 @@ export function installHoverSounds(): () => void {
     if (!blocked) return;
     blocked = false;
     if (hoveringTile || held) startMusic();
+    else syncMenu(FADE_IN_MS);
   };
   document.addEventListener("pointerdown", onGesture, true);
   document.addEventListener("keydown", onGesture, true);

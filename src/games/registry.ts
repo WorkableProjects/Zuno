@@ -24,6 +24,8 @@ export interface GameEngine {
   artwork: "board" | "cards" | "statements" | "hands" | "deck" | "sketch" | "survey" | null;
   /** Runs only in online lobbies. The dashboard offers Host lobby and Join instead of Load. */
   onlineOnly?: boolean;
+  /** Library grouping: single-player games or games for a group. Defaults to "party". */
+  players?: "solo" | "party";
   /** A sample in public/samples that the importer can load. */
   sampleFile: string;
   /** What a game file holds, for the import screen. */
@@ -209,6 +211,8 @@ const engines: GameEngine[] = [
 export function listEngines(): GameEngine[] {
   return engines;
 }
+
+export const isSoloGame = (gameType: string): boolean => getEngine(gameType)?.players === "solo";
 
 export function getEngine(gameType: string): GameEngine | undefined {
   return engines.find((e) => e.gameType === gameType);

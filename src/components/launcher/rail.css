@@ -226,8 +226,10 @@
   /* The multi-action button sits in the bar's right end. */
   :is(html[data-rail="top"], html[data-rail="bottom"]) .corner.is-docked { left: auto; right: 28px; }
   html[data-rail="bottom"] .corner.is-docked { bottom: 28px; }
-  /* The dock grows upward from its button, so a top bar anchors the button's bottom edge. */
-  html[data-rail="top"] .corner.is-docked { bottom: calc(100dvh - 28px - 48px); }
+  /* A top bar anchors the button's top edge and the dock opens downward, below the bar. */
+  html[data-rail="top"] .corner.is-docked { top: 28px; bottom: auto; flex-direction: column; }
+  html[data-rail="top"] .corner.is-docked .corner-stack { padding: 8px 0 0; margin: -8px 0 0; transform: translateY(-6px); }
+  html[data-rail="top"] .corner.is-docked:is(:hover, :focus-within, [data-open="true"]) .corner-stack { transform: none; }
   :is(html[data-rail="top"], html[data-rail="bottom"]) .corner.is-docked .corner-panel { left: auto; right: 0; bottom: calc(100% + 14px); }
   html[data-rail="top"] .corner.is-docked .corner-panel { bottom: auto; top: calc(100% + 14px); }
 }
@@ -245,7 +247,10 @@
   html[data-rail="top"] .lx-side { top: 12px; bottom: auto; }
   html[data-rail="top"] .lx-main { padding-top: 92px; padding-bottom: 24px; }
   html[data-rail="top"] .lx-nav-pill::before { bottom: auto; top: -9px; border-radius: 0 0 4px 4px; }
-  html[data-rail="top"] .corner.is-docked { bottom: calc(100dvh - 22px - 48px); }
+  html[data-rail="top"] .corner.is-docked { top: 22px; bottom: auto; flex-direction: column; }
+  html[data-rail="top"] .corner.is-docked .corner-stack { padding: 8px 0 0; margin: -8px 0 0; transform: translateY(-6px); }
+  html[data-rail="top"] .corner.is-docked:is(:hover, :focus-within, [data-open="true"]) .corner-stack { transform: none; }
+  html[data-rail="top"] .corner.is-docked .corner-panel { bottom: auto; top: calc(100% + 14px); }
 }
 @media (max-width: 420px) {
   .lx-side .lx-mark { display: none; }

@@ -8,7 +8,7 @@ import { useProfile } from "../../lib/profile";
 import { playSfx } from "../../lib/sfx";
 import { cachedRect, cancelWrite, forgetRect, writeNextFrame } from "../../lib/pointerFrame";
 import { gameFontStyle } from "../../games/gameFont";
-import { getEngine } from "../../games/registry";
+import { getEngine, isSoloGame } from "../../games/registry";
 import { TileCover } from "../dashboard/GameTile";
 import type { RailItem } from "../dashboard/railItems";
 import { GAME_INFO } from "./gameInfo";
@@ -195,7 +195,7 @@ interface HomeProps {
   onSection: (s: Section) => void;
 }
 
-type Filter = "all" | "online" | "local" | "files";
+type Filter = "all" | "solo" | "online" | "local" | "files";
 
 /** Home and Library: a grid of big tiles. Hover previews the game's music and backdrop; a click opens its page. */
 export function LauncherHome({ section, items, selectedId, onSelect, onOpen, onJoin, onForget, onSection }: HomeProps) {
@@ -216,6 +216,7 @@ export function LauncherHome({ section, items, selectedId, onSelect, onOpen, onJ
     const q = query.trim().toLowerCase();
     let list: RailItem[] = filter === "files" ? files : engines;
     if (filter === "online") list = engines.filter((e) => GAME_INFO[e.gameType]?.mode !== "One screen");
+    if (filter === "solo") list = engines.filter((e) => isSoloGame(e.gameType));
     if (filter === "local") list = engines.filter((e) => GAME_INFO[e.gameType]?.mode !== "Online");
     return q ? list.filter((i) => i.title.toLowerCase().includes(q) || getEngine(i.gameType)?.title.toLowerCase().includes(q)) : list;
   }, [filter, query, engines, files]);
@@ -249,6 +250,7 @@ export function LauncherHome({ section, items, selectedId, onSelect, onOpen, onJ
           {(
             [
               ["all", "All games"],
+              ["solo", "Solo"],
               ["online", "Online"],
               ["local", "One screen"],
               ["files", "Your files"],
@@ -259,7 +261,26 @@ export function LauncherHome({ section, items, selectedId, onSelect, onOpen, onJ
             </button>
           ))}
         </div>
-        {shown.length === 0 ? <p className="meta lx-empty">{filter === "files" ? "Games you load or build show up here." : "No games match."}</p> : tiles(shown, 2)}
+        {shown.length === 0 ? (
+          <p className="meta lx-empty">{filter === "files" ? "Games you load or build show up here." : filter === "solo" ? "No solo games yet." : "No games match."}</p>
+        ) : filter === "files" ? (
+          tiles(shown, 2)
+        ) : (
+          ([
+            ["solo", "Solo", shown.filter((e) => isSoloGame(e.gameType))],
+            ["party", "Party", shown.filter((e) => !isSoloGame(e.gameType))],
+          ] as Array<[string, string, RailItem[]]>)
+            .filter(([, , list]) => list.length > 0)
+            .map(([id, label, list], i) => (
+              <section key={id} className="lib-section" aria-labelledby={`lib-sec-${id}`}>
+                <h2 className="lib-section-head" id={`lib-sec-${id}`}>
+                  <span>{label}</span>
+                  <small>{list.length}</small>
+                </h2>
+                {tiles(list, 2 + i)}
+              </section>
+            ))
+        )}
       </main>
     );
   }

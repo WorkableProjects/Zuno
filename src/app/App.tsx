@@ -14,7 +14,7 @@ import type { LoadedGame } from "../components/import/loadGame";
 import { useSpatialNav } from "../components/navigation/spatialNav";
 import { DevicePrompt, StartupIntro } from "../components/intro/Intro";
 import { CornerControls } from "../components/ui/CornerControls";
-import { installHoverSounds, isSoundTheme, setSoundTheme, type SoundTheme } from "../lib/audio";
+import { installHoverSounds, isSoundTheme, setMenuMusic, setSoundTheme, type SoundTheme } from "../lib/audio";
 import { installClickSounds, playSfx } from "../lib/sfx";
 import { withScreenTransition } from "../lib/screenTransition";
 import { installMotionGovernor } from "../lib/motionGovernor";
@@ -313,6 +313,8 @@ export function App() {
   }, []);
 
   useEffect(() => installHoverSounds(), []);
+  const onLauncher = screen.name === "dashboard" || screen.name === "game";
+  useEffect(() => setMenuMusic(onLauncher), [onLauncher]);
   useEffect(() => installClickSounds(), []);
   useEffect(() => installRipples(), []);
   useEffect(() => installMotionGovernor(), []);
