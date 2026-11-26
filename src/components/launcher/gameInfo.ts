@@ -13,6 +13,18 @@ export interface GameInfo {
 }
 
 export const GAME_INFO: Record<string, GameInfo> = {
+  gridiron: {
+    shot: "Game Day: all 22 players on the field, the scoreboard bug, win probability and the play caller.",
+    players: "1",
+    mode: "One screen",
+    length: "Career",
+    rules: [
+      { heading: "Your franchise", points: ["Pick one of 32 fictional teams and take over as GM and head coach.", "Set the depth chart, schemes and game plan. Manage the salary cap, sign free agents, make trades and run the draft."] },
+      { heading: "Game day", points: ["Every snap plays out live in 2D with all 22 players. Call each play from the playbook, or let your coordinators call them.", "Use timeouts, challenges and 4th-down calls. Replay any play, change the camera or skip ahead."] },
+      { heading: "Seasons", points: ["17 games, then a 14-team playoff and the Zuno Bowl.", "Each offseason: re-sign, scout the combine, free agency, the draft, camp and cutdown to 53."] },
+      { heading: "Keep the job", points: ["The owner sets a goal every season. Meet it to keep your job and build a dynasty in the history books."] },
+    ],
+  },
   jeopardy: {
     shot: "The host screen: pick a clue from the board; team scores sit underneath.",
     players: "Teams",

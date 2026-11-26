@@ -94,6 +94,19 @@ function SketchCover() {
   );
 }
 
+function FieldCover() {
+  return (
+    <svg className="tile-img" viewBox="0 0 120 120" aria-hidden="true">
+      <rect width="120" height="120" className="cover-bg" />
+      <rect x="14" y="30" width="92" height="60" rx="6" className="cover-cell" />
+      <path d="M37 30 V90 M60 30 V90 M83 30 V90" strokeWidth="1.5" className="cover-x-mark" opacity="0.5" />
+      <path d="M50 30 V90" strokeWidth="3" stroke="#5096ff" />
+      <path d="M71 30 V90" strokeWidth="3" stroke="#fad63c" />
+      <ellipse cx="62" cy="60" rx="9" ry="5.5" className="cover-lit" />
+    </svg>
+  );
+}
+
 function SurveyCover() {
   return (
     <svg className="tile-img" viewBox="0 0 120 120" aria-hidden="true">
@@ -110,7 +123,7 @@ function SurveyCover() {
 
 /** The drawn cover art for a game type. */
 export function TileCover({ gameType }: { gameType: string }) {
-  return gameType === "headbands" ? <CardsCover /> : gameType === "liar" ? <LiarCover /> : gameType === "rpg" ? <RpgCover /> : gameType === "blackjack" ? <DeckCover /> : gameType === "drawit" ? <SketchCover /> : gameType === "feud" ? <SurveyCover /> : <BoardCover />;
+  return gameType === "headbands" ? <CardsCover /> : gameType === "liar" ? <LiarCover /> : gameType === "rpg" ? <RpgCover /> : gameType === "blackjack" ? <DeckCover /> : gameType === "drawit" ? <SketchCover /> : gameType === "feud" ? <SurveyCover /> : gameType === "gridiron" ? <FieldCover /> : <BoardCover />;
 }
 
 function FileCover({ item }: { item: RailItem }) {
@@ -177,7 +190,7 @@ export function GameTile({ item, active, onSelect, onActivate }: Props) {
     >
       <span className="tile-shadow" />
       <span className="tile-art">
-        {item.kind === "engine" && (item.gameType === "headbands" ? <CardsCover /> : item.gameType === "liar" ? <LiarCover /> : item.gameType === "rpg" ? <RpgCover /> : item.gameType === "blackjack" ? <DeckCover /> : item.gameType === "drawit" ? <SketchCover /> : item.gameType === "feud" ? <SurveyCover /> : <BoardCover />)}
+        {item.kind === "engine" && (item.gameType === "headbands" ? <CardsCover /> : item.gameType === "liar" ? <LiarCover /> : item.gameType === "rpg" ? <RpgCover /> : item.gameType === "blackjack" ? <DeckCover /> : item.gameType === "drawit" ? <SketchCover /> : item.gameType === "feud" ? <SurveyCover /> : item.gameType === "gridiron" ? <FieldCover /> : <BoardCover />)}
         {item.kind === "file" && <FileCover item={item} />}
         {item.kind === "build" && (
           <span className="tile-img tile-create">

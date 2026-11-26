@@ -5,7 +5,7 @@
  * muted toggle simply means silence. Nothing here can throw into the app.
  */
 
-export type SoundTheme = "jeopardy" | "headbands" | "liar" | "rpg" | "blackjack" | "drawit" | "feud";
+export type SoundTheme = "jeopardy" | "headbands" | "liar" | "rpg" | "blackjack" | "drawit" | "feud" | "gridiron";
 
 /**
  * Each game's track. A missing or broken file means silence: a game never
@@ -19,6 +19,7 @@ const TRACKS: Record<SoundTheme, string[]> = {
   blackjack: ["Blackjack.mp3"],
   drawit: ["Draw It.mp3"],
   feud: ["Survey Feud.mp3"],
+  gridiron: ["Gridiron GM.mp3"],
 };
 
 /**

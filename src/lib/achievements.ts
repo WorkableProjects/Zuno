@@ -33,7 +33,7 @@ export interface Progress {
   at?: number;
 }
 
-const GAME_TYPES = ["jeopardy", "headbands", "liar", "rpg", "blackjack", "drawit", "feud"];
+const GAME_TYPES = ["jeopardy", "headbands", "liar", "rpg", "blackjack", "drawit", "feud", "gridiron"];
 
 const addSeen = (p: Progress, v: string) => {
   const seen = new Set(p.seen ?? []);

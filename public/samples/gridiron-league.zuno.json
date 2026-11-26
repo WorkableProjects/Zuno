@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "gameType": "gridiron",
+  "metadata": {
+    "title": "Zuno Gridiron League",
+    "description": "The default 32-team league. Swap in a league section with 32 teams to build your own.",
+    "author": "Zuno",
+    "coverImage": null
+  },
+  "appearance": { "accentColor": "#22C55E", "backgroundPreset": "tide" },
+  "content": { "league": null, "career": null },
+  "settings": {}
+}
