@@ -277,7 +277,208 @@
   .gr-view-toggles { left: 12px; justify-content: flex-start; }
   .gr-caption { max-width: calc(100% - 24px); }
   .gr-mu-row { grid-template-columns: 1fr; }
+  .gr-mu-at { text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gr-call, .gr-toast { animation: none; }
+}
+
+/* ===========================================================================
+   V2 polish layer. One system: 4px spacing grid, three surface depths with a
+   top light and soft elevation, Graduate display face for titles only, the
+   team color as the single accent, broadcast yellow reserved for game day.
+   Motion: --ease-out-expo for entrances (≤320ms), --t-press for presses.
+   =========================================================================== */
+.gr-app {
+  --gr-line: color-mix(in oklab, var(--hairline) 70%, transparent);
+  --gr-elev: var(--top-light, inset 0 1px 0 rgba(255,255,255,.04)), var(--elev-1, 0 1px 2px rgb(0 0 0 / .2), 0 4px 12px rgb(0 0 0 / .18));
+  --gr-team-wash: color-mix(in oklab, var(--team, var(--accent)) 14%, transparent);
+  background:
+    radial-gradient(1200px 520px at 100% -10%, var(--gr-team-wash), transparent 60%),
+    var(--bg);
+}
+.gr-app h1 { font: 400 30px/1.1 var(--font-display); letter-spacing: 0.01em; text-wrap: balance; }
+.gr-app h2 { font: 600 15px/1.3 var(--font-ui); letter-spacing: -0.005em; }
+.gr-app h3 { font: 600 11px/1.3 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.gr-eyebrow { display: block; margin-bottom: 6px; color: var(--text-3); font: 600 11px/1.2 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; }
+.gr-empty { margin: 0; padding: 20px 16px; border-radius: 10px; border: 1px dashed var(--gr-line); color: var(--text-3); font-size: 13px; text-align: center; }
+.gr-section-title { margin-top: 8px !important; }
+
+/* Buttons and controls: tactile press, clear focus. */
+.gr-app .btn { transition: transform var(--t-press) var(--ease), background-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease); }
+.gr-app .btn:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+.gr-app .btn:focus-visible, .gr-app button:focus-visible, .gr-app input:focus-visible, .gr-app select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.gr-app input[type="number"], .gr-app input:not([type]), .gr-app select { min-height: 36px; padding: 6px 10px; border-color: var(--border); transition: border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
+.gr-app input:not([type]):hover, .gr-app input[type="number"]:hover, .gr-app select:hover { border-color: color-mix(in oklab, var(--text) 30%, transparent); }
+.gr-danger.is-armed { background: color-mix(in oklab, var(--gr-neg) 16%, transparent) !important; }
+.gr-advance { min-width: 112px; justify-content: center; gap: 8px; }
+.gr-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: gr-spin 700ms linear infinite; }
+@keyframes gr-spin { to { transform: rotate(360deg); } }
+
+/* Shell */
+.gr-shell { grid-template-columns: 256px minmax(0, 1fr); }
+.gr-nav { padding: 20px 12px 16px; gap: 20px; background: color-mix(in oklab, var(--surface) 88%, var(--bg)); border-right-color: var(--gr-line); }
+.gr-nav-team { position: relative; padding: 12px; border-radius: 12px; background: linear-gradient(135deg, color-mix(in oklab, var(--team) 22%, var(--surface-2)), var(--surface-2)); box-shadow: var(--gr-elev); overflow: hidden; }
+.gr-nav-team::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--team-2, var(--team)); opacity: 0.8; }
+.gr-nav-team strong { font: 600 14px/1.25 var(--font-ui); }
+.gr-nav-team .meta { font-size: 12px; }
+.gr-nav ul { gap: 1px; }
+.gr-nav button, .gr-nav-foot button { min-height: 36px; border-radius: 9px; font-weight: 500; position: relative; }
+.gr-nav button svg { transition: transform var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.gr-nav button:hover svg { transform: translateX(1px); }
+.gr-nav button.is-on { background: var(--surface-3); box-shadow: var(--top-light, none); }
+.gr-nav button.is-on::before { content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--team); animation: gr-grow var(--t-med) var(--ease-out-expo); }
+.gr-nav button.is-on svg { color: var(--team); filter: brightness(1.4) saturate(0.8); }
+.gr-nav button .num { min-width: 20px; height: 18px; display: inline-grid; place-items: center; padding: 0 6px; border-radius: 9px; background: var(--team); color: #fff; font: 600 11px/1 var(--font-ui); }
+@keyframes gr-grow { from { transform: scaleY(0.3); opacity: 0; } }
+.gr-nav-foot { border-top-color: var(--gr-line); }
+.gr-nav-foot button { color: var(--text-3); font-size: 13px; }
+
+.gr-content { padding: 32px 40px 80px; }
+.gr-content-head { align-items: flex-end; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--gr-line); animation: gr-in var(--t-slow) var(--ease-out-expo); }
+.gr-title { min-width: 0; }
+.gr-screen { animation: gr-in var(--t-slow) var(--ease-out-expo) both; animation-delay: 40ms; }
+@keyframes gr-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* Surfaces */
+.gr-panel { padding: 20px 22px; border-color: var(--gr-line); border-radius: var(--r-panel, 18px); box-shadow: var(--gr-elev); }
+.gr-panel-head { margin-bottom: 16px; }
+.gr-stack > .gr-seg { justify-self: start; }
+.gr-grid3 > .gr-panel, .gr-hub-main > .gr-panel, .gr-hub-side > .gr-panel, .gr-divs > *, .gr-slots > li, .gr-stats > div { animation: gr-in var(--t-slow) var(--ease-out-expo) both; }
+.gr-grid3 > :nth-child(2), .gr-hub-side > :nth-child(1), .gr-slots > :nth-child(2), .gr-stats > :nth-child(2) { animation-delay: calc(var(--t-stagger) * 1); }
+.gr-grid3 > :nth-child(3), .gr-hub-main > :nth-child(2), .gr-hub-side > :nth-child(2), .gr-slots > :nth-child(3), .gr-stats > :nth-child(3) { animation-delay: calc(var(--t-stagger) * 2); }
+.gr-grid3 > :nth-child(n+4), .gr-hub-main > :nth-child(n+3), .gr-hub-side > :nth-child(n+3), .gr-stats > :nth-child(n+4) { animation-delay: calc(var(--t-stagger) * 3); }
+.gr-stats > div { padding: 16px 20px 18px; border-color: var(--gr-line); border-radius: var(--r-panel, 18px); box-shadow: var(--gr-elev); background: linear-gradient(180deg, var(--surface), color-mix(in oklab, var(--surface) 80%, var(--bg))); }
+.gr-stats > div > :first-child { font: 600 11px/1.2 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.gr-stats strong { font: 600 26px/1.1 var(--font-ui); letter-spacing: -0.02em; }
+
+/* Tables: quieter headers, row hover, tabular numbers. */
+.gr-table th { font: 600 11px/1.2 var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 8px; border-bottom-color: var(--gr-line); }
+.gr-table td { padding: 8px; border-bottom-color: color-mix(in oklab, var(--hairline) 45%, transparent); transition: background-color var(--t-fast) var(--ease); }
+.gr-table tbody tr:hover td { background: color-mix(in oklab, var(--surface-2) 55%, transparent); }
+.gr-table tr.is-you td { background: color-mix(in oklab, var(--team) 14%, transparent); }
+.gr-table tr.is-you td:first-child { box-shadow: inset 3px 0 0 var(--team); }
+.gr-link { border-bottom-color: transparent; font-weight: 500; transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.gr-link:hover { border-bottom-color: currentColor; }
+
+.gr-ovr { min-width: 32px; height: 22px; border-radius: 6px; font-weight: 600; letter-spacing: -0.01em; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--text) 8%, transparent); }
+.gr-ovr.is-elite { background: color-mix(in oklab, var(--gr-pos) 38%, var(--surface-3)); color: #fff; }
+.gr-bar { height: 6px; }
+.gr-bar i { background: linear-gradient(90deg, color-mix(in oklab, var(--team) 60%, var(--text-2)), var(--text-2)); transform-origin: left; animation: gr-fill 600ms var(--ease-out-expo) both; }
+@keyframes gr-fill { from { transform: scaleX(0); } }
+
+.gr-seg { padding: 3px; border-color: var(--gr-line); }
+.gr-seg button { min-height: 30px; padding: 0 12px; font-weight: 500; transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.gr-seg button:hover:not(.is-on) { color: var(--text); background: color-mix(in oklab, var(--surface-3) 45%, transparent); }
+.gr-seg button.is-on { box-shadow: var(--elev-1, 0 1px 2px rgb(0 0 0 / .25)), var(--top-light, none); }
+.gr-slider input { accent-color: var(--team); }
+
+/* Hub */
+.gr-mu-team { padding: 24px 12px; border-radius: 14px; border-color: var(--gr-line); background: radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--tc) 30%, var(--surface-2)), var(--surface-2) 70%); box-shadow: var(--gr-elev); transition: transform var(--t-med) var(--ease); }
+.gr-mu-team:hover { transform: translateY(-2px); }
+.gr-mu-team strong { font-size: 22px; }
+.gr-calendar li { transition: background-color var(--t-fast) var(--ease); }
+.gr-inbox li { transition: background-color var(--t-fast) var(--ease); }
+.gr-scores li, .gr-sched li { transition: background-color var(--t-fast) var(--ease); }
+
+/* Dialog */
+.gr-dialog { padding: 24px; gap: 20px; }
+.gr-dialog-head h2 { font: 400 22px/1.2 var(--font-display); }
+.gr-offer { padding: 16px; border-radius: 12px; border: 1px solid var(--gr-line); }
+
+/* Saves and new career */
+.gr-saves { max-width: 1120px; padding: 40px 32px 64px; gap: 24px; animation: gr-in var(--t-slow) var(--ease-out-expo); }
+.gr-saves-head { gap: 20px; }
+.gr-hero { position: relative; width: 100%; padding: 36px 32px 32px; border-radius: 22px; overflow: hidden; border: 1px solid var(--gr-line); box-shadow: var(--gr-elev);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), rgba(255,255,255,.06) calc(10% - 1px) 10%),
+    radial-gradient(90% 140% at 100% 0%, rgba(63,179,127,.28), transparent 60%),
+    linear-gradient(160deg, #173a26, #0d2116 70%);
+  color: #f3f6f1; }
+.gr-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gr-yellow) 30%, var(--gr-yellow) 70%, transparent); opacity: 0.85; }
+.gr-hero .gr-eyebrow { color: rgba(243,246,241,.65); }
+.gr-hero h1, .gr-saves-head .gr-hero h1 { font-size: clamp(34px, 5vw, 52px); }
+.gr-hero p { margin: 10px 0 0; max-width: 520px; color: rgba(243,246,241,.75); font-size: 15px; line-height: 1.5; }
+.gr-slot { gap: 10px; padding: 22px; border-color: var(--gr-line); border-radius: var(--r-panel, 18px); box-shadow: var(--gr-elev), inset 0 3px 0 var(--tc, transparent); transition: transform var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease); }
+.gr-slot:hover { transform: translateY(-2px); box-shadow: var(--elev-2, 0 12px 28px rgb(0 0 0 / .3)), inset 0 3px 0 var(--tc, transparent); }
+.gr-slot > .meta:first-child { font: 600 11px/1.2 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; }
+.gr-slot strong.is-empty { color: var(--text-3); }
+.gr-field-label input { min-height: 42px !important; font-size: 15px !important; }
+.gr-teampick { gap: 10px; }
+.gr-teampick button { padding: 14px; border-color: var(--gr-line); box-shadow: var(--gr-elev); transition: transform var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.gr-teampick button:hover { transform: translateY(-1px); }
+.gr-teampick button:active { transform: scale(0.985); }
+.gr-teampick button.is-on { box-shadow: 0 0 0 1px var(--tc), 0 8px 24px color-mix(in oklab, var(--tc) 25%, transparent); }
+.gr-teampick button > svg { transition: transform var(--t-med) var(--ease-pop); }
+.gr-teampick button.is-on > svg { transform: scale(1.12); }
+.gr-start-bar { padding: 16px 0 20px; background: linear-gradient(transparent, var(--bg) 30%); border-top: 0; }
+
+/* Game day */
+.gr-gd-stage { border-radius: 16px; border-color: rgba(255,255,255,.08); box-shadow: var(--elev-2, 0 12px 28px rgb(0 0 0 / .35)); }
+.gr-bug { border-radius: 12px; box-shadow: 0 6px 20px rgb(0 0 0 / .35); }
+.gr-bug-score { font-weight: 700; }
+.gr-bug-down { font-weight: 700; letter-spacing: 0.02em; }
+.gr-caption { border-radius: 10px; backdrop-filter: blur(6px); animation: gr-in var(--t-med) var(--ease-out-expo); }
+.gr-gd-side > section { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--gr-line); background: var(--surface); box-shadow: var(--gr-elev); }
+.gr-call { border-radius: 18px; padding: 18px; }
+.gr-card { border-color: var(--gr-line); transition: transform var(--t-press) var(--ease), background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.gr-card:hover { border-color: color-mix(in oklab, var(--text) 25%, transparent); transform: translateY(-1px); box-shadow: var(--elev-1, none); }
+.gr-cards > .gr-card { animation: gr-in var(--t-med) var(--ease-out-expo) both; }
+.gr-final { border-radius: 18px; box-shadow: var(--shadow-float); animation: gr-in var(--t-slow) var(--ease-out-expo); }
+.gr-toast { border-radius: 12px; padding: 12px 18px; font-weight: 500; }
+
+/* Mobile: the menu becomes a compact header with a swipeable tab strip, so content starts on the first screen. */
+@media (max-width: 760px) {
+  .gr-shell { grid-template-columns: 1fr; }
+  .gr-nav { height: auto; flex-direction: column;
+    position: sticky; top: 0; z-index: 20; gap: 10px; padding: 10px 12px 8px; border-right: 0; border-bottom: 1px solid var(--gr-line); backdrop-filter: blur(12px); background: color-mix(in oklab, var(--surface) 85%, transparent); overflow: visible; }
+  .gr-nav-team { padding: 8px 10px; }
+  .gr-nav ul { display: flex; grid-template-columns: none; gap: 4px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 12px; scroll-snap-type: x proximity; }
+  .gr-nav ul::-webkit-scrollbar { display: none; }
+  .gr-nav li { flex: none; scroll-snap-align: start; }
+  .gr-nav ul button { grid-template-columns: 16px auto auto; white-space: nowrap; min-height: 34px; }
+  .gr-nav button.is-on::before { left: 10px; right: 10px; top: auto; bottom: 0; width: auto; height: 2px; border-radius: 2px; }
+  .gr-nav-foot { display: flex; gap: 4px; margin: 0 -12px; padding: 6px 12px 0; overflow-x: auto; scrollbar-width: none; }
+  .gr-nav-foot button { grid-template-columns: 16px auto; white-space: nowrap; width: auto; flex: none; min-height: 30px; }
+  .gr-content { padding: 20px 16px 64px; }
+  .gr-content-head { flex-wrap: wrap; }
+  .gr-app h1 { font-size: 26px; }
+  .gr-hero { padding: 28px 20px 24px; border-radius: 18px; }
+  .gr-saves { padding: 20px 16px 48px; }
+  .gr-panel { padding: 16px; }
+  .gr-panel { overflow-x: auto; overscroll-behavior-x: contain; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gr-app *, .gr-app *::before, .gr-app *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+  .gr-spin { animation: none; }
+}
+@media (max-width: 760px) {
+  .gr-shell > * { min-width: 0; }
+  .gr-nav ul, .gr-nav-foot { max-width: calc(100vw); }
+}
+
+/* V2.1: score pop, play-call key hints, phone game-day controls. */
+.gr-bug-score { display: inline-block; animation: gr-pop 420ms var(--ease-pop); }
+@keyframes gr-pop { 0% { transform: scale(1.35); color: var(--gr-yellow); } 100% { transform: none; } }
+.gr-kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-right: 8px; padding: 0 4px; border-radius: 5px; border: 1px solid var(--gr-line); background: var(--surface); color: var(--text-3); font: 600 11px/1 var(--font-ui); vertical-align: 1px; }
+.gr-card:hover .gr-kbd { color: var(--text); border-color: color-mix(in oklab, var(--text) 30%, transparent); }
+@media (hover: none) { .gr-kbd { display: none; } }
+@media (max-width: 760px) {
+  .gr-gameday { padding: 8px; gap: 8px; }
+  .gr-gd-top { flex-wrap: nowrap; flex-direction: column; align-items: stretch; }
+  .gr-gd-controls { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -8px; padding: 0 8px 2px; }
+  .gr-gd-controls::-webkit-scrollbar { display: none; }
+  .gr-gd-controls > * { flex: none; }
+  .gr-bug { width: 100%; grid-template-columns: 1fr 1fr auto auto; }
+  .gr-cards { grid-template-columns: 1fr 1fr; }
+  .gr-call { max-height: 70%; padding: 14px; }
+}
+@media (max-width: 1100px) {
+  .gr-gameday { grid-template-columns: minmax(0, 1fr); }
+  .gr-gd-main { grid-template-columns: minmax(0, 1fr); }
+  .gr-gd-top, .gr-gd-main, .gr-gd-stage, .gr-gd-side { min-width: 0; }
+}
+@media (max-width: 760px) {
+  .gr-bug-team { padding: 6px 8px 4px; column-gap: 6px; }
+  .gr-bug-clock, .gr-bug-down { padding: 0 8px; font-size: 13px; }
 }

@@ -102,14 +102,20 @@ export function Leaders() {
       <div className="gr-grid3">
         {LEADER_KEYS.map(([k, label]) => (
           <Panel key={k} title={label}>
+            {(() => {
+              const rows = leaders(c, k, 5, scope === "team" ? c.userTeam : undefined);
+              if (!rows.length) return <p className="gr-empty">No stats yet. Leaders appear after week 1.</p>;
+              return (
             <ol className="gr-leaders">
-              {leaders(c, k, 5, scope === "team" ? c.userTeam : undefined).map(({ p, v }) => (
+              {rows.map(({ p, v }) => (
                 <li key={p.id}>
                   <PlayerLink p={p} /> <span className="meta">{p.teamId !== null ? c.teams[p.teamId].abbr : "FA"}</span>
                   <span className="num">{v}</span>
                 </li>
               ))}
             </ol>
+              );
+            })()}
           </Panel>
         ))}
       </div>
@@ -131,7 +137,7 @@ export function History() {
             ))}
           </ul>
         ) : (
-          <p className="meta">No trophies yet. Division titles and Zuno Bowls land here.</p>
+          <p className="gr-empty">No trophies yet. Division titles and Zuno Bowls land here.</p>
         )}
       </Panel>
       <Panel title="Seasons">
@@ -165,7 +171,7 @@ export function History() {
             </tbody>
           </table>
         ) : (
-          <p className="meta">Finish a season to start the record book.</p>
+          <p className="gr-empty">Finish a season to start the record book.</p>
         )}
       </Panel>
       <div className="gr-grid2">
@@ -184,7 +190,7 @@ export function History() {
               </tbody>
             </table>
           ) : (
-            <p className="meta">Records are set at the end of each season.</p>
+            <p className="gr-empty">Records are set at the end of each season.</p>
           )}
         </Panel>
         <Panel title="Hall of Fame">
@@ -197,7 +203,7 @@ export function History() {
               ))}
             </ul>
           ) : (
-            <p className="meta">Great careers end here.</p>
+            <p className="gr-empty">Great careers end here.</p>
           )}
         </Panel>
       </div>
