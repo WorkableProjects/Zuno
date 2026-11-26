@@ -118,7 +118,7 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
             <div className="lx-thumbs">
               {info.gallery.slice(0, 3).map((g) => (
                 <button key={g.file} type="button" className="lx-thumb" onClick={() => document.getElementById("how-to-play")?.scrollIntoView({ behavior: "smooth" })} aria-label={`See screenshot: ${g.caption}`}>
-                  <img src={`${import.meta.env.BASE_URL}screens/${g.file}`} width={160} height={100} loading="lazy" decoding="async" alt="" />
+                  <img src={`${import.meta.env.BASE_URL}screens/${g.file}`} width={160} height={100} decoding="async" alt="" onError={(e) => ((e.currentTarget.parentElement as HTMLElement).hidden = true)} />
                 </button>
               ))}
             </div>
