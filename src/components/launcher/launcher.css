@@ -66,6 +66,12 @@
 
 /* ---------- Library tiles: big, name only ---------- */
 .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 15vw, 210px), 1fr)); gap: 22px 18px; }
+/* Library groups: a labelled rule above each set of tiles. */
+.lib-section + .lib-section { margin-top: 34px; }
+.lib-section-head { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; color: var(--text-3); font: 700 13px / 1 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; }
+.lib-section-head::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
+.lib-section-head small { order: 1; color: var(--text-3); font: 600 12px / 1 var(--font-ui); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.lib-section-head::after { order: 2; }
 .lib-tile {
   display: grid;
   gap: 10px;
