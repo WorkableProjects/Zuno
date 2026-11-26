@@ -8,10 +8,13 @@ export interface GameInfo {
   length: string;
   /** Sections shown when you scroll down. */
   rules: Array<{ heading: string; points: string[] }>;
+  /** Caption under the in-game screenshot (public/screens/<gameType>.webp). */
+  shot: string;
 }
 
 export const GAME_INFO: Record<string, GameInfo> = {
   jeopardy: {
+    shot: "The host screen: pick a clue from the board; team scores sit underneath.",
     players: "Teams",
     mode: "One screen",
     length: "20–45 min",
@@ -22,6 +25,7 @@ export const GAME_INFO: Record<string, GameInfo> = {
     ],
   },
   headbands: {
+    shot: "One screen: the asking player's card is shown to the group, with yes / no answers below.",
     players: "2+",
     mode: "One screen or online",
     length: "10–30 min",
@@ -32,6 +36,7 @@ export const GAME_INFO: Record<string, GameInfo> = {
     ],
   },
   liar: {
+    shot: "Voting: each player picks which of the storyteller's three statements is the lie.",
     players: "3+",
     mode: "One screen or online",
     length: "15–40 min",
@@ -42,6 +47,7 @@ export const GAME_INFO: Record<string, GameInfo> = {
     ],
   },
   rpg: {
+    shot: "A duel: both players pick rock, paper or scissors before the clock runs out.",
     players: "2–12",
     mode: "Online",
     length: "15–30 min",
@@ -53,6 +59,7 @@ export const GAME_INFO: Record<string, GameInfo> = {
     ],
   },
   blackjack: {
+    shot: "Your move: every hand at the table against the dealer, with Hit, Stand, Double and Split.",
     players: "1–7",
     mode: "Online",
     length: "10–30 min",
@@ -64,6 +71,7 @@ export const GAME_INFO: Record<string, GameInfo> = {
     ],
   },
   drawit: {
+    shot: "The drawer's view: the secret word on top, the canvas and tools, and guesses on the side.",
     players: "2–12",
     mode: "Online",
     length: "10–25 min",
@@ -74,6 +82,7 @@ export const GAME_INFO: Record<string, GameInfo> = {
     ],
   },
   feud: {
+    shot: "Hosting a round: the survey board, with guesses to match or strike.",
     players: "3–12",
     mode: "Online",
     length: "15–30 min",

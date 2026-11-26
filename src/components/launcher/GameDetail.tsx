@@ -140,6 +140,10 @@ export function GameDetail({ gameType, onBack, onLoad, onBuild, onHostOnline, on
           <h2 className="lx-rules-title" id="how-to-play-title">
             How {engine.title} works
           </h2>
+          <figure className="lx-shot">
+            <img src={`${import.meta.env.BASE_URL}screens/${gameType}.webp`} width={1440} height={900} loading="lazy" decoding="async" alt={`${engine.title} in play. ${info.shot}`} />
+            <figcaption>{info.shot}</figcaption>
+          </figure>
           <div className="lx-rule-grid">
             {info.rules.map((r, i) => (
               <article key={r.heading} className="lx-rule" style={{ "--i": i } as React.CSSProperties}>
