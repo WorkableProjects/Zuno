@@ -15,6 +15,7 @@ import { History, Leaders, Standings } from "./screens/League";
 import { DepthChart, GamePlan, PlayerCard, Roster, Staff } from "./screens/Team";
 import { Ctx, Ovr, TeamLogo, type GmCtx } from "./screens/ui";
 import { gameFontStyle } from "../gameFont";
+import { chime } from "./gmSfx";
 import "./gridiron.css";
 
 interface Props {
@@ -110,9 +111,9 @@ export function GridironPlay({ file, onExit }: Props) {
           <div className="gr-shell">
             <nav className="gr-nav" aria-label="Gridiron GM">
               <div className="gr-nav-team">
-                <TeamLogo team={t} size={32} />
+                <TeamLogo team={t} size={36} />
                 <div>
-                  <strong>{t.abbr}</strong>
+                  <strong>{t.city} {t.name}</strong>
                   <span className="meta">{weekLabel(career)}</span>
                 </div>
               </div>
@@ -128,7 +129,7 @@ export function GridironPlay({ file, onExit }: Props) {
                 ))}
               </ul>
               <div className="gr-nav-foot">
-                <button type="button" onClick={() => { void persist(career).then(() => flash("Saved")); }}>
+                <button type="button" onClick={() => { void persist(career).then(() => { chime(true); flash("Saved"); }); }}>
                   <Save size={16} strokeWidth={1.5} /> <span>Save</span>
                 </button>
                 <button type="button" onClick={() => exportCareer(career)}>
@@ -143,14 +144,18 @@ export function GridironPlay({ file, onExit }: Props) {
               </div>
             </nav>
             <main className="gr-content" aria-busy={busy}>
-              <header className="gr-content-head">
-                <h1>{NAV.find((n) => n[0] === screen)?.[1]}</h1>
+              <header className="gr-content-head" key={`h-${screen}`}>
+                <div className="gr-title">
+                  <span className="gr-eyebrow">{t.city} {t.name} · {weekLabel(career)}</span>
+                  <h1>{NAV.find((n) => n[0] === screen)?.[1]}</h1>
+                </div>
                 {screen !== "hub" && (
-                  <button type="button" className="btn btn-primary" onClick={doAdvance} disabled={busy}>
-                    {busy ? "Simulating" : "Advance"}
+                  <button type="button" className={`btn btn-primary gr-advance${busy ? " is-busy" : ""}`} onClick={doAdvance} disabled={busy}>
+                    {busy ? <><span className="gr-spin" aria-hidden="true" /> Simulating</> : "Advance"}
                   </button>
                 )}
               </header>
+              <div className="gr-screen" key={screen}>
               {screen === "hub" && (
                 <Hub
                   onPlay={(g) => setLive({ game: g, side: g.home === career.userTeam ? 0 : 1 })}
@@ -169,6 +174,7 @@ export function GridironPlay({ file, onExit }: Props) {
               {screen === "standings" && <Standings />}
               {screen === "leaders" && <Leaders />}
               {screen === "history" && <History />}
+              </div>
             </main>
           </div>
         )}
@@ -204,6 +210,7 @@ function Saves({ file, onExit, onLoad }: { file: GridironFile; onExit: () => voi
   const [creating, setCreating] = useState<number | null>(null);
   const imported = file.content.career as unknown as Career | null;
   const [msg, setMsg] = useState("");
+  const [confirmDel, setConfirmDel] = useState<number | null>(null);
 
   useEffect(() => setIndex(readIndex()), [creating]);
 
@@ -219,8 +226,11 @@ function Saves({ file, onExit, onLoad }: { file: GridironFile; onExit: () => voi
     <div className="gr-saves">
       <header className="gr-saves-head">
         <button type="button" className="btn btn-quiet" onClick={onExit}><ArrowLeft size={16} /> Back</button>
-        <h1>Zuno Gridiron GM</h1>
-        <p className="meta">{file.metadata.title}{file.content.league ? " · custom league" : ""}</p>
+        <div className="gr-hero">
+          <span className="gr-eyebrow">Franchise mode{file.content.league ? " · custom league" : ""}</span>
+          <h1>Gridiron GM</h1>
+          <p>Build a roster, call the plays and chase the Zuno Bowl. Three save slots, saved on this device.</p>
+        </div>
       </header>
       {imported && (
         <section className="gr-panel">
@@ -248,13 +258,20 @@ function Saves({ file, onExit, onLoad }: { file: GridironFile; onExit: () => voi
                   <div className="gr-call-row">
                     <button type="button" className="btn btn-primary btn-sm" onClick={() => void open(s)}>Continue</button>
                     <button type="button" className="btn btn-quiet btn-sm" onClick={() => setCreating(s)}>New career here</button>
-                    <button type="button" className="btn btn-quiet btn-sm gr-danger" onClick={() => { void deleteCareer(s).then(() => setIndex(readIndex())); }}>Delete</button>
+                    {confirmDel === s ? (
+                      <button type="button" className="btn btn-quiet btn-sm gr-danger is-armed" onBlur={() => setConfirmDel(null)} onClick={() => { setConfirmDel(null); void deleteCareer(s).then(() => setIndex(readIndex())); }}>Confirm delete</button>
+                    ) : (
+                      <button type="button" className="btn btn-quiet btn-sm gr-danger" onClick={() => setConfirmDel(s)}>Delete</button>
+                    )}
                   </div>
                 </>
               ) : (
                 <>
-                  <strong>Empty</strong>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setCreating(s)}>New career</button>
+                  <strong className="is-empty">Empty slot</strong>
+                  <span className="meta">Start a new franchise here.</span>
+                  <div className="gr-call-row">
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setCreating(s)}>New career</button>
+                  </div>
                 </>
               )}
             </li>
@@ -278,13 +295,13 @@ function NewCareer({ slot, teams, onBack, onStart }: { slot: number; teams: Team
     <div className="gr-saves">
       <header className="gr-saves-head">
         <button type="button" className="btn btn-quiet" onClick={onBack}><ArrowLeft size={16} /> Back</button>
-        <h1>New career · slot {slot}</h1>
+        <div className="gr-hero"><span className="gr-eyebrow">Slot {slot}</span><h1>New career</h1></div>
       </header>
       <label className="gr-field-label">
         Coach name
         <input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
       </label>
-      <h2>Pick a team</h2>
+      <h2 className="gr-section-title">Pick a franchise</h2>
       <ul className="gr-teampick">
         {preview.teams.map((t, i) => (
           <li key={t.id}>

@@ -765,3 +765,23 @@ export function playSfxBuffer(buf: AudioBuffer): boolean {
 export function installClickSounds(): () => void {
   return () => undefined;
 }
+
+/**
+ * A fresh voice gain on the shared bus, for game modules that synthesize their
+ * own cues (Gridiron's stadium sounds). Null when sound effects are off, muted
+ * or unavailable, so callers simply skip. The gain is disconnected after `ms`.
+ */
+export function openSfxVoice(level = 1, ms = 5000): { ac: BaseAudioContext; out: GainNode } | null {
+  if (!sfxOn || isMuted() || getVolume() <= 0) return null;
+  const b = getBus();
+  if (!b || b.ac.state !== "running") return null;
+  try {
+    const out = b.ac.createGain();
+    out.gain.value = level * perceptualGain(getVolume());
+    out.connect(b.input);
+    window.setTimeout(() => out.disconnect(), ms);
+    return { ac: b.ac, out };
+  } catch {
+    return null;
+  }
+}

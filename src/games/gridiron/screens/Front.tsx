@@ -112,7 +112,7 @@ export function FreeAgency() {
             </div>
           </div>
         ) : (
-          <p className="meta">Pick a player to make an offer.</p>
+          <p className="gr-empty">Pick a player to make an offer.</p>
         )}
         {msg && <p className="gr-msg" role="status">{msg}</p>}
       </Panel>

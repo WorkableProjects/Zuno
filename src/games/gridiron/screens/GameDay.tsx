@@ -132,12 +132,16 @@ export function GameDay({ game, userSide, onDone, onExit }: Props) {
   const onEvent = (e: PlayScript["events"][number]) => {
     setCaption(e.text);
     if (e.kind === "snap") return;
+    // Pads first, then the official's whistle a beat later, as on a real field.
     if (e.kind === "tackle" || e.kind === "sack") {
-      hit();
-      whistle();
-    } else if (e.kind === "whistle" || e.kind === "incomplete") whistle();
+      hit(e.kind === "sack" ? 1.2 : 1);
+      window.setTimeout(() => whistle(), 260 / Math.max(1, speed));
+    } else if (e.kind === "pancake") hit(0.7);
+    else if (e.kind === "kick") hit(0.45);
+    else if (e.kind === "whistle" || e.kind === "incomplete") whistle(e.kind === "incomplete" ? 0.3 : 0.42);
     if (e.kind === "touchdown") horn();
-    else if (e.kind === "interception" || e.kind === "sack" || (e.kind === "catch" && (rec?.spec.outcome.yards ?? 0) >= 20)) crowd(1.2);
+    else if (e.kind === "interception") crowd(1.4);
+    else if (e.kind === "sack" || (e.kind === "catch" && (rec?.spec.outcome.yards ?? 0) >= 20)) crowd(1.1);
   };
 
   const skip = (until: "drive" | "quarter" | "end") => {
