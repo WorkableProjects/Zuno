@@ -11,7 +11,7 @@ import {
   analyzeTrade, answerOffer, emptySide, pickAssets, proposeTrade, rosterAssets, rosterLimit, sideIsEmpty, suggestSweeteners, type TeamBeforeAfter, type TradeSide,
 } from "../gmTrade";
 import { OfferFields } from "./Team";
-import { injuryTag, money, Ovr, Panel, PlayerLink, Seg, TeamTag, useGm } from "./ui";
+import { injuryTag, money, Ovr, Panel, PlayerLink, Seg, TeamTag, useDirtyGuard, useGm } from "./ui";
 import "./trade.css";
 
 export function Cap() {
@@ -324,6 +324,7 @@ export function Trades() {
   const timer = useRef<number | null>(null);
   const confirmRef = useRef<HTMLHeadingElement>(null);
   const dirty = !sideIsEmpty(give) || !sideIsEmpty(get);
+  useDirtyGuard(dirty && stage !== "processing");
   const open = tradeWindowOpen(c);
 
   const a = useMemo(() => analyzeTrade(c, other, give, get), [c, c.updatedAt, other, give, get]); // eslint-disable-line react-hooks/exhaustive-deps

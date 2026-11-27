@@ -1,0 +1,42 @@
+/* Shared polish for the management screens (Hub, Roster, Depth, Staff, League, Player card). */
+.gr-xscroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+.gr-xscroll:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.gr-xscroll .gr-table { min-width: 560px; }
+.gr-xscroll .gr-table th { position: static; }
+.gr-trunc { display: inline-block; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.gr-wrap { overflow-wrap: anywhere; }
+.gr-table button.gr-th, .gr-th { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; }
+.gr-th[aria-pressed="true"]::after { content: ""; }
+.gr-sortmark { font-size: 10px; }
+.gr-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 12px; }
+.gr-controls label { display: grid; gap: 4px; font-size: 12px; color: var(--text-3); }
+.gr-controls input, .gr-controls select { min-height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--hairline); background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; }
+.gr-controls input:focus-visible, .gr-controls select:focus-visible { outline: 2px solid var(--ring); }
+.gr-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--text-3); }
+.gr-status { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid currentColor; }
+.gr-status.is-clinch { color: var(--gr-pos); }
+.gr-status.is-out { color: var(--text-3); }
+.gr-status.is-in { color: var(--gr-blue); }
+.gr-mu-team strong, .gr-mu-team span { overflow-wrap: anywhere; text-align: center; }
+.gr-inbox li { cursor: pointer; }
+.gr-inbox li:focus-visible { outline: 2px solid var(--ring); }
+.gr-inbox span { overflow-wrap: anywhere; }
+.gr-hub-news { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.gr-dnd li { flex-wrap: wrap; }
+.gr-dnd li.is-over { box-shadow: 0 -2px 0 var(--ring); }
+.gr-dnd li.is-drag { opacity: 0.5; }
+.gr-dnd-btns .btn, .gr-row-actions .btn, .gr-leaders .gr-link { min-height: 36px; min-width: 36px; }
+.gr-dnd .gr-link { overflow-wrap: anywhere; text-align: left; }
+.gr-leaders li { gap: 8px; }
+.gr-leaders li > .gr-link { min-width: 0; overflow-wrap: anywhere; text-align: left; }
+.gr-leaders-tie { color: var(--text-3); }
+.gr-card-head p { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .gr-controls { align-items: stretch; }
+  .gr-controls > * { flex: 1 1 140px; }
+  .gr-controls input, .gr-controls select { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .gr-dnd li { transition: none; } }
+.gr-inbox li { padding: 0; }
+.gr-inbox-item { all: unset; box-sizing: border-box; display: grid; gap: 2px; width: 100%; padding: 10px 12px; border-radius: 8px; cursor: pointer; text-align: left; }
+.gr-inbox-item:focus-visible { outline: 2px solid var(--ring); }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, ArrowLeft, BarChart3, BookOpen, CalendarDays, ClipboardList, Download, DollarSign, GraduationCap, Home, Layers, ListOrdered, Repeat2, Save, ShieldHalf, Trophy, UserPlus, Users,
+  AlertTriangle, ArrowLeft, BarChart3, BookOpen, CalendarDays, ClipboardList, Download, DollarSign, GraduationCap, Home, Layers, Library, ListOrdered, Repeat2, Save, ShieldHalf, Trophy, UserPlus, Users,
 } from "lucide-react";
 import type { GridironFile } from "../../game-files/schema/gridiron";
 import { advance, finishLiveGame, newCareer, recordResult, userTeam, weekLabel } from "./gmCareer";
@@ -9,11 +9,12 @@ import { DEFAULT_TEAMS, generateLeague, teamRating, type TeamSeed } from "./gmLe
 import { deleteCareer, exportCareerText, exportFileName, loadCareerResult, migrateCareer, readIndex, rebuildIndex, saveCareerResult, SLOTS, type SavedCareer, type SlotInfo } from "./gmSave";
 import type { Career, ScheduledGame } from "./gmTypes";
 import { DraftRoom, Cap, FreeAgency, Trades } from "./screens/Front";
+import { Playbook } from "./screens/Playbook";
 import { GameDay } from "./screens/GameDay";
 import { Hub } from "./screens/Hub";
 import { History, Leaders, Standings } from "./screens/League";
 import { DepthChart, GamePlan, PlayerCard, Roster, Staff } from "./screens/Team";
-import { Ctx, Ovr, TeamLogo, type GmCtx } from "./screens/ui";
+import { Ctx, DirtyCtx, Ovr, TeamLogo, type GmCtx } from "./screens/ui";
 import { gameFontStyle } from "../gameFont";
 import { chime } from "./gmSfx";
 import "./gridiron.css";
@@ -29,6 +30,7 @@ const NAV: Array<[string, string, typeof Home]> = [
   ["roster", "Roster", Users],
   ["depth", "Depth chart", Layers],
   ["plan", "Game plan", ClipboardList],
+  ["playbook", "Playbook", Library],
   ["cap", "Cap and contracts", DollarSign],
   ["fa", "Free agency", UserPlus],
   ["trades", "Trades", Repeat2],
@@ -49,6 +51,9 @@ export function GridironPlay({ file, onExit }: Props) {
   const [busy, setBusy] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>({ status: "saved", at: null });
   const [leaving, setLeaving] = useState<"quit" | "slots" | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [pendingScreen, setPendingScreen] = useState<string | null>(null);
+  const dirtyRef = useRef(false);
   const [savingNow, setSavingNow] = useState(false);
   const toastId = useRef(0);
   const rev = useRef(0);
@@ -82,14 +87,26 @@ export function GridironPlay({ file, onExit }: Props) {
     return r.ok;
   }, []);
 
+  /** Screens report work in progress (a deal, a play being edited); leaving them asks first. */
+  const reportDirty = useCallback((d: boolean) => {
+    dirtyRef.current = d;
+    setDirty(d);
+  }, []);
+  const gotoScreen = useCallback((to: string) => {
+    if (dirtyRef.current && to !== screenRef.current) setPendingScreen(to);
+    else setScreen(to);
+  }, []);
+  const screenRef = useRef("hub");
+  screenRef.current = screen;
+
   useEffect(() => {
     if (!career) return;
     const warn = (e: BeforeUnloadEvent) => {
-      if (saveState.status !== "saved") e.preventDefault();
+      if (saveState.status !== "saved" || dirty) e.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [career, saveState.status]);
+  }, [career, saveState.status, dirty]);
 
   useEffect(() => {
     if (!leaving) return;
@@ -97,6 +114,13 @@ export function GridironPlay({ file, onExit }: Props) {
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
   }, [leaving]);
+
+  useEffect(() => {
+    if (!pendingScreen) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setPendingScreen(null);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [pendingScreen]);
 
   const doAdvance = () => {
     if (!career || busy) return;
@@ -113,18 +137,19 @@ export function GridironPlay({ file, onExit }: Props) {
     }, 20);
   };
 
-  const ctx: GmCtx | null = useMemo(() => (career ? { c: career, update, openPlayer: setPlayer, go: setScreen } : null), [career, update]);
+  const ctx: GmCtx | null = useMemo(() => (career ? { c: career, update, openPlayer: setPlayer, go: gotoScreen } : null), [career, update, gotoScreen]);
 
   if (!career || !ctx) return <div className="gr-app" style={gameFontStyle("gridiron")}><Saves file={file} onExit={onExit} onLoad={(c) => { setCareer(c); setScreen("hub"); setSaveState({ status: "saved", at: c.updatedAt || null }); }} /></div>;
 
   const t = userTeam(career);
   const unread = career.inbox.filter((m) => !m.read).length;
   const leave = (to: "quit" | "slots") => {
-    if (saveState.status === "saved") return finishLeave(to);
+    if (saveState.status === "saved" && !dirty) return finishLeave(to);
     setLeaving(to);
   };
   const finishLeave = (to: "quit" | "slots") => {
     setLeaving(null);
+    reportDirty(false);
     if (to === "quit") onExit();
     else setCareer(null);
   };
@@ -148,6 +173,7 @@ export function GridironPlay({ file, onExit }: Props) {
 
   return (
     <Ctx.Provider value={ctx}>
+      <DirtyCtx.Provider value={reportDirty}>
       <div className="gr-app" style={{ ...gameFontStyle("gridiron"), "--team": t.colors[0], "--team-2": t.colors[1] } as React.CSSProperties}>
         {live ? (
           <GameDay
@@ -171,7 +197,7 @@ export function GridironPlay({ file, onExit }: Props) {
               <ul>
                 {NAV.map(([id, label, Icon]) => (
                   <li key={id}>
-                    <button type="button" className={screen === id ? "is-on" : ""} onClick={() => setScreen(id)} aria-current={screen === id ? "page" : undefined}>
+                    <button type="button" className={screen === id ? "is-on" : ""} onClick={() => gotoScreen(id)} aria-current={screen === id ? "page" : undefined}>
                       <Icon size={16} strokeWidth={1.5} />
                       <span>{label}</span>
                       {id === "hub" && unread > 0 && <span className="meta num gr-unread" aria-label={`${unread} unread message${unread === 1 ? "" : "s"}`}>{unread}</span>}
@@ -217,6 +243,7 @@ export function GridironPlay({ file, onExit }: Props) {
               {screen === "roster" && <Roster />}
               {screen === "depth" && <DepthChart />}
               {screen === "plan" && <GamePlan />}
+              {screen === "playbook" && <Playbook />}
               {screen === "cap" && <Cap />}
               {screen === "fa" && <FreeAgency />}
               {screen === "trades" && <Trades />}
@@ -247,9 +274,22 @@ export function GridironPlay({ file, onExit }: Props) {
             </div>
           </div>
         )}
+        {pendingScreen && (
+          <div className="gr-modal-back" onClick={() => setPendingScreen(null)}>
+            <div className="gr-modal" role="alertdialog" aria-modal="true" aria-labelledby="gr-pend-t" aria-describedby="gr-pend-d" onClick={(e) => e.stopPropagation()}>
+              <h2 id="gr-pend-t"><AlertTriangle size={18} aria-hidden="true" /> Leave without finishing?</h2>
+              <p id="gr-pend-d">{screen === "trades" ? "Your trade proposal hasn't been sent. Leaving clears the deal you're building." : "You have unsaved edits on this screen. Leaving discards them."}</p>
+              <div className="gr-call-row">
+                <button type="button" autoFocus className="btn btn-primary btn-sm" onClick={() => setPendingScreen(null)}>Stay</button>
+                <button type="button" className="btn btn-quiet btn-sm gr-danger" onClick={() => { const to = pendingScreen; reportDirty(false); setPendingScreen(null); setScreen(to); }}>Leave</button>
+              </div>
+            </div>
+          </div>
+        )}
         {player !== null && <PlayerCard key={player} id={player} onClose={() => setPlayer(null)} />}
         {toast && <div className="gr-toast" role="status" aria-live="polite">{toast}</div>}
       </div>
+      </DirtyCtx.Provider>
     </Ctx.Provider>
   );
 }

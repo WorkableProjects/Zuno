@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Eye, FastForward, Play } from "lucide-react";
-import { computeStandings, recordText, teamRating } from "../gmLeague";
-import { gamesThisWeek, isFired, OFFSEASON, PHASE_LABEL, pressConference, PRESS_CHOICES, pressTopic, rosterCounts, userGame, userTeam, weekLabel, ROSTER_MAX } from "../gmCareer";
+import { computeStandings, CONF_NAMES, DIV_NAMES, divisionOrder, recordText, teamPlayers, teamRating } from "../gmLeague";
+import { fullName } from "../gmPlayers";
+import { playoffSeedMap, gamesThisWeek, isFired, OFFSEASON, PHASE_LABEL, pressConference, PRESS_CHOICES, pressTopic, rosterCounts, userGame, userTeam, weekLabel, ROSTER_MAX } from "../gmCareer";
 import type { ScheduledGame } from "../gmTypes";
 import { BoxScore } from "./League";
-import { Ovr, Panel, TeamLogo, TeamTag, useGm } from "./ui";
+import { injuryTag, Ovr, Panel, TeamLogo, TeamTag, useGm } from "./ui";
 
 const OFFSEASON_HELP: Record<string, string> = {
   resign: "Contracts are expiring. Open players on the Roster to re-sign, extend or franchise-tag them before they hit free agency.",
@@ -26,6 +27,11 @@ export function Hub({ onPlay, onWatch, onAdvance }: { onPlay: (g: ScheduledGame)
   const r = teamRating(t, c.players);
   const schedule = c.schedule.filter((g) => g.home === t.id || g.away === t.id).sort((a, b) => a.week - b.week);
   const counts = rosterCounts(c, t.id);
+  const divRank = divisionOrder(t.conf, t.div, c.teams, st, c.schedule, c.seed).indexOf(t.id) + 1;
+  const ord = (n: number) => `${n}${["th", "st", "nd", "rd"][n % 100 > 10 && n % 100 < 14 ? 0 : n % 10 < 4 ? n % 10 : 0]}`;
+  const streak = st[t.id].streak;
+  const hurt = teamPlayers(t.id, c.players, true).filter((p) => p.injury).sort((a, b) => b.injury!.weeks - a.injury!.weeks);
+  const unread = c.inbox.filter((m) => !m.read).length;
   if (isFired(c))
     return (
       <Panel title="You're fired">
@@ -101,16 +107,25 @@ export function Hub({ onPlay, onWatch, onAdvance }: { onPlay: (g: ScheduledGame)
           </Panel>
         )}
 
-        <Panel title="Inbox">
-          <ul className="gr-inbox">
-            {c.inbox.slice(0, 12).map((m) => (
-              <li key={m.id} className={m.read ? "" : "is-new"} onClick={() => { m.read = true; update(); }}>
-                <span className="meta">{m.week} · {m.from}</span>
-                <strong>{m.subject}</strong>
-                <span>{m.body}</span>
-              </li>
-            ))}
-          </ul>
+        <Panel
+          title={`Inbox${unread ? ` (${unread} unread)` : ""}`}
+          actions={unread > 0 ? <button type="button" className="btn btn-quiet btn-sm" onClick={() => { c.inbox.forEach((m) => (m.read = true)); update(); }}>Mark all read</button> : undefined}
+        >
+          {c.inbox.length === 0 ? (
+            <p className="gr-empty">No messages yet. The owner, scouts and league office write here.</p>
+          ) : (
+            <ul className="gr-inbox">
+              {c.inbox.slice(0, 12).map((m) => (
+                <li key={m.id} className={m.read ? "" : "is-new"}>
+                  <button type="button" className="gr-inbox-item" aria-label={`${m.read ? "" : "Unread. "}${m.subject}. ${m.read ? "" : "Select to mark as read."}`} onClick={() => { if (!m.read) { m.read = true; update(); } }}>
+                    <span className="meta">{m.week} · {m.from}</span>
+                    <strong>{m.subject}</strong>
+                    <span>{m.body}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
       </div>
 
@@ -120,7 +135,8 @@ export function Hub({ onPlay, onWatch, onAdvance }: { onPlay: (g: ScheduledGame)
             <TeamLogo team={t} size={48} />
             <div>
               <h2>{t.city} {t.name}</h2>
-              <p className="meta">{recordText(st[t.id])} · {t.offScheme} · {t.defBase} · {t.market} market</p>
+              <p className="meta gr-wrap">{recordText(st[t.id])}{streak !== 0 ? ` · ${streak > 0 ? `W${streak}` : `L${-streak}`} streak` : ""} · {t.offScheme} · {t.defBase} · {t.market} market</p>
+              <p className="meta">{divRank > 0 ? `${ord(divRank)} in ${CONF_NAMES[t.conf]} ${DIV_NAMES[t.div]}` : ""}{c.phase === "regular" || c.phase === "playoffs" ? (playoffSeedMap(c)[t.id] ? ` · currently seed ${playoffSeedMap(c)[t.id]}` : " · outside the playoff field") : ""}</p>
             </div>
           </div>
           <dl className="gr-ratings">
@@ -135,7 +151,22 @@ export function Hub({ onPlay, onWatch, onAdvance }: { onPlay: (g: ScheduledGame)
           </div>
           <p className="meta">Season goal: {c.goal}</p>
         </Panel>
+        <Panel title="Injury report">
+          {hurt.length === 0 ? (
+            <p className="gr-empty">Everyone is healthy.</p>
+          ) : (
+            <ul className="gr-hub-news">
+              {hurt.slice(0, 8).map((p) => (
+                <li key={p.id}>
+                  <span className="meta">{p.pos}</span> <span className="gr-wrap">{fullName(p)}</span> <span className="gr-inj">{injuryTag(p)} · {p.injury!.name}, {p.injury!.weeks} wk</span>
+                </li>
+              ))}
+              {hurt.length > 8 && <li className="meta">and {hurt.length - 8} more on the Roster screen</li>}
+            </ul>
+          )}
+        </Panel>
         <Panel title={`${c.year} schedule`}>
+          {schedule.length === 0 && <p className="gr-empty">The schedule isn't set yet.</p>}
           <ol className="gr-sched">
             {schedule.map((g) => {
               const home = g.home === t.id;
