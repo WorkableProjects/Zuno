@@ -33,7 +33,7 @@ export function wantedTags(s: PickSit): SitTag[] {
   if (s.dist <= 2) w.push("short-yardage");
   if (s.ballOn >= 80) w.push("red-zone");
   if ((s.quarter === 2 || s.quarter === 4) && s.clock <= 120) w.push("two-minute");
-  if (s.dist >= 8) w.push("long-yardage");
+  if (s.dist >= 8 && (s.down >= 2 || s.dist >= 12)) w.push("long-yardage");
   return w;
 }
 

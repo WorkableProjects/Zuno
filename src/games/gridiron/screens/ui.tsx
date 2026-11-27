@@ -36,7 +36,7 @@ export function TableScroll({ label, children }: { label: string; children: Reac
   );
 }
 
-export const money = (m: number) => `$${m.toFixed(1)}M`;
+export const money = (m: number) => `${m < 0 ? "-" : ""}$${Math.abs(m).toFixed(1)}M`;
 
 const SHAPES: Record<LogoSpec["shape"], string> = {
   shield: "M12 2 L21 5 V12 C21 17 17 21 12 22 C7 21 3 17 3 12 V5 Z",

@@ -129,7 +129,10 @@ const snapView = (g: GameState): View => ({
 
 const isTyping = (t: EventTarget | null): boolean => {
   const el = t as HTMLElement | null;
-  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+  if (!el) return false;
+  // Range sliders, checkboxes and buttons do not take text, so game shortcuts (Esc, R, T) still work while they hold focus.
+  if (el.tagName === "INPUT") return !["range", "checkbox", "radio", "button"].includes((el as HTMLInputElement).type);
+  return el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable;
 };
 
 export function GameDay({ game, userSide, onDone }: Props) {
@@ -826,7 +829,7 @@ function Halftime({ g, side, onDone }: { g: GameState; side: 0 | 1; onDone: () =
   const [, set] = useState(0);
   const LABELS = { passRatio: "Pass ratio", aggression: "4th-down aggression", blitz: "Blitz frequency", tempo: "Tempo" } as const;
   const slider = (key: keyof typeof LABELS) => (
-    <label className="gr-slider">
+    <label key={key} className="gr-slider">
       <span>{LABELS[key]}</span>
       <input type="range" min={0} max={100} value={t.plan[key]} onChange={(e) => { t.plan[key] = Number(e.target.value); set((x) => x + 1); }} />
       <span className="num">{t.plan[key]}</span>

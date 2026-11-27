@@ -359,7 +359,7 @@ export function Trades() {
       busy.current = false;
       if (r.applied) {
         clearDeal();
-        setResult({ ok: true, text: `${r.message} The deal is final and saved.` });
+        setResult({ ok: true, text: `${r.message} The deal is final. Save to a slot or advance the week to keep it.` });
         update(r.message);
       } else {
         setStage("edit");

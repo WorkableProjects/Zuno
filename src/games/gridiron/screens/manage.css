@@ -1,7 +1,8 @@
 /* Shared polish for the management screens (Hub, Roster, Depth, Staff, League, Player card). */
-.gr-xscroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+.gr-xscroll { position: relative; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
 .gr-xscroll:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .gr-xscroll .gr-table { min-width: 560px; }
+.gr-xscroll .gr-table td { white-space: nowrap; }
 .gr-xscroll .gr-table th { position: static; }
 .gr-trunc { display: inline-block; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .gr-wrap { overflow-wrap: anywhere; }

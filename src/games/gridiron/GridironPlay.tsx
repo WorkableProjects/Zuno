@@ -6,7 +6,7 @@ import type { GridironFile } from "../../game-files/schema/gridiron";
 import { advance, finishLiveGame, newCareer, recordResult, userTeam, weekLabel } from "./gmCareer";
 import { finishGame, type GameState } from "./gmEngine";
 import { DEFAULT_TEAMS, generateLeague, teamRating, type TeamSeed } from "./gmLeague";
-import { deleteCareer, exportCareerText, exportFileName, loadCareerResult, migrateCareer, readIndex, rebuildIndex, saveCareerResult, SLOTS, type SavedCareer, type SlotInfo } from "./gmSave";
+import { deleteCareer, exportCareerText, exportFileName, importCareerText, loadCareerResult, migrateCareer, readIndex, rebuildIndex, saveCareerResult, SLOTS, type SavedCareer, type SlotInfo } from "./gmSave";
 import type { Career, ScheduledGame } from "./gmTypes";
 import { DraftRoom, Cap, FreeAgency, Trades } from "./screens/Front";
 import { Playbook } from "./screens/Playbook";
@@ -335,11 +335,24 @@ function Saves({ file, onExit, onLoad }: { file: GridironFile; onExit: () => voi
   const [loaded, setLoaded] = useState(false);
   const headRef = useRef<HTMLHeadingElement>(null);
 
+  const [picked, setPicked] = useState<{ ok: true; career: SavedCareer; notes: string[] } | { ok: false; error: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const pickFile = async (f: File | undefined) => {
+    if (!f) return;
+    try {
+      const r = importCareerText(await f.text());
+      setPicked(r.ok ? { ok: true, career: r.career, notes: r.warnings } : { ok: false, error: r.errors.join(" ") });
+    } catch {
+      setPicked({ ok: false, error: "That file could not be read." });
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  };
   const imported = useMemo(() => {
+    if (picked) return picked;
     if (!file.content.career) return null;
     const m = migrateCareer(file.content.career);
     return m.ok ? m : { ok: false as const, error: m.error };
-  }, [file]);
+  }, [file, picked]);
 
   const refresh = useCallback(async () => {
     setIndex(await rebuildIndex());
@@ -424,6 +437,8 @@ function Saves({ file, onExit, onLoad }: { file: GridironFile; onExit: () => voi
           <span className="gr-eyebrow">Franchise mode{file.content.league ? " · custom league" : ""}</span>
           <h1 ref={headRef} tabIndex={-1}>Gridiron GM</h1>
           <p>Build a roster, call the plays and chase the Zuno Bowl. Three save slots, kept on this device.</p>
+          <input ref={fileRef} type="file" accept=".json,application/json" hidden aria-label="Import career file" onChange={(e) => void pickFile(e.target.files?.[0])} />
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileRef.current?.click()}>Import career file</button>
         </div>
       </header>
       {imported && (
