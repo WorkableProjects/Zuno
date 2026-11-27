@@ -166,22 +166,30 @@ export function drawFrame(ctx: CanvasRenderingContext2D, w: number, h: number, c
   ctx.scale(cam.zoom, cam.zoom * (o.vertical ? 1 : k));
   ctx.translate(-cam.x, -cam.y);
   ctx.drawImage(field, 0, 0, FIELD_W, FIELD_H);
-  // Line of scrimmage (blue) and first down (yellow).
-  ctx.lineWidth = 0.35;
-  if (o.losX !== null) {
-    ctx.strokeStyle = "rgba(80,150,255,0.95)";
+  // Line of scrimmage (blue) and first down (yellow). A dark under-stroke keeps both readable over the white yard lines,
+  // and the first-down line carries small end markers like the sideline chains.
+  const marker = (x: number, color: string, chains: boolean) => {
+    ctx.lineCap = "butt";
+    ctx.strokeStyle = "rgba(6,12,8,0.55)";
+    ctx.lineWidth = 0.62;
     ctx.beginPath();
-    ctx.moveTo(o.losX, 0);
-    ctx.lineTo(o.losX, FIELD_H);
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, FIELD_H);
     ctx.stroke();
-  }
-  if (o.firstX !== null && o.firstX > 10 && o.firstX < 110) {
-    ctx.strokeStyle = "rgba(250,214,60,0.95)";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 0.32;
     ctx.beginPath();
-    ctx.moveTo(o.firstX, 0);
-    ctx.lineTo(o.firstX, FIELD_H);
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, FIELD_H);
     ctx.stroke();
-  }
+    if (chains) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x - 0.45, -0.6, 0.9, 1.6);
+      ctx.fillRect(x - 0.45, FIELD_H - 1, 0.9, 1.6);
+    }
+  };
+  if (o.losX !== null) marker(o.losX, "rgba(96,162,255,0.98)", false);
+  if (o.firstX !== null && o.firstX > 10 && o.firstX < 110) marker(o.firstX, "rgba(250,214,60,0.98)", true);
   if (script) {
     const { pos } = frameAt(script, t);
     // Overlays in world space.

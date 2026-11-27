@@ -1,4 +1,6 @@
 /** Shared data shapes for Gridiron GM: players, teams, schedule, games and the career save. */
+import type { CustomPlay } from "./gmCustomPlays";
+import type { CustomPlayRecord } from "../../game-files/schema/gridiron";
 
 export const POSITIONS = ["QB", "RB", "FB", "WR", "TE", "OT", "OG", "C", "DE", "DT", "OLB", "MLB", "CB", "FS", "SS", "K", "P", "LS"] as const;
 export type Pos = (typeof POSITIONS)[number];
@@ -374,5 +376,7 @@ export interface Career {
   pressPending: boolean;
   log: string[];
   coachMode: boolean;
+  /** The user's own play designs (see gmCustomPlays). Absent on older saves. */
+  customPlays?: CustomPlay[] | CustomPlayRecord[];
   updatedAt: number;
 }
