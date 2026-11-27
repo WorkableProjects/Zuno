@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, BarChart3, BookOpen, CalendarDays, ClipboardList, Download, DollarSign, GraduationCap, Home, Layers, ListOrdered, Repeat2, Save, ShieldHalf, Trophy, UserPlus, Users,
+  AlertTriangle, ArrowLeft, BarChart3, BookOpen, CalendarDays, ClipboardList, Download, DollarSign, GraduationCap, Home, Layers, ListOrdered, Repeat2, Save, ShieldHalf, Trophy, UserPlus, Users,
 } from "lucide-react";
 import type { GridironFile } from "../../game-files/schema/gridiron";
 import { advance, finishLiveGame, newCareer, recordResult, userTeam, weekLabel } from "./gmCareer";
 import { finishGame, type GameState } from "./gmEngine";
 import { DEFAULT_TEAMS, generateLeague, teamRating, type TeamSeed } from "./gmLeague";
-import { deleteCareer, exportableCareer, loadCareer, readIndex, saveCareer, SLOTS, type SlotInfo } from "./gmSave";
+import { deleteCareer, exportCareerText, exportFileName, loadCareerResult, migrateCareer, readIndex, rebuildIndex, saveCareerResult, SLOTS, type SavedCareer, type SlotInfo } from "./gmSave";
 import type { Career, ScheduledGame } from "./gmTypes";
 import { DraftRoom, Cap, FreeAgency, Trades } from "./screens/Front";
 import { GameDay } from "./screens/GameDay";
@@ -17,6 +17,7 @@ import { Ctx, Ovr, TeamLogo, type GmCtx } from "./screens/ui";
 import { gameFontStyle } from "../gameFont";
 import { chime } from "./gmSfx";
 import "./gridiron.css";
+import "./gridironShell.css";
 
 interface Props {
   file: GridironFile;
@@ -46,7 +47,11 @@ export function GridironPlay({ file, onExit }: Props) {
   const [player, setPlayer] = useState<number | null>(null);
   const [live, setLive] = useState<{ game: ScheduledGame; side: 0 | 1 | null } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>({ status: "saved", at: null });
+  const [leaving, setLeaving] = useState<"quit" | "slots" | null>(null);
+  const [savingNow, setSavingNow] = useState(false);
   const toastId = useRef(0);
+  const rev = useRef(0);
 
   const flash = (m?: string) => {
     if (!m) return;
@@ -57,33 +62,78 @@ export function GridironPlay({ file, onExit }: Props) {
 
   const update = useCallback((m?: string) => {
     setTick((x) => x + 1);
-    if (career) career.updatedAt = Date.now();
+    rev.current++;
+    setSaveState((s) => (s.status === "saving" ? s : { status: "unsaved", at: s.at }));
     flash(m);
   }, [career]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const persist = useCallback(async (c: Career) => {
-    const ok = await saveCareer(c);
-    if (!ok) flash("Couldn't save. Your browser storage may be full.");
+  /** Writes the career. Reports success only after storage confirms; failures stay visible in the nav. */
+  const persist = useCallback(async (c: Career, quiet = true): Promise<boolean> => {
+    const mark = rev.current;
+    setSaveState((s) => ({ status: "saving", at: s.at }));
+    const r = await saveCareerResult(c);
+    if (r.ok) {
+      setSaveState({ status: mark === rev.current ? "saved" : "unsaved", at: c.updatedAt });
+      if (!quiet) flash("Saved to this device.");
+    } else {
+      setSaveState((s) => ({ status: "error", at: s.at, error: r.error }));
+      flash(r.error ?? "Couldn't save.");
+    }
+    return r.ok;
   }, []);
+
+  useEffect(() => {
+    if (!career) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      if (saveState.status !== "saved") e.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [career, saveState.status]);
+
+  useEffect(() => {
+    if (!leaving) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setLeaving(null);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [leaving]);
 
   const doAdvance = () => {
     if (!career || busy) return;
     setBusy(true);
     // Let the button state paint before the sim runs.
     window.setTimeout(() => {
-      const m = advance(career);
-      update(m);
-      void persist(career);
-      setBusy(false);
+      try {
+        const m = advance(career);
+        update(m);
+        void persist(career);
+      } finally {
+        setBusy(false);
+      }
     }, 20);
   };
 
   const ctx: GmCtx | null = useMemo(() => (career ? { c: career, update, openPlayer: setPlayer, go: setScreen } : null), [career, update]);
 
-  if (!career || !ctx) return <div className="gr-app" style={gameFontStyle("gridiron")}><Saves file={file} onExit={onExit} onLoad={(c) => { setCareer(c); setScreen("hub"); }} /></div>;
+  if (!career || !ctx) return <div className="gr-app" style={gameFontStyle("gridiron")}><Saves file={file} onExit={onExit} onLoad={(c) => { setCareer(c); setScreen("hub"); setSaveState({ status: "saved", at: c.updatedAt || null }); }} /></div>;
 
   const t = userTeam(career);
   const unread = career.inbox.filter((m) => !m.read).length;
+  const leave = (to: "quit" | "slots") => {
+    if (saveState.status === "saved") return finishLeave(to);
+    setLeaving(to);
+  };
+  const finishLeave = (to: "quit" | "slots") => {
+    setLeaving(null);
+    if (to === "quit") onExit();
+    else setCareer(null);
+  };
+  const saveAndLeave = async (to: "quit" | "slots") => {
+    setSavingNow(true);
+    const ok = await persist(career);
+    setSavingNow(false);
+    if (ok) finishLeave(to);
+  };
 
   const endLive = (g: GameState) => {
     if (!live) return;
@@ -115,6 +165,7 @@ export function GridironPlay({ file, onExit }: Props) {
                 <div>
                   <strong>{t.city} {t.name}</strong>
                   <span className="meta">{weekLabel(career)}</span>
+                  <span className={`gr-savestat is-${saveState.status}`} role="status">{saveLabel(saveState)}</span>
                 </div>
               </div>
               <ul>
@@ -123,22 +174,22 @@ export function GridironPlay({ file, onExit }: Props) {
                     <button type="button" className={screen === id ? "is-on" : ""} onClick={() => setScreen(id)} aria-current={screen === id ? "page" : undefined}>
                       <Icon size={16} strokeWidth={1.5} />
                       <span>{label}</span>
-                      {id === "hub" && unread > 0 && <span className="meta num">{unread}</span>}
+                      {id === "hub" && unread > 0 && <span className="meta num gr-unread" aria-label={`${unread} unread message${unread === 1 ? "" : "s"}`}>{unread}</span>}
                     </button>
                   </li>
                 ))}
               </ul>
               <div className="gr-nav-foot">
-                <button type="button" onClick={() => { void persist(career).then(() => { chime(true); flash("Saved"); }); }}>
-                  <Save size={16} strokeWidth={1.5} /> <span>Save</span>
+                <button type="button" disabled={saveState.status === "saving"} title={`Save to slot ${career.slot} on this device`} onClick={() => { void persist(career, false).then((ok) => ok && chime(true)); }}>
+                  <Save size={16} strokeWidth={1.5} /> <span>{saveState.status === "error" ? "Retry save" : `Save to slot ${career.slot}`}</span>
                 </button>
-                <button type="button" onClick={() => exportCareer(career)}>
+                <button type="button" title="Download a copy of this career as a file" onClick={() => flash(exportCareer(career))}>
                   <Download size={16} strokeWidth={1.5} /> <span>Export file</span>
                 </button>
-                <button type="button" onClick={() => { void persist(career); setCareer(null); }}>
+                <button type="button" title="Go to the three save slots" onClick={() => leave("slots")}>
                   <CalendarDays size={16} strokeWidth={1.5} /> <span>Save slots</span>
                 </button>
-                <button type="button" onClick={() => { void persist(career).then(onExit); }}>
+                <button type="button" onClick={() => leave("quit")}>
                   <ArrowLeft size={16} strokeWidth={1.5} /> <span>Quit to Zuno</span>
                 </button>
               </div>
@@ -178,29 +229,59 @@ export function GridironPlay({ file, onExit }: Props) {
             </main>
           </div>
         )}
+        {leaving && (
+          <div className="gr-modal-back" onClick={() => !savingNow && setLeaving(null)}>
+            <div className="gr-modal" role="alertdialog" aria-modal="true" aria-labelledby="gr-leave-t" aria-describedby="gr-leave-d" onClick={(e) => e.stopPropagation()}>
+              <h2 id="gr-leave-t"><AlertTriangle size={18} aria-hidden="true" /> {saveState.status === "error" ? "Your career isn't saved" : "You have unsaved changes"}</h2>
+              <p id="gr-leave-d">
+                {saveState.status === "error"
+                  ? `${saveState.error ?? "The save failed."} Export a file to keep a copy before you leave.`
+                  : "Changes since your last save will be lost if you leave now."}
+              </p>
+              <div className="gr-call-row">
+                <button type="button" autoFocus className="btn btn-primary btn-sm" disabled={savingNow} onClick={() => void saveAndLeave(leaving)}>{savingNow ? "Saving" : "Save and leave"}</button>
+                {saveState.status === "error" && <button type="button" className="btn btn-secondary btn-sm" onClick={() => flash(exportCareer(career))}>Export file</button>}
+                <button type="button" className="btn btn-quiet btn-sm gr-danger" disabled={savingNow} onClick={() => finishLeave(leaving)}>Leave without saving</button>
+                <button type="button" className="btn btn-quiet btn-sm" disabled={savingNow} onClick={() => setLeaving(null)}>Stay</button>
+              </div>
+            </div>
+          </div>
+        )}
         {player !== null && <PlayerCard key={player} id={player} onClose={() => setPlayer(null)} />}
-        {toast && <div className="gr-toast" role="status">{toast}</div>}
+        {toast && <div className="gr-toast" role="status" aria-live="polite">{toast}</div>}
       </div>
     </Ctx.Provider>
   );
 }
 
-function exportCareer(c: Career) {
-  const t = c.teams[c.userTeam];
-  const data = {
-    schemaVersion: 1,
-    gameType: "gridiron",
-    metadata: { title: `${t.city} ${t.name} · ${c.year}`, description: `${c.coachName}'s career`, author: c.coachName, coverImage: null },
-    appearance: { accentColor: "#22C55E", backgroundPreset: "tide" },
-    content: { league: null, career: exportableCareer(c) },
-    settings: {},
-  };
-  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${t.abbr.toLowerCase()}-${c.year}.zuno.json`;
-  a.click();
-  window.setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+interface SaveState {
+  status: "saved" | "unsaved" | "saving" | "error";
+  at: number | null;
+  error?: string;
+}
+
+function saveLabel(s: SaveState): string {
+  if (s.status === "saving") return "Saving";
+  if (s.status === "error") return "Not saved";
+  if (s.status === "unsaved") return "Unsaved changes";
+  return s.at ? `Saved ${new Date(s.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Saved";
+}
+
+/** Downloads a copy of the career as a file. Returns the message to show. */
+function exportCareer(c: Career): string {
+  try {
+    const blob = new Blob([exportCareerText(c)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = exportFileName(c);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return `Exported ${a.download}. It's a copy for moving or backing up, separate from your save slots.`;
+  } catch {
+    return "Couldn't create the export file.";
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -208,104 +289,254 @@ function exportCareer(c: Career) {
 function Saves({ file, onExit, onLoad }: { file: GridironFile; onExit: () => void; onLoad: (c: Career) => void }) {
   const [index, setIndex] = useState<SlotInfo[]>(() => readIndex());
   const [creating, setCreating] = useState<number | null>(null);
-  const imported = file.content.career as unknown as Career | null;
-  const [msg, setMsg] = useState("");
-  const [confirmDel, setConfirmDel] = useState<number | null>(null);
+  const [msg, setMsg] = useState<{ text: string; bad: boolean } | null>(null);
+  const [confirm, setConfirm] = useState<{ kind: "delete" | "new" | "import"; slot: number } | null>(null);
+  const [busySlot, setBusySlot] = useState<number | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const headRef = useRef<HTMLHeadingElement>(null);
 
-  useEffect(() => setIndex(readIndex()), [creating]);
+  const imported = useMemo(() => {
+    if (!file.content.career) return null;
+    const m = migrateCareer(file.content.career);
+    return m.ok ? m : { ok: false as const, error: m.error };
+  }, [file]);
+
+  const refresh = useCallback(async () => {
+    setIndex(await rebuildIndex());
+    setLoaded(true);
+  }, []);
+  useEffect(() => {
+    void refresh();
+  }, [refresh, creating]);
+
+  useEffect(() => {
+    if (!confirm) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setConfirm(null);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [confirm]);
 
   const open = async (slot: number) => {
-    const c = await loadCareer(slot);
-    if (c) onLoad(c);
-    else setMsg("That save couldn't be read.");
+    if (busySlot !== null) return;
+    setBusySlot(slot);
+    const r = await loadCareerResult(slot);
+    setBusySlot(null);
+    if (r.status === "ok") onLoad(r.career);
+    else if (r.status === "empty") setMsg({ text: `Slot ${slot} is empty.`, bad: true });
+    else setMsg({ text: `Slot ${slot} couldn't be read: ${r.reason} You can delete it to start over.`, bad: true });
+    if (r.status !== "ok") void refresh();
   };
 
-  if (creating !== null) return <NewCareer slot={creating} teams={file.content.league?.teams ?? DEFAULT_TEAMS} onBack={() => setCreating(null)} onStart={(c) => { void saveCareer(c); onLoad(c); }} />;
+  const doImport = async (slot: number) => {
+    if (!imported || !imported.ok || busySlot !== null) return;
+    setBusySlot(slot);
+    setConfirm(null);
+    const c: SavedCareer = { ...imported.career, slot };
+    const r = await saveCareerResult(c);
+    setBusySlot(null);
+    if (r.ok) onLoad(c);
+    else setMsg({ text: r.error ?? "Couldn't save the imported career.", bad: true });
+  };
+
+  const doDelete = async (slot: number) => {
+    setConfirm(null);
+    const ok = await deleteCareer(slot);
+    setMsg(ok ? { text: `Slot ${slot} deleted.`, bad: false } : { text: `Slot ${slot} couldn't be fully deleted.`, bad: true });
+    await refresh();
+  };
+
+  if (creating !== null) {
+    return (
+      <NewCareer
+        slot={creating}
+        teams={file.content.league?.teams ?? DEFAULT_TEAMS}
+        onBack={() => setCreating(null)}
+        onStart={async (c) => {
+          const r = await saveCareerResult(c);
+          if (r.ok) onLoad(c);
+          return r.ok ? null : { error: r.error ?? "Couldn't save.", proceed: () => onLoad(c) };
+        }}
+      />
+    );
+  }
+
+  const occupied = (s: number) => index.some((x) => x.slot === s);
+  const slotBtn = (s: number, kind: "new" | "import") => {
+    const label = kind === "new" ? "New career here" : `Load into slot ${s}`;
+    return (
+      <button
+        key={s}
+        type="button"
+        className={kind === "new" ? "btn btn-quiet btn-sm" : "btn btn-secondary btn-sm"}
+        disabled={busySlot !== null}
+        onClick={() => (occupied(s) ? setConfirm({ kind, slot: s }) : kind === "new" ? setCreating(s) : void doImport(s))}
+      >
+        {label}
+      </button>
+    );
+  };
 
   return (
     <div className="gr-saves">
       <header className="gr-saves-head">
-        <button type="button" className="btn btn-quiet" onClick={onExit}><ArrowLeft size={16} /> Back</button>
+        <button type="button" className="btn btn-quiet" onClick={onExit}><ArrowLeft size={16} /> Back to Zuno</button>
         <div className="gr-hero">
           <span className="gr-eyebrow">Franchise mode{file.content.league ? " · custom league" : ""}</span>
-          <h1>Gridiron GM</h1>
-          <p>Build a roster, call the plays and chase the Zuno Bowl. Three save slots, saved on this device.</p>
+          <h1 ref={headRef} tabIndex={-1}>Gridiron GM</h1>
+          <p>Build a roster, call the plays and chase the Zuno Bowl. Three save slots, kept on this device.</p>
         </div>
       </header>
       {imported && (
-        <section className="gr-panel">
-          <h2>Imported career</h2>
-          <p>{imported.coachName} · {imported.teams[imported.userTeam].city} {imported.teams[imported.userTeam].name} · {imported.year}</p>
-          <div className="gr-call-row">
-            {SLOTS.map((s) => (
-              <button key={s} type="button" className="btn btn-secondary btn-sm" onClick={() => { const c = { ...imported, slot: s }; void saveCareer(c).then(() => onLoad(c)); }}>
-                Load into slot {s}
-              </button>
-            ))}
-          </div>
+        <section className="gr-panel" aria-labelledby="gr-imp-t">
+          <h2 id="gr-imp-t">Imported career</h2>
+          {imported.ok ? (
+            <>
+              <p>
+                <strong>{imported.career.coachName}</strong> · {imported.career.teams[imported.career.userTeam].city} {imported.career.teams[imported.career.userTeam].name} · {imported.career.year} · {imported.career.phase === "regular" ? `Week ${imported.career.week}` : imported.career.phase}
+                {(imported.career.customPlays?.length ?? 0) > 0 && ` · ${imported.career.customPlays!.length} custom play${imported.career.customPlays!.length === 1 ? "" : "s"}`}
+              </p>
+              {imported.notes.map((n) => <p key={n} className="meta">{n}</p>)}
+              <p className="meta">Pick a slot to open it in. Nothing is overwritten until you confirm.</p>
+              <div className="gr-call-row">{SLOTS.map((s) => slotBtn(s, "import"))}</div>
+            </>
+          ) : (
+            <p className="gr-msg is-bad" role="alert">This career can't be opened: {imported.error}</p>
+          )}
         </section>
       )}
-      <ol className="gr-slots">
+      <ol className="gr-slots" aria-busy={!loaded}>
         {SLOTS.map((s) => {
           const info = index.find((x) => x.slot === s);
+          const asking = confirm?.slot === s ? confirm : null;
           return (
-            <li key={s} className="gr-slot" style={info ? ({ "--tc": info.colors[0] } as React.CSSProperties) : undefined}>
+            <li key={s} className="gr-slot" style={info && !info.corrupt ? ({ "--tc": info.colors[0] } as React.CSSProperties) : undefined}>
               <span className="meta">Slot {s}</span>
-              {info ? (
+              {info?.corrupt ? (
+                <>
+                  <strong className="gr-danger">Unreadable save</strong>
+                  <span className="meta">{info.label}</span>
+                  <div className="gr-call-row">
+                    <button type="button" className="btn btn-quiet btn-sm" onClick={() => setCreating(s)}>New career here</button>
+                    <button type="button" className="btn btn-quiet btn-sm gr-danger" onClick={() => setConfirm({ kind: "delete", slot: s })}>Delete</button>
+                  </div>
+                </>
+              ) : info ? (
                 <>
                   <strong>{info.team}</strong>
-                  <span className="meta">{info.coach} · {info.label} · saved {new Date(info.updatedAt).toLocaleDateString()}</span>
+                  <span className="meta">{info.coach} · {info.label}</span>
+                  <span className="meta">Last saved {info.updatedAt ? new Date(info.updatedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "unknown"}</span>
                   <div className="gr-call-row">
-                    <button type="button" className="btn btn-primary btn-sm" onClick={() => void open(s)}>Continue</button>
-                    <button type="button" className="btn btn-quiet btn-sm" onClick={() => setCreating(s)}>New career here</button>
-                    {confirmDel === s ? (
-                      <button type="button" className="btn btn-quiet btn-sm gr-danger is-armed" onBlur={() => setConfirmDel(null)} onClick={() => { setConfirmDel(null); void deleteCareer(s).then(() => setIndex(readIndex())); }}>Confirm delete</button>
-                    ) : (
-                      <button type="button" className="btn btn-quiet btn-sm gr-danger" onClick={() => setConfirmDel(s)}>Delete</button>
-                    )}
+                    <button type="button" className="btn btn-primary btn-sm" disabled={busySlot !== null} onClick={() => void open(s)}>{busySlot === s ? "Opening" : "Continue"}</button>
+                    <button type="button" className="btn btn-quiet btn-sm" disabled={busySlot !== null} onClick={() => setConfirm({ kind: "new", slot: s })}>New career here</button>
+                    <button type="button" className="btn btn-quiet btn-sm gr-danger" disabled={busySlot !== null} onClick={() => setConfirm({ kind: "delete", slot: s })}>Delete</button>
                   </div>
                 </>
               ) : (
                 <>
                   <strong className="is-empty">Empty slot</strong>
-                  <span className="meta">Start a new franchise here.</span>
+                  <span className="meta">{loaded ? "No career saved here yet. Pick a team and start one." : "Checking this slot"}</span>
                   <div className="gr-call-row">
                     <button type="button" className="btn btn-primary btn-sm" onClick={() => setCreating(s)}>New career</button>
                   </div>
                 </>
               )}
+              {asking && (
+                <div className="gr-confirm" role="alertdialog" aria-label={`Confirm for slot ${s}`}>
+                  <p>
+                    {asking.kind === "delete" && `Delete slot ${s}? This can't be undone. Export it first if you want a copy.`}
+                    {asking.kind === "new" && `Start a new career in slot ${s}? The existing career is replaced once you save the new one.`}
+                    {asking.kind === "import" && `Replace the career in slot ${s} with the imported one?`}
+                  </p>
+                  <div className="gr-call-row">
+                    <button
+                      type="button"
+                      autoFocus
+                      className="btn btn-secondary btn-sm gr-danger"
+                      onClick={() => (asking.kind === "delete" ? void doDelete(s) : asking.kind === "import" ? void doImport(s) : (setConfirm(null), setCreating(s)))}
+                    >
+                      {asking.kind === "delete" ? "Delete" : "Replace"}
+                    </button>
+                    <button type="button" className="btn btn-quiet btn-sm" onClick={() => setConfirm(null)}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </li>
           );
         })}
       </ol>
-      {msg && <p className="gr-msg">{msg}</p>}
-      <p className="meta">Careers autosave after every week. Export a career from inside the game to move it to another browser.</p>
+      {msg && <p className={`gr-msg${msg.bad ? " is-bad" : ""}`} role={msg.bad ? "alert" : "status"}>{msg.text}</p>}
+      <p className="meta">
+        Careers autosave to the slot after every week and when a game ends. A slot lives in this browser; an exported file is a separate copy you can move to another browser (use Export file inside a career).
+      </p>
     </div>
   );
 }
 
-function NewCareer({ slot, teams, onBack, onStart }: { slot: number; teams: TeamSeed[]; onBack: () => void; onStart: (c: Career) => void }) {
+function NewCareer({ slot, teams, onBack, onStart }: {
+  slot: number;
+  teams: TeamSeed[];
+  onBack: () => void;
+  onStart: (c: Career) => Promise<{ error: string; proceed: () => void } | null>;
+}) {
   const [seed] = useState(() => Math.floor(Math.random() * 1e9));
   const [name, setName] = useState("");
   const [pickId, setPickId] = useState<number | null>(null);
   const preview = useMemo(() => generateLeague(seed, teams), [seed, teams]);
   const ratings = useMemo(() => preview.teams.map((t) => teamRating(t, preview.players)), [preview]);
   const [starting, setStarting] = useState(false);
+  const [failure, setFailure] = useState<{ error: string; proceed: () => void } | null>(null);
+  const timer = useRef<number | null>(null);
+  const cancelled = useRef(false);
+  const built = useRef<Career | null>(null);
+
+  useEffect(() => () => {
+    cancelled.current = true;
+    if (timer.current !== null) window.clearTimeout(timer.current);
+  }, []);
+
+  const start = () => {
+    if (pickId === null || starting) return;
+    cancelled.current = false;
+    setStarting(true);
+    setFailure(null);
+    timer.current = window.setTimeout(async () => {
+      try {
+        if (!built.current) built.current = newCareer({ seed, teamId: pickId, coachName: name.trim() || "Coach", slot, teams });
+        if (cancelled.current) return;
+        const f = await onStart(built.current);
+        if (cancelled.current) return;
+        if (f) setFailure(f);
+      } catch {
+        setFailure({ error: "Couldn't build the league. Try again.", proceed: () => undefined });
+      }
+      setStarting(false);
+    }, 20);
+  };
+
+  const cancel = () => {
+    cancelled.current = true;
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    built.current = null;
+    setStarting(false);
+  };
+
+  const chosen = pickId !== null ? preview.teams[pickId] : null;
   return (
     <div className="gr-saves">
       <header className="gr-saves-head">
-        <button type="button" className="btn btn-quiet" onClick={onBack}><ArrowLeft size={16} /> Back</button>
+        <button type="button" className="btn btn-quiet" onClick={onBack} disabled={starting}><ArrowLeft size={16} /> Back to save slots</button>
         <div className="gr-hero"><span className="gr-eyebrow">Slot {slot}</span><h1>New career</h1></div>
       </header>
       <label className="gr-field-label">
         Coach name
-        <input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+        <input value={name} maxLength={40} autoComplete="off" disabled={starting} onChange={(e) => setName(e.target.value)} placeholder="Coach" />
+        <span className="meta">Optional. Shown on your save slot. Leave blank to be "Coach".</span>
       </label>
       <h2 className="gr-section-title">Pick a franchise</h2>
-      <ul className="gr-teampick">
+      <ul className="gr-teampick" role="group" aria-label="Franchises">
         {preview.teams.map((t, i) => (
           <li key={t.id}>
-            <button type="button" className={pickId === t.id ? "is-on" : ""} aria-pressed={pickId === t.id} onClick={() => setPickId(t.id)} style={{ "--tc": t.colors[0] } as React.CSSProperties}>
+            <button type="button" disabled={starting} className={pickId === t.id ? "is-on" : ""} aria-pressed={pickId === t.id} onClick={() => setPickId(t.id)} style={{ "--tc": t.colors[0] } as React.CSSProperties}>
               <TeamLogo team={t} size={36} />
               <span>
                 <strong>{t.city}</strong> {t.name}
@@ -318,18 +549,18 @@ function NewCareer({ slot, teams, onBack, onStart }: { slot: number; teams: Team
         ))}
       </ul>
       <div className="gr-start-bar">
-        <span className="meta">{pickId !== null ? `${preview.teams[pickId].city} ${preview.teams[pickId].name}` : "Choose a franchise"}</span>
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={pickId === null || starting}
-          onClick={() => {
-            setStarting(true);
-            window.setTimeout(() => onStart(newCareer({ seed, teamId: pickId!, coachName: name || "Coach", slot, teams })), 20);
-          }}
-        >
-          <Trophy size={16} /> {starting ? "Building the league" : "Start career"}
-        </button>
+        <span className="meta" aria-live="polite">
+          {failure ? failure.error : starting ? "Building the league. This takes a moment." : chosen ? `${chosen.city} ${chosen.name}` : "Choose a franchise to continue"}
+        </span>
+        <div className="gr-call-row">
+          {failure && (
+            <button type="button" className="btn btn-quiet" onClick={() => failure.proceed()}>Continue without saving</button>
+          )}
+          {starting && <button type="button" className="btn btn-quiet" onClick={cancel}>Cancel</button>}
+          <button type="button" className="btn btn-primary" disabled={pickId === null || starting} onClick={start}>
+            {starting ? <><span className="gr-spin" aria-hidden="true" /> Building</> : <><Trophy size={16} /> {failure ? "Retry save" : "Start career"}</>}
+          </button>
+        </div>
       </div>
     </div>
   );

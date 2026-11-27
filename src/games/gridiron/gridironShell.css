@@ -1,0 +1,24 @@
+/* Shell, save-slot and dialog additions (T4). Reuses gridiron.css variables. */
+.gr-savestat { display: block; font-size: 12px; color: var(--text-3); }
+.gr-savestat.is-unsaved { color: var(--text-2); }
+.gr-savestat.is-error { color: var(--gr-neg); font-weight: 600; }
+.gr-unread { min-width: 20px; text-align: center; border-radius: 10px; background: var(--team, var(--surface-3)); color: #fff; padding: 0 6px; }
+.gr-msg.is-bad { color: var(--gr-neg); border: 1px solid color-mix(in oklab, var(--gr-neg) 40%, transparent); }
+.gr-confirm { display: grid; gap: 8px; padding: 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--hairline); }
+.gr-confirm p { margin: 0; font-size: 14px; }
+.gr-modal-back { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgb(0 0 0 / .55); }
+.gr-modal { width: min(460px, 100%); display: grid; gap: 12px; padding: 20px; border-radius: 16px; background: var(--surface); border: 1px solid var(--hairline); box-shadow: var(--shadow-float); }
+.gr-modal h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
+.gr-modal p { margin: 0; color: var(--text-2); }
+.gr-start-bar .gr-call-row { flex-wrap: wrap; justify-content: flex-end; }
+.gr-slot .gr-call-row { flex-wrap: wrap; }
+.gr-nav-foot button:disabled, .gr-slot button:disabled { opacity: .55; cursor: not-allowed; }
+.gr-toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+.gr-start-bar { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.gr-nav-foot { padding-bottom: env(safe-area-inset-bottom, 0px); }
+@media (max-width: 760px) {
+  .gr-nav-foot { grid-template-columns: 1fr 1fr; }
+  .gr-start-bar { flex-direction: column; align-items: stretch; }
+  .gr-start-bar .gr-call-row { justify-content: stretch; }
+  .gr-start-bar .btn { flex: 1; }
+}
