@@ -5,7 +5,7 @@ import { leaders, playoffSeedMap, teamName } from "../gmCareer";
 import { fullName, passerRating } from "../gmPlayers";
 import { buildPlayScript } from "../gmPlayScript";
 import type { PlaySpec, ScheduledGame, StatLine } from "../gmTypes";
-import { GDialog, Panel, PlayerLink, Seg, TeamLogo, TeamTag, useGm } from "./ui";
+import { GDialog, Panel, PlayerLink, Seg, TableScroll, TeamLogo, TeamTag, useGm } from "./ui";
 
 export function Standings() {
   const { c } = useGm();
@@ -13,12 +13,14 @@ export function Standings() {
   const seeds = c.phase === "playoffs" || c.week > 10 ? playoffSeedMap(c) : {};
   return (
     <div className="gr-stack">
+      {c.week <= 1 && c.phase === "regular" && !c.schedule.some((g) => g.result) && <p className="gr-empty">No games played yet. Records fill in after week 1.</p>}
       {(c.phase === "playoffs" || c.schedule.some((g) => g.round)) && <Bracket />}
       {[0, 1].map((conf) => (
         <Panel key={conf} title={CONF_NAMES[conf]}>
           <div className="gr-divs">
             {[0, 1, 2, 3].map((d) => (
-              <table key={d} className="gr-table">
+              <TableScroll key={d} label={`${CONF_NAMES[conf]} ${DIV_NAMES[d]} standings`}>
+              <table className="gr-table">
                 <caption>{DIV_NAMES[d]}</caption>
                 <thead>
                   <tr>
@@ -34,10 +36,11 @@ export function Standings() {
                   {divisionOrder(conf, d, c.teams, st, c.schedule, c.seed).map((id) => {
                     const s = st[id];
                     return (
-                      <tr key={id} className={id === c.userTeam ? "is-you" : ""}>
-                        <td>
+                      <tr key={id} className={id === c.userTeam ? "is-you" : ""} style={id === c.userTeam ? { fontWeight: 600 } : undefined}>
+                        <td className="gr-wrap">
                           <TeamTag team={c.teams[id]} full />
-                          {seeds[id] && <span className="meta gr-seed"> {seeds[id]}</span>}
+                          {seeds[id] && <span className="gr-status is-in gr-seed" title={`Playoff seed ${seeds[id]}`}> {seeds[id]}</span>}
+                          {id === c.userTeam && <span className="sr-only"> (your team)</span>}
                         </td>
                         <td className="num">{recordText(s)}</td>
                         <td className="num">{recordText({ w: s.divW, l: s.divL, t: s.divT })}</td>
@@ -49,10 +52,16 @@ export function Standings() {
                   })}
                 </tbody>
               </table>
+              </TableScroll>
             ))}
           </div>
         </Panel>
       ))}
+      <ul className="gr-legend" aria-label="Legend">
+        <li><span className="gr-status is-in">1 to 7</span> Current playoff seed (1 gets a bye). {Object.keys(seeds).length ? "Teams without a number are outside the field." : "Seeds show from week 11."}</li>
+        <li><b>W-L</b> overall, <b>Div</b> division record, <b>PF/PA</b> points for and against, <b>Strk</b> current streak.</li>
+        <li>Your team's row is tinted and bold.</li>
+      </ul>
       <p className="meta">Ties break by head-to-head, division record, common games, conference record, then point differential. Seven teams per conference make the playoffs; the 1 seed gets a bye.</p>
     </div>
   );
@@ -66,16 +75,18 @@ function Bracket() {
   const seeds = [0, 1].map((conf) => playoffSeeds(conf, c.teams, st, c.schedule, c.seed));
   return (
     <Panel title={`${c.year} playoffs`}>
+      <TableScroll label="Playoff bracket">
       <div className="gr-bracket">
         {rounds.map(([r, label]) => (
           <div key={r} className="gr-round">
             <h3>{label}</h3>
+            {c.schedule.filter((g) => g.round === r).length === 0 && <p className="meta">Not set yet</p>}
             {c.schedule.filter((g) => g.round === r).map((g) => (
-              <button key={g.id} type="button" className="gr-matchup" onClick={() => g.result && setBox(g)} disabled={!g.result}>
+              <button key={g.id} type="button" className="gr-matchup" onClick={() => g.result && setBox(g)} disabled={!g.result} aria-label={`${c.teams[g.away].city} ${c.teams[g.away].name} at ${c.teams[g.home].city} ${c.teams[g.home].name}${g.result ? `, final ${g.result.score[1]} to ${g.result.score[0]}. Open box score` : ", not played yet"}`}>
                 {[g.away, g.home].map((id, i) => (
                   <span key={id} className={g.result && (g.result.score[i === 0 ? 1 : 0] > g.result.score[i === 0 ? 0 : 1]) ? "is-win" : ""}>
                     <TeamLogo team={c.teams[id]} size={18} /> <span className="meta">{seeds[c.teams[id].conf].indexOf(id) + 1}</span> {c.teams[id].abbr}
-                    <b className="num">{g.result ? g.result.score[i === 0 ? 1 : 0] : ""}</b>
+                    <b className="num">{g.result ? g.result.score[i === 0 ? 1 : 0] : ""}{g.result && g.result.score[i === 0 ? 1 : 0] > g.result.score[i === 0 ? 0 : 1] ? " W" : ""}</b>
                   </span>
                 ))}
               </button>
@@ -83,6 +94,8 @@ function Bracket() {
           </div>
         ))}
       </div>
+      </TableScroll>
+      <p className="meta">Select a finished game for its box score. Winners are in bold with a "W" mark. Numbers beside a team are conference seeds.</p>
       {box && <BoxScore game={box} onClose={() => setBox(null)} />}
     </Panel>
   );
@@ -99,20 +112,26 @@ export function Leaders() {
   return (
     <div className="gr-stack">
       <Seg label="Scope" value={scope} options={[["league", "League"], ["team", "Your team"]]} onChange={setScope} />
+      <p className="meta">{c.year} season totals for {scope === "league" ? "the whole league" : "your team"}. Top five per category; tied players share a rank (T). Career records are on the League history screen.</p>
       <div className="gr-grid3">
         {LEADER_KEYS.map(([k, label]) => (
           <Panel key={k} title={label}>
             {(() => {
               const rows = leaders(c, k, 5, scope === "team" ? c.userTeam : undefined);
-              if (!rows.length) return <p className="gr-empty">No stats yet. Leaders appear after week 1.</p>;
+              if (!rows.length) return <p className="gr-empty">{scope === "team" ? "None of your players has recorded this yet." : "No stats yet. Leaders appear after week 1."}</p>;
               return (
             <ol className="gr-leaders">
-              {rows.map(({ p, v }) => (
-                <li key={p.id}>
-                  <PlayerLink p={p} /> <span className="meta">{p.teamId !== null ? c.teams[p.teamId].abbr : "FA"}</span>
-                  <span className="num">{v}</span>
-                </li>
-              ))}
+              {rows.map(({ p, v }) => {
+                const first = rows.findIndex((r) => r.v === v);
+                const tied = rows.filter((r) => r.v === v).length > 1;
+                return (
+                  <li key={p.id} style={p.teamId !== null ? ({ boxShadow: `inset 3px 0 0 ${c.teams[p.teamId].colors[0]}` } as React.CSSProperties) : undefined}>
+                    <span className="meta num" aria-label={`Rank ${first + 1}${tied ? ", tied" : ""}`}>{tied ? "T" : ""}{first + 1}</span>
+                    <PlayerLink p={p} /> <span className="meta">{p.pos} · {p.teamId !== null ? c.teams[p.teamId].abbr : "FA"}</span>
+                    <span className="num">{v}</span>
+                  </li>
+                );
+              })}
             </ol>
               );
             })()}
@@ -142,6 +161,7 @@ export function History() {
       </Panel>
       <Panel title="Seasons">
         {c.history.length ? (
+          <TableScroll label="Past seasons">
           <table className="gr-table">
             <thead>
               <tr>
@@ -164,12 +184,13 @@ export function History() {
                   <td>{h.userFinish}</td>
                   <td>{h.champion !== null ? <TeamTag team={c.teams[h.champion]} /> : "—"}</td>
                   {(["MVP", "OPOY", "DPOY", "ROTY", "COY"] as const).map((k) => (
-                    <td key={k}>{h.awards[k]?.name ?? "—"}</td>
+                    <td key={k} className="gr-wrap">{h.awards[k]?.name ?? "—"}</td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
+          </TableScroll>
         ) : (
           <p className="gr-empty">Finish a season to start the record book.</p>
         )}
@@ -177,18 +198,20 @@ export function History() {
       <div className="gr-grid2">
         <Panel title="Franchise records">
           {Object.keys(c.records).length ? (
+            <TableScroll label="Franchise records">
             <table className="gr-table">
               <tbody>
                 {Object.entries(c.records).map(([k, r]) => (
                   <tr key={k}>
                     <td>{k}</td>
-                    <td>{r.name}</td>
+                    <td className="gr-wrap">{r.name}</td>
                     <td className="num">{r.value}</td>
                     <td className="num meta">{r.year}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </TableScroll>
           ) : (
             <p className="gr-empty">Records are set at the end of each season.</p>
           )}
@@ -198,7 +221,7 @@ export function History() {
             <ul className="gr-list">
               {c.hallOfFame.map((h) => (
                 <li key={h.playerId}>
-                  {h.name} <span className="meta">{h.pos} · class of {h.year}</span>
+                  <span className="gr-wrap">{h.name}</span> <span className="meta">{h.pos} · class of {h.year}</span>
                 </li>
               ))}
             </ul>

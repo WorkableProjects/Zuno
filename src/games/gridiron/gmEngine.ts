@@ -26,6 +26,22 @@ export interface PlayRecord {
   big: boolean;
   scoring: boolean;
   drive: number;
+  /** Engine state once the play was applied. The engine mutates the game synchronously, so a UI that animates the
+   * play should show the snap situation (down/dist/ballOn above) until the animation ends, then this. */
+  after?: PlayAfter;
+}
+
+export interface PlayAfter {
+  down: number;
+  dist: number;
+  ballOn: number; // from the (new) offense's own goal
+  poss: 0 | 1;
+  phase: GameState["phase"];
+  quarter: number;
+  clock: number;
+  score: [number, number];
+  firstDown: boolean;
+  turnoverOnDowns: boolean;
 }
 
 export interface Drive {
@@ -398,14 +414,56 @@ export function step(g: GameState, input: StepInput = {}): PlayRecord | null {
     if (choice === "punt") return punt(g);
     if (choice === "fg") return fieldGoal(g);
   }
-  if (shouldKneel(g)) return kneel(g);
-  if (shouldSpike(g)) return spike(g);
+  if (shouldKneel(g) || input.off?.type === "kneel") return kneel(g);
+  if (shouldSpike(g) || input.off?.type === "spike") return spike(g);
   const sit = situation(g);
   const offTeam = teamOf(g, g.poss);
   const defTeam = teamOf(g, other(g.poss));
   const off = input.off ?? aiOffCall(() => rand(g), sit, offTeam.plan, offTeam.offScheme);
   const def = input.def ?? aiDefCall(() => rand(g), sit, defTeam.plan, defTeam.coverage);
   return scrimmage(g, off, def);
+}
+
+// ---------------------------------------------------------------------------
+// Play-definition hook (built-in and custom plays run through the exact same engine path as step())
+
+/** Anything that resolves to an offensive call: a built-in OFF_PLAYS card, or a custom play's engine call. */
+export interface PlayDefinition {
+  id?: string; // stored on the PlaySpec as playId so stats/replays can name the play
+  name?: string;
+  call: OffCall;
+}
+
+const PERSONNEL = ["10", "11", "12", "21", "22"];
+const PLAY_TYPES = ["run", "short", "medium", "deep", "screen", "playaction"];
+
+/** Clamps a hand-built call into something the engine can resolve (unknown personnel/type fall back, runs get a gap and side). */
+export function normalizeOffCall(call: OffCall): OffCall {
+  const type = PLAY_TYPES.includes(call.type) || call.type === "kneel" || call.type === "spike" ? call.type : "short";
+  const out: OffCall = { ...call, type, personnel: PERSONNEL.includes(call.personnel) ? call.personnel : "11", concept: call.concept || "Custom" };
+  if (type === "run") {
+    out.gap = call.gap && "ABCD".includes(call.gap) ? call.gap : "A";
+    out.side = call.side === -1 ? -1 : 1;
+  } else out.side = call.side === -1 ? -1 : 1;
+  return out;
+}
+
+/**
+ * Executes one snap for the team with the ball using a play definition. Same path as step({ off }): same RNG, penalties,
+ * downs, clock, review and stat handling. Defaults 4th down to "go" (the caller chose a scrimmage play), and returns the
+ * record (tagged with playId / playName) or null if the engine consumed the step without a snap (e.g. a challenge
+ * resolution or the end of a period). If the game is not waiting on a scrimmage snap, the engine does what step() would.
+ */
+export function runPlay(g: GameState, play: PlayDefinition | OffCall, opts: Omit<StepInput, "off"> = {}): PlayRecord | null {
+  const def: PlayDefinition = "call" in play ? play : { call: play };
+  const call = normalizeOffCall(def.call);
+  const wasPlay = g.phase === "play" && !g.review;
+  const rec = step(g, { ...opts, off: call, fourth: opts.fourth ?? (g.down === 4 ? "go" : undefined) });
+  if (rec && wasPlay && rec.spec.off === call) {
+    if (def.id) rec.spec.playId = def.id;
+    if (def.name) rec.spec.playName = def.name;
+  }
+  return rec;
 }
 
 /** Runs the clock between snaps. Returns false if the quarter ended. */
@@ -443,7 +501,7 @@ function aiTimeoutCall(g: GameState): 0 | 1 | null {
 function shouldKneel(g: GameState): boolean {
   const lead = g.score[g.poss] - g.score[other(g.poss)];
   if (g.quarter < 4 || g.ot) return false;
-  if (lead <= 0) return false;
+  if (lead <= 0 || g.down >= 4) return false; // never kneel away a 4th down the coach chose to go for
   const downsLeft = 4 - g.down;
   const oppTo = g.timeouts[other(g.poss)];
   return g.clock <= (downsLeft + 1) * 40 - oppTo * 40 + 2 && g.clock < 125;
@@ -646,8 +704,7 @@ function scrimmage(g: GameState, off: OffCall, def: DefCallFull): PlayRecord {
         }
         const dropped = rand(g) < 0.13;
         const pd = !dropped && rand(g) < 0.45;
-        out = { kind: "incomplete", yards: 0, airYards, targetIdx: tgt.i, defenderIdx: coverIdx };
-        if (pd) stat(g, cover.id).pd++;
+        out = { kind: "incomplete", yards: 0, airYards, targetIdx: tgt.i, defenderIdx: coverIdx, deflected: pd, dropped };
         text = `${shortName(qb)} pass ${depthWord(depth)} to ${shortName(target)} incomplete${dropped ? ", dropped" : pd ? `, broken up by ${shortName(cover)}` : ""}`;
         clockStops = true;
       }
@@ -747,7 +804,8 @@ function penaltyPlay(g: GameState, ctx: Ctx, pen: { name: string; on: "off" | "d
   let yards = pen.yards;
   // Half the distance to the goal.
   if (yards < 0 && g.ballOn + yards < 1) yards = -Math.floor(g.ballOn / 2);
-  if (yards > 0 && g.ballOn + yards > 99) yards = Math.max(1, Math.floor((100 - g.ballOn) / 2));
+  if (yards > 0 && g.ballOn + yards > 99) yards = Math.floor((100 - g.ballOn) / 2);
+  yards = clamp(g.ballOn + yards, 1, 99) - g.ballOn; // never mark the ball off outside the field
   g.team[side].penalties++;
   g.team[side].penYds += Math.abs(yards);
   const out: PlayOutcome = { kind: "penalty", yards, penalty: { ...pen, yards } };
@@ -758,9 +816,10 @@ function penaltyPlay(g: GameState, ctx: Ctx, pen: { name: string; on: "off" | "d
     g.down = 1;
     g.dist = Math.min(10, 100 - g.ballOn);
     g.team[g.poss].firstDowns++;
+    out.firstDown = true;
   } else {
-    g.dist = Math.max(1, g.dist - yards);
-    if (g.dist > 30) g.dist = 30;
+    // Distance follows the penalty yardage (not the nullified play) and stays consistent with the line to gain.
+    g.dist = clamp(g.dist - yards, 1, 100 - g.ballOn);
   }
   if (pen.name !== "False start" && pen.name !== "Offside") g.clock = Math.max(0, g.clock - 4);
   return record(g, spec, text, snap, false);
@@ -781,6 +840,9 @@ function applyScrimmage(
   for (const id of offIds) g.fatigue[id] = (g.fatigue[id] ?? 0) + 1;
   for (const id of defIds) g.fatigue[id] = (g.fatigue[id] ?? 0) + 1;
   if (snap.down === 3) ts.thirdAtt++;
+
+  // A fumble that already crossed a goal line is not a defensive recovery: the offense keeps the TD / concedes the safety.
+  if (out.kind === "fumble" && out.recoveredByDefense && (snap.ballOn + out.yards >= 100 || snap.ballOn + out.yards <= 0)) out.recoveredByDefense = false;
 
   const qbId = offIds[0];
   let scored = false;
@@ -812,6 +874,7 @@ function applyScrimmage(
     case "incomplete": {
       stat(g, qbId).pAtt++;
       stat(g, offIds[out.targetIdx!]).tgt++;
+      if (out.deflected && out.defenderIdx !== undefined) stat(g, defIds[out.defenderIdx]).pd++;
       break;
     }
     case "interception": {
@@ -868,14 +931,15 @@ function applyScrimmage(
   if (out.kind === "interception") {
     const spot = snap.ballOn + (out.airYards ?? 0);
     const defBall = 100 - spot + (out.returnYards ?? 0);
-    changePossession(g, clamp(defBall, 1, 100));
+    const touchback = defBall < 1 && !out.defTouchdown;
+    changePossession(g, touchback ? 20 : clamp(defBall, 1, 100));
     if (out.defTouchdown || defBall >= 100) {
       stat(g, defIds[out.defenderIdx!]).defTd++;
       fullText = `${text}`;
       touchdown(g);
       scored = true;
-    } else if (defBall < 1) {
-      g.ballOn = 20; // touchback
+    } else if (touchback) {
+      fullText = `${text}, touchback`;
     }
     return record(g, spec, fullText, snap, scored, true);
   }
@@ -898,9 +962,9 @@ function applyScrimmage(
   }
   if (newSpot <= 0) {
     // Safety.
-    out.kind = out.kind === "sack" ? "sack" : out.kind;
-    spec.outcome = { ...out };
+    spec.outcome = { ...out, safety: true };
     fullText = `${text}, SAFETY`;
+    closeDrive(g, "Safety");
     g.score[d] += 2;
     addQuarterScore(g, d, 2);
     g.safetyKick = true;
@@ -914,7 +978,8 @@ function applyScrimmage(
   if (out.kind === "incomplete" || out.kind === "spike") {
     clockStops = true;
   }
-  if (out.yards >= g.dist && out.kind !== "incomplete") {
+  if (out.yards >= g.dist && out.kind !== "incomplete" && out.kind !== "kneel" && out.kind !== "spike") {
+    out.firstDown = true;
     g.down = 1;
     g.dist = Math.min(10, 100 - g.ballOn);
     ts.firstDowns++;
@@ -924,6 +989,7 @@ function applyScrimmage(
     g.dist = g.dist - (out.kind === "incomplete" ? 0 : out.yards);
     if (g.down > 4) {
       fullText = `${text}. Turnover on downs`;
+      out.turnoverOnDowns = true;
       changePossession(g, 100 - g.ballOn);
       return record(g, spec, fullText, snap, false, true);
     }
@@ -1061,6 +1127,10 @@ function record(g: GameState, spec: PlaySpec, text: string, snap: { down: number
   if (rec.big) spec.label = scoring ? "Score" : turnover ? "Turnover" : spec.outcome.kind === "sack" ? "Sack" : "Big play";
   g.plays.push(rec);
   if (g.clock <= 0 && g.phase === "play" && !g.review) endOfPeriod(g);
+  rec.after = {
+    down: g.down, dist: g.dist, ballOn: g.ballOn, poss: g.poss, phase: g.phase, quarter: g.quarter, clock: g.clock,
+    score: [g.score[0], g.score[1]], firstDown: !!spec.outcome.firstDown, turnoverOnDowns: !!spec.outcome.turnoverOnDowns,
+  };
   return rec;
 }
 
@@ -1176,8 +1246,8 @@ function punt(g: GameState): PlayRecord {
   if (land >= 100) {
     if (rand(g) < 0.25 && g.ballOn > 50) {
       // Downed inside the 10.
-      dist = 100 - g.ballOn - 1 - Math.floor(rand(g) * 8);
-      recvBall = 100 - (g.ballOn + dist);
+      dist = Math.max(1, 100 - g.ballOn - 1 - Math.floor(rand(g) * 8));
+      recvBall = Math.max(1, 100 - (g.ballOn + dist));
       out = { kind: "punt", yards: dist, kickDistance: dist, returnYards: 0 };
       text = `${p ? shortName(p) : "Punt"} punts ${dist} yards, downed at the ${yardLine(recvBall)}`;
     } else {
@@ -1314,7 +1384,7 @@ function kneel(g: GameState): PlayRecord {
   const offU = offenseUnit(g, g.poss, off);
   const defU = defenseUnit(g, other(g.poss), { pkg: "Base", call: "Run D", shell: "Cover 3" });
   const ctx: Ctx = { special: null, off, def: { pkg: "Base", call: "Run D", shell: "Cover 3" }, offIds: offU.players.map((p) => p.id), defIds: defU.players.map((p) => p.id) };
-  const out: PlayOutcome = { kind: "kneel", yards: -1, carrierIdx: 0 };
+  const out: PlayOutcome = { kind: "kneel", yards: -Math.min(1, Math.max(0, g.ballOn - 1)), carrierIdx: 0 };
   return applyScrimmage(g, ctx, out, `${shortName(offU.players[0])} kneels`, false, 2, { down: g.down, dist: g.dist, ballOn: g.ballOn, clock: g.clock, quarter: g.quarter }, "", ctx.def!, off);
 }
 
@@ -1330,6 +1400,13 @@ function spike(g: GameState): PlayRecord {
   g.clock = Math.max(0, g.clock - 2);
   g.down++;
   g.running = false;
+  if (g.down > 4) {
+    // Spiking away the final down is a turnover on downs.
+    out.turnoverOnDowns = true;
+    spec.text += ". Turnover on downs";
+    changePossession(g, 100 - g.ballOn);
+    return record(g, spec, spec.text, snap, false, true);
+  }
   return record(g, spec, spec.text, snap, false);
 }
 

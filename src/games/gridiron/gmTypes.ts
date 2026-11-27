@@ -1,4 +1,6 @@
 /** Shared data shapes for Gridiron GM: players, teams, schedule, games and the career save. */
+import type { CustomPlay } from "./gmCustomPlays";
+import type { CustomPlayRecord } from "../../game-files/schema/gridiron";
 
 export const POSITIONS = ["QB", "RB", "FB", "WR", "TE", "OT", "OG", "C", "DE", "DT", "OLB", "MLB", "CB", "FS", "SS", "K", "P", "LS"] as const;
 export type Pos = (typeof POSITIONS)[number];
@@ -230,6 +232,9 @@ export interface PlaySpec {
   defPlayers: Array<{ id: number; num: number; pos: string; name: string; spd: number }>;
   text: string;
   label?: string;
+  /** Set when the snap was run through a play definition (built-in or custom) via runPlay(). */
+  playId?: string;
+  playName?: string;
 }
 
 export interface PlayOutcome {
@@ -250,6 +255,12 @@ export interface PlayOutcome {
   recoveredByDefense?: boolean;
   penalty?: { name: string; on: "off" | "def"; yards: number; autoFirst?: boolean };
   kickDistance?: number;
+  /** Additive v3 flags, set by the engine so replays and the UI never have to infer them. */
+  firstDown?: boolean; // the play earned a new set of downs
+  turnoverOnDowns?: boolean; // failed on 4th down, possession changed
+  safety?: boolean; // the offense was tackled (or fumbled) into its own end zone
+  deflected?: boolean; // incomplete: broken up by a defender
+  dropped?: boolean; // incomplete: the target dropped it
 }
 
 /** One frame per 0.1 s: [x, y] for 22 players (0-10 offense, 11-21 defense), then the ball. Field coords in yards: x 0..120 (end zones 0-10, 110-120), y 0..53.3. */
@@ -365,5 +376,7 @@ export interface Career {
   pressPending: boolean;
   log: string[];
   coachMode: boolean;
+  /** The user's own play designs (see gmCustomPlays). Absent on older saves. */
+  customPlays?: CustomPlay[] | CustomPlayRecord[];
   updatedAt: number;
 }

@@ -6,34 +6,60 @@ import {
 } from "../gmCareer";
 import { ATTR_LABELS, COVERAGES, DEF_BASES, DEPTH_SLOTS, OFF_SCHEMES, POSITIONS, STAFF_ROLES, type AttrKey, type DepthSlot, type Player, type StatLine } from "../gmTypes";
 import { capHit, fullName, ovr, OVR_WEIGHTS, passerRating, POS_GROUP, schemeFit } from "../gmPlayers";
-import { GDialog, injuryTag, money, Ovr, Panel, PlayerLink, Seg, useGm } from "./ui";
+import { GDialog, injuryTag, money, Ovr, Panel, PlayerLink, Seg, TableScroll, useGm } from "./ui";
 
 type SortKey = "pos" | "ovr" | "age" | "cap" | "name";
+const OFF_POS: Record<string, true> = { QB: true, RB: true, FB: true, WR: true, TE: true, OL: true, K: true, P: true };
 const POS_ORDER = Object.fromEntries(POSITIONS.map((p, i) => [p, i]));
+
+const NATURAL_DESC: Record<SortKey, boolean> = { pos: false, name: false, age: false, ovr: true, cap: true };
 
 export function Roster() {
   const { c, update } = useGm();
   const [group, setGroup] = useState("All");
   const [sort, setSort] = useState<SortKey>("pos");
+  const [flip, setFlip] = useState(false);
+  const [q, setQ] = useState("");
   const [showPs, setShowPs] = useState(false);
   const t = userTeam(c);
   const counts = rosterCounts(c, t.id);
-  const list = teamPlayers(t.id, c.players, true)
-    .filter((p) => p.ps === showPs)
+  const starters = useMemo(() => {
+    const ids = new Set<number>();
+    for (const sl of DEPTH_SLOTS) (t.depth[sl] ?? []).slice(0, SLOT_STARTERS[sl]).forEach((id) => ids.add(id));
+    return ids;
+  }, [t.depth, c.updatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const needle = q.trim().toLowerCase();
+  const squad = teamPlayers(t.id, c.players, true).filter((p) => p.ps === showPs);
+  const list = squad
     .filter((p) => group === "All" || POS_GROUP[p.pos] === group)
+    .filter((p) => !needle || `${p.first} ${p.last} ${p.pos} ${p.archetype} ${p.num}`.toLowerCase().includes(needle))
     .sort((a, b) => (sort === "pos" ? POS_ORDER[a.pos] - POS_ORDER[b.pos] || ovr(b) - ovr(a) : sort === "ovr" ? ovr(b) - ovr(a) : sort === "age" ? a.age - b.age : sort === "cap" ? capHit(b) - capHit(a) : a.last.localeCompare(b.last)));
-  const head = (k: SortKey, label: string, num = false) => (
-    <th className={num ? "num" : ""} aria-sort={sort === k ? "descending" : "none"}>
-      <button type="button" className="gr-th" onClick={() => setSort(k)}>{label}</button>
-    </th>
-  );
+  if (flip) list.reverse();
+  const pick = (k: SortKey) => {
+    if (k === sort) setFlip((f) => !f);
+    else {
+      setSort(k);
+      setFlip(false);
+    }
+  };
+  const head = (k: SortKey, label: string, num = false) => {
+    const desc = NATURAL_DESC[k] !== (sort === k && flip);
+    return (
+      <th className={num ? "num" : ""} aria-sort={sort === k ? (desc ? "descending" : "ascending") : "none"}>
+        <button type="button" className="gr-th" onClick={() => pick(k)} title={`Sort by ${label}`}>{label}{sort === k && <span className="gr-sortmark" aria-hidden="true">{desc ? " ▼" : " ▲"}</span>}</button>
+      </th>
+    );
+  };
   return (
     <Panel
       title={`Roster · ${counts.active}/${ROSTER_MAX} active · ${counts.ps}/${PS_MAX} practice squad · ${counts.ir} IR`}
       actions={<Seg label="Squad" value={showPs ? "ps" : "active"} options={[["active", "Active"], ["ps", "Practice squad"]]} onChange={(v) => setShowPs(v === "ps")} />}
     >
-      <Seg label="Group" value={group} options={["All", "QB", "RB", "WR", "OL", "DL", "LB", "DB", "ST"].map((g) => [g, g])} onChange={setGroup} />
-      <div className="gr-scroll">
+      <div className="gr-controls">
+        <label>Search<input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, position or number" /></label>
+        <Seg label="Position group" value={group} options={["All", "QB", "RB", "WR", "OL", "DL", "LB", "DB", "ST"].map((g) => [g, g])} onChange={setGroup} />
+      </div>
+      <TableScroll label={showPs ? "Practice squad players" : "Active roster players"}>
         <table className="gr-table">
           <thead>
             <tr>
@@ -42,19 +68,20 @@ export function Roster() {
               {head("ovr", "Ovr", true)}
               <th>Archetype</th>
               {head("age", "Age", true)}
-              <th className="num">Exp</th>
+              <th className="num" title="Years of experience (R = rookie)">Exp</th>
               {head("cap", "Cap hit", true)}
-              <th className="num">Yrs</th>
+              <th className="num" title="Years left on contract">Yrs</th>
+              <th>Role</th>
               <th>Status</th>
               <th className="num">Morale</th>
-              <th />
+              <th><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
             {list.map((p) => (
               <tr key={p.id}>
                 <td>{p.pos}</td>
-                <td>
+                <td className="gr-wrap">
                   <span className="meta">#{p.num}</span> <PlayerLink p={p} />
                 </td>
                 <td className="num"><Ovr p={p} /></td>
@@ -63,6 +90,7 @@ export function Roster() {
                 <td className="num">{p.yrs === 0 ? "R" : p.yrs}</td>
                 <td className="num">{money(capHit(p))}</td>
                 <td className="num">{p.contract.years.length}{p.contract.tagged ? " (tag)" : ""}</td>
+                <td>{p.ps ? <span className="meta">Practice squad</span> : starters.has(p.id) ? "Starter" : <span className="meta">Reserve</span>}</td>
                 <td>{p.injury ? <span className="gr-inj">{injuryTag(p)} · {p.injury.name}</span> : <span className="meta">Healthy</span>}</td>
                 <td className="num">{p.morale}</td>
                 <td className="gr-row-actions">
@@ -74,9 +102,19 @@ export function Roster() {
                 </td>
               </tr>
             ))}
+            {list.length === 0 && (
+              <tr>
+                <td colSpan={12} className="gr-empty">
+                  {squad.length === 0
+                    ? showPs ? "No players on the practice squad." : "No players on the active roster. Sign free agents to fill it."
+                    : "No players match this search or position filter."}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
+      <p className="meta" aria-live="polite">{list.length} of {squad.length} players shown. Starters are the top of each depth-chart position. Release a player from his card.</p>
     </Panel>
   );
 }
@@ -86,13 +124,18 @@ export function DepthChart() {
   const t = userTeam(c);
   const [slot, setSlot] = useState<DepthSlot>("QB");
   const [drag, setDrag] = useState<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [note, setNote] = useState("");
   const ids = t.depth[slot] ?? [];
   const eligible = teamPlayers(t.id, c.players).filter((p) => SLOT_POS[slot].includes(p.pos) || slot === "KR" || slot === "PR" || slot === "LS");
   const move = (from: number, to: number) => {
+    if (from < 0 || to < 0 || from >= ids.length || to >= ids.length || from === to) return;
     const list = ids.slice();
     const [x] = list.splice(from, 1);
     list.splice(to, 0, x);
     t.depth[slot] = list;
+    setNote(`${fullName(c.players[x])} moved to ${to + 1}${to < SLOT_STARTERS[slot] ? " (starter)" : " (backup)"}.`);
     update();
   };
   const add = (id: number) => {
@@ -108,15 +151,29 @@ export function DepthChart() {
             return (
               <button key={s} type="button" role="option" aria-selected={s === slot} className={s === slot ? "is-on" : ""} onClick={() => setSlot(s)}>
                 <span>{s}</span>
-                <span className="meta">{top ? top.last : "—"}</span>
+                <span className="meta gr-trunc">{top ? top.last : "Empty"}</span>
               </button>
             );
           })}
         </div>
-        <button type="button" className="btn btn-secondary" onClick={() => { autoDepth(t, c.players); update("Depth chart reset to best available."); }}>Auto-fill depth chart</button>
+        {confirmReset ? (
+          <div className="gr-confirm" role="alertdialog" aria-label="Confirm depth chart reset">
+            <p>Replace every position with the best available players? Your own ordering is lost.</p>
+            <div className="gr-call-row">
+              <button type="button" autoFocus className="btn btn-secondary btn-sm gr-danger" onClick={() => { autoDepth(t, c.players); setConfirmReset(false); update("Depth chart reset to best available."); }}>Reset all positions</button>
+              <button type="button" className="btn btn-quiet btn-sm" onClick={() => setConfirmReset(false)}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="btn btn-secondary" onClick={() => setConfirmReset(true)}>Auto-fill depth chart</button>
+        )}
       </Panel>
       <Panel title={`${slot} · ${SLOT_STARTERS[slot]} starter${SLOT_STARTERS[slot] > 1 ? "s" : ""}`}>
-        <p className="meta">Drag to reorder. Starters are above the line.</p>
+        <p className="meta">
+          Drag a row, or use the arrow buttons, to reorder. Starters are above the line. On game day the engine walks this list from the top and uses the first healthy players; injured, practice-squad and retired players are skipped, and if the list runs short the best available player at a matching position fills in. Changes apply right away and save with your career.
+        </p>
+        <p className="sr-only" role="status" aria-live="polite">{note}</p>
+        {ids.length === 0 && <p className="gr-empty">Nobody is listed at {slot}. Add a player below or auto-fill the depth chart.</p>}
         <ol className="gr-dnd">
           {ids.map((id, i) => {
             const p = c.players[id];
@@ -126,9 +183,10 @@ export function DepthChart() {
                 key={id}
                 draggable
                 onDragStart={() => setDrag(i)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => { if (drag !== null && drag !== i) move(drag, i); setDrag(null); }}
-                className={i === SLOT_STARTERS[slot] - 1 ? "is-cut" : ""}
+                onDragEnd={() => { setDrag(null); setOver(null); }}
+                onDragOver={(e) => { e.preventDefault(); if (over !== i) setOver(i); }}
+                onDrop={() => { if (drag !== null && drag !== i) move(drag, i); setDrag(null); setOver(null); }}
+                className={`${i === SLOT_STARTERS[slot] - 1 ? "is-cut " : ""}${drag === i ? "is-drag " : ""}${over === i && drag !== null && drag !== i ? "is-over" : ""}`}
               >
                 <GripVertical size={16} className="meta" aria-hidden="true" />
                 <span className="num meta">{i + 1}</span>
@@ -136,24 +194,30 @@ export function DepthChart() {
                 <PlayerLink p={p} />
                 <Ovr p={p} />
                 {schemeFit(p, t.offScheme, t.defBase) !== 0 && <span className="meta">fit {schemeFit(p, t.offScheme, t.defBase) > 0 ? "+" : ""}{schemeFit(p, t.offScheme, t.defBase)}</span>}
-                {p.injury && <span className="gr-inj">{injuryTag(p)}</span>}
+                {(p.injury || p.ps) && <span className="gr-inj">{p.ps ? "Practice squad (won't play)" : `${injuryTag(p)} (skipped)`}</span>}
                 <span className="gr-dnd-btns">
-                  <button type="button" className="btn btn-quiet btn-sm" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label="Move up">↑</button>
-                  <button type="button" className="btn btn-quiet btn-sm" disabled={i === ids.length - 1} onClick={() => move(i, i + 1)} aria-label="Move down">↓</button>
-                  <button type="button" className="btn btn-quiet btn-sm" onClick={() => { t.depth[slot] = ids.filter((x) => x !== id); update(); }} aria-label="Remove">×</button>
+                  <button type="button" className="btn btn-quiet btn-sm" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label={`Move ${p.last} up`}>↑</button>
+                  <button type="button" className="btn btn-quiet btn-sm" disabled={i === ids.length - 1} onClick={() => move(i, i + 1)} aria-label={`Move ${p.last} down`}>↓</button>
+                  <button type="button" className="btn btn-quiet btn-sm" onClick={() => { t.depth[slot] = ids.filter((x) => x !== id); update(); }} aria-label={`Remove ${p.last} from ${slot}`}>×</button>
                 </span>
               </li>
             );
           })}
         </ol>
-        <h3>Add</h3>
-        <ul className="gr-list">
-          {eligible.filter((p) => !ids.includes(p.id)).sort((a, b) => ovr(b) - ovr(a)).slice(0, 10).map((p) => (
-            <li key={p.id}>
-              <button type="button" className="btn btn-quiet btn-sm" onClick={() => add(p.id)}>Add</button> {p.pos} {fullName(p)} <Ovr p={p} />
-            </li>
-          ))}
-        </ul>
+        <h3>Add to {slot}</h3>
+        {(() => {
+          const pool = eligible.filter((p) => !ids.includes(p.id)).sort((a, b) => ovr(b) - ovr(a)).slice(0, 10);
+          if (!pool.length) return <p className="gr-empty">Every eligible player is already listed.</p>;
+          return (
+            <ul className="gr-list">
+              {pool.map((p) => (
+                <li key={p.id}>
+                  <button type="button" className="btn btn-quiet btn-sm" onClick={() => add(p.id)} aria-label={`Add ${fullName(p)} to ${slot}`}>Add</button> {p.pos} <span className="gr-wrap">{fullName(p)}</span> <Ovr p={p} />{p.injury && <span className="gr-inj"> {injuryTag(p)}</span>}
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
       </Panel>
     </div>
   );
@@ -213,9 +277,13 @@ export function Staff() {
   const { c, update } = useGm();
   const t = userTeam(c);
   const offseason = OFFSEASON.includes(c.phase);
+  const [hiring, setHiring] = useState<number | null>(null);
+  const target = hiring !== null ? c.coachPool.find((x) => x.id === hiring) : undefined;
+  const replaced = target ? t.staff[target.role] : undefined;
   return (
     <div className="gr-grid2">
       <Panel title="Your staff">
+        <TableScroll label="Your coaching staff">
         <table className="gr-table">
           <thead><tr><th>Role</th><th>Coach</th><th className="num">Rating</th><th className="num">Dev</th><th>Scheme</th><th className="num">Salary</th></tr></thead>
           <tbody>
@@ -224,7 +292,7 @@ export function Staff() {
               return (
                 <tr key={r}>
                   <td>{r}</td>
-                  <td>{co?.name ?? "Vacant"}</td>
+                  <td className="gr-wrap">{co?.name ?? <span className="meta">Vacant</span>}</td>
                   <td className="num">{co ? <Ovr value={co.rating} /> : "—"}</td>
                   <td className="num">{co ? `+${co.dev}` : "—"}</td>
                   <td className="meta">{co?.scheme ?? ""}</td>
@@ -234,12 +302,27 @@ export function Staff() {
             })}
           </tbody>
         </table>
+        </TableScroll>
         <p className="meta">Coordinators lift their side of the ball on game day. Position coaches add to development every offseason. A new OC or DC brings his scheme.</p>
       </Panel>
       <Panel title="Available coaches">
-        {!offseason && <p className="meta">You can hire during the offseason.</p>}
+        {!offseason && <p className="meta">Hiring opens in the offseason. Until then the Hire buttons stay off.</p>}
+        {target && (
+          <div className="gr-confirm" role="alertdialog" aria-label="Confirm hire">
+            <p>
+              Hire {target.name} as {target.role} for {money(target.salary)}?{replaced ? ` ${replaced.name} leaves and goes back to the available pool.` : ""}
+              {(target.role === "OC" || target.role === "DC") && target.scheme ? ` Your ${target.role === "OC" ? "offensive scheme" : "defensive front"} changes to ${target.scheme}.` : ""}
+            </p>
+            <div className="gr-call-row">
+              <button type="button" autoFocus className="btn btn-secondary btn-sm" onClick={() => { const id = target.id; setHiring(null); update(hireCoach(c, id)); }}>Confirm hire</button>
+              <button type="button" className="btn btn-quiet btn-sm" onClick={() => setHiring(null)}>Cancel</button>
+            </div>
+          </div>
+        )}
+        {c.coachPool.length === 0 && <p className="gr-empty">No coaches are available to hire right now.</p>}
+        <TableScroll label="Available coaches">
         <table className="gr-table">
-          <thead><tr><th>Role</th><th>Coach</th><th className="num">Rating</th><th className="num">Dev</th><th>Scheme</th><th /></tr></thead>
+          <thead><tr><th>Role</th><th>Coach</th><th className="num">Rating</th><th className="num">Dev</th><th>Scheme</th><th><span className="sr-only">Hire</span></th></tr></thead>
           <tbody>
             {c.coachPool.slice().sort((a, b) => a.role.localeCompare(b.role) || b.rating - a.rating).map((co) => (
               <tr key={co.id}>
@@ -248,11 +331,12 @@ export function Staff() {
                 <td className="num"><Ovr value={co.rating} /></td>
                 <td className="num">+{co.dev}</td>
                 <td className="meta">{co.scheme ?? ""}</td>
-                <td><button type="button" className="btn btn-quiet btn-sm" disabled={!offseason} onClick={() => update(hireCoach(c, co.id))}>Hire</button></td>
+                <td><button type="button" className="btn btn-quiet btn-sm" disabled={!offseason} title={offseason ? undefined : "Hiring opens in the offseason"} aria-label={`Hire ${co.name} as ${co.role}`} onClick={() => setHiring(co.id)}>Hire</button></td>
               </tr>
             ))}
           </tbody>
         </table>
+        </TableScroll>
       </Panel>
     </div>
   );
@@ -261,6 +345,18 @@ export function Staff() {
 // ---------------------------------------------------------------------------
 
 export function PlayerCard({ id, onClose }: { id: number; onClose: () => void }) {
+  const { c } = useGm();
+  if (!c.players[id]) {
+    return (
+      <GDialog title="Player not found" onClose={onClose}>
+        <p className="gr-empty">This player is no longer in the league database.</p>
+      </GDialog>
+    );
+  }
+  return <PlayerCardBody id={id} onClose={onClose} />;
+}
+
+function PlayerCardBody({ id, onClose }: { id: number; onClose: () => void }) {
   const { c, update } = useGm();
   const p = c.players[id];
   const [msg, setMsg] = useState("");
@@ -298,7 +394,12 @@ export function PlayerCard({ id, onClose }: { id: number; onClose: () => void })
             {p.teamId !== null ? `${c.teams[p.teamId].city} ${c.teams[p.teamId].name}${p.ps ? " (practice squad)" : ""}` : p.retired ? "Retired" : "Free agent"} · Development: {p.dev} · Morale {p.morale}
             {p.draft ? ` · Drafted ${p.draft.year} R${p.draft.round} #${p.draft.pick}` : ""}
           </p>
-          {p.injury && <p className="gr-inj">{injuryTag(p)}: {p.injury.name}, {p.injury.weeks} wk</p>}
+          {(() => {
+            const team = p.teamId !== null ? c.teams[p.teamId] : null;
+            const fit = team ? schemeFit(p, team.offScheme, team.defBase) : 0;
+            return team ? <p className="meta">Scheme fit ({p.pos in OFF_POS ? team.offScheme : team.defBase}): {fit > 0 ? `+${fit}` : fit === 0 ? "neutral" : fit}</p> : null;
+          })()}
+          {p.injury && <p className="gr-inj">{injuryTag(p)}: {p.injury.name}, {p.injury.weeks} wk{p.injury.ir ? " (injured reserve)" : ""}</p>}
         </div>
       </div>
       <div className="gr-attrs">
@@ -310,7 +411,9 @@ export function PlayerCard({ id, onClose }: { id: number; onClose: () => void })
           </div>
         ))}
       </div>
+      {p.contract.years.length === 0 && <p className="meta">No contract on file.</p>}
       {p.contract.years.length > 0 && (
+        <TableScroll label="Contract">
         <table className="gr-table gr-table-tight">
           <thead><tr><th>Contract</th>{p.contract.years.map((_, i) => <th key={i} className="num">{c.year + i + (OFFSEASON.includes(c.phase) && c.phase !== "resign" ? 1 : 0)}</th>)}</tr></thead>
           <tbody>
@@ -318,8 +421,11 @@ export function PlayerCard({ id, onClose }: { id: number; onClose: () => void })
             <tr><td>Guaranteed</td>{p.contract.years.map((y, i) => <td key={i} className="num">{money(y.guar)}</td>)}</tr>
           </tbody>
         </table>
+        </TableScroll>
       )}
+      {!season && p.career.length === 0 && <p className="meta">No games played yet.</p>}
       {(season || p.career.length > 0) && (
+        <TableScroll label="Production">
         <table className="gr-table gr-table-tight">
           <thead><tr><th>Year</th><th>Team</th><th className="num">GP</th><th>Stats</th></tr></thead>
           <tbody>
@@ -330,6 +436,7 @@ export function PlayerCard({ id, onClose }: { id: number; onClose: () => void })
             })}
           </tbody>
         </table>
+        </TableScroll>
       )}
       {p.awards.length > 0 && <p className="meta">Awards: {p.awards.join(" · ")}</p>}
       {mine && (
@@ -367,7 +474,7 @@ export function OfferFields({ offer, setOffer, ask }: { offer: { years: number; 
   return (
     <span className="gr-offer-fields">
       <label>Years <input type="number" min={1} max={6} value={offer.years} onChange={(e) => setOffer({ ...offer, years: Math.max(1, Math.min(6, Number(e.target.value) || 1)) })} /></label>
-      <label>$M/yr <input type="number" min={0.5} max={70} step={0.1} value={offer.salary} onChange={(e) => setOffer({ ...offer, salary: Math.max(0.5, Number(e.target.value) || 0.5) })} /></label>
+      <label>$M/yr <input type="number" min={0.5} max={70} step={0.1} value={offer.salary} onChange={(e) => setOffer({ ...offer, salary: Math.min(70, Math.max(0.5, Number(e.target.value) || 0.5)) })} /></label>
       <label>Guaranteed <input type="number" min={0} max={100} step={5} value={Math.round(offer.guarantee * 100)} onChange={(e) => setOffer({ ...offer, guarantee: Math.max(0, Math.min(1, (Number(e.target.value) || 0) / 100)) })} />%</label>
       <label>Incentives <input type="number" min={0} max={10} step={0.5} value={offer.incentives} onChange={(e) => setOffer({ ...offer, incentives: Math.max(0, Number(e.target.value) || 0) })} /></label>
       <span className="meta">Asking about {money(ask)}</span>

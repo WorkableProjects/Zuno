@@ -14,6 +14,46 @@ export interface GridironTeamSeed {
   colors: [string, string];
 }
 
+/** Newest career save format this build writes. 1 = original saves (no saveVersion field), 2 = adds saveVersion and customPlays. */
+export const GRIDIRON_SAVE_VERSION = 2;
+export const MAX_CUSTOM_PLAYS = 200;
+export const MAX_CUSTOM_PLAY_NAME = 40;
+export const MAX_CUSTOM_PLAY_DESCRIPTION = 400;
+const CUSTOM_PLAY_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$/;
+
+/** A custom play is defined elsewhere (gmCustomPlays.ts); here it is only a JSON object with an id and a name. */
+export type CustomPlayRecord = Record<string, unknown> & { id: string; name: string };
+
+/**
+ * Checks custom plays permissively but safely. Unknown fields are kept. Plays that are not objects, have a bad
+ * or repeated id, or have an over-long name or description are dropped and counted in `problems`.
+ */
+export function sanitizeCustomPlays(input: unknown): { plays: CustomPlayRecord[]; problems: string[] } {
+  const problems: string[] = [];
+  if (input === undefined || input === null) return { plays: [], problems };
+  if (!Array.isArray(input)) return { plays: [], problems: ["Custom plays must be a list."] };
+  const plays: CustomPlayRecord[] = [];
+  const seen = new Set<string>();
+  input.forEach((p: unknown, i: number) => {
+    const where = `Custom play ${i + 1}`;
+    if (plays.length >= MAX_CUSTOM_PLAYS) return void (i === MAX_CUSTOM_PLAYS && problems.push(`Only the first ${MAX_CUSTOM_PLAYS} custom plays are kept.`));
+    if (!isRecord(p)) return void problems.push(`${where} is not an object.`);
+    if (typeof p.id !== "string" || !CUSTOM_PLAY_ID.test(p.id)) return void problems.push(`${where} has an invalid id.`);
+    if (seen.has(p.id)) return void problems.push(`${where} repeats the id ${p.id}.`);
+    const name = typeof p.name === "string" ? p.name.trim() : "";
+    if (!name || name.length > MAX_CUSTOM_PLAY_NAME) return void problems.push(`${where} needs a name of 1 to ${MAX_CUSTOM_PLAY_NAME} characters.`);
+    if (p.description !== undefined && (typeof p.description !== "string" || p.description.length > MAX_CUSTOM_PLAY_DESCRIPTION)) return void problems.push(`${where} has an invalid description.`);
+    try {
+      JSON.stringify(p);
+    } catch {
+      return void problems.push(`${where} cannot be stored.`);
+    }
+    seen.add(p.id);
+    plays.push({ ...p, id: p.id, name });
+  });
+  return { plays, problems };
+}
+
 export interface GridironContent {
   league: { teams: GridironTeamSeed[] } | null;
   /** An exported career (validated for shape only; it is data and never executed). */
@@ -65,7 +105,18 @@ export function validateGridiron(raw: Record<string, unknown>): ValidationResult
       else if (!isRecord(k.players) || !Array.isArray(k.schedule)) errors.push("The saved career is missing players or its schedule.");
       else if (typeof k.userTeam !== "number" || k.userTeam < 0 || k.userTeam > 31) errors.push("The saved career doesn't say which team you coach.");
       else if (typeof k.coachName !== "string" || k.coachName.length > 40) errors.push("The saved career has an invalid coach name.");
-      else content.career = k;
+      else if (typeof k.year !== "number" || typeof k.week !== "number" || typeof k.phase !== "string") errors.push("The saved career is missing its year, week or phase.");
+      else if (k.saveVersion !== undefined && (typeof k.saveVersion !== "number" || !Number.isInteger(k.saveVersion) || k.saveVersion < 1)) errors.push("The saved career has an invalid save version.");
+      else if (k.saveVersion !== undefined && (k.saveVersion as number) > GRIDIRON_SAVE_VERSION) errors.push("This career was saved by a newer version of Gridiron GM than this one can open.");
+      else if (!isRecord((k.teams as unknown[])[k.userTeam as number])) errors.push("The saved career's team list is damaged.");
+      else {
+        const cp = sanitizeCustomPlays(k.customPlays);
+        if (cp.problems.length && k.customPlays !== undefined) {
+          if (!Array.isArray(k.customPlays)) errors.push(...cp.problems);
+          else warnings.push(`${cp.problems.length} custom play problem(s); those plays will be skipped. ${cp.problems.slice(0, 3).join(" ")}`);
+        }
+        if (!errors.length) content.career = k;
+      }
     }
   }
   if (errors.length) return { ok: false, errors };

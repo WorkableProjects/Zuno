@@ -1,7 +1,8 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { Dialog } from "../../../components/ui/Dialog";
 import { ovr } from "../gmPlayers";
 import type { Career, LogoSpec, Player, Team } from "../gmTypes";
+import "./manage.css";
 
 export interface GmCtx {
   c: Career;
@@ -13,7 +14,29 @@ export interface GmCtx {
 export const Ctx = createContext<GmCtx | null>(null);
 export const useGm = () => useContext(Ctx)!;
 
-export const money = (m: number) => `$${m.toFixed(1)}M`;
+/**
+ * Screens with work in progress (a trade being built, a play being edited) report it here so the shell can
+ * ask before the user navigates away. The shell provides the setter; outside it the setter does nothing.
+ */
+export const DirtyCtx = createContext<(dirty: boolean) => void>(() => undefined);
+export function useDirtyGuard(dirty: boolean) {
+  const set = useContext(DirtyCtx);
+  useEffect(() => {
+    set(dirty);
+    return () => set(false);
+  }, [dirty, set]);
+}
+
+/** Wide tables scroll sideways inside this region instead of stretching the page. Keyboard reachable. */
+export function TableScroll({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="gr-xscroll" role="region" aria-label={label} tabIndex={0}>
+      {children}
+    </div>
+  );
+}
+
+export const money = (m: number) => `${m < 0 ? "-" : ""}$${Math.abs(m).toFixed(1)}M`;
 
 const SHAPES: Record<LogoSpec["shape"], string> = {
   shield: "M12 2 L21 5 V12 C21 17 17 21 12 22 C7 21 3 17 3 12 V5 Z",

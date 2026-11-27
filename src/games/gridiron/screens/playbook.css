@@ -1,0 +1,38 @@
+/* Playbook library and custom play editor. Reuses gridiron.css variables. */
+.gr-pb-note { margin: 0 0 12px; max-width: 70ch; }
+.gr-pb-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.gr-pb-filters { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); margin-bottom: 8px; }
+.gr-pb-filters label, .gr-pb-field label { display: grid; gap: 4px; font-size: 12px; color: var(--text-3); min-width: 0; }
+.gr-pb-filters input, .gr-pb-filters select, .gr-pb-field input, .gr-pb-field select { min-height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--hairline); background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; min-width: 0; width: 100%; }
+.gr-pb-filters input:focus-visible, .gr-pb-filters select:focus-visible, .gr-pb-field input:focus-visible, .gr-pb-field select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.gr-msg.is-bad { color: var(--gr-neg); }
+.gr-pb-layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+.gr-pb-side { position: sticky; top: 12px; }
+.gr-pb-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.gr-pb-grid > li { display: grid; gap: 8px; align-content: start; padding: 14px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--surface); min-width: 0; }
+.gr-pb-grid > li.is-sel { border-color: var(--ring); }
+.gr-pb-card { display: grid; gap: 6px; min-width: 0; }
+.gr-pb-card-top { display: flex; flex-wrap: wrap; gap: 6px; }
+.gr-pb-tag { padding: 2px 8px; border-radius: 999px; font-size: 11px; background: var(--surface-3); color: var(--text); }
+.gr-pb-tag.is-quiet { background: var(--surface-2); color: var(--text-2); }
+.gr-pb-tag.is-info { color: var(--text-3); }
+.gr-pb-tag.is-off { border: 1px solid var(--gr-neg); color: var(--gr-neg); background: transparent; }
+.gr-pb-name { font-size: 16px; overflow-wrap: anywhere; }
+.gr-pb-tagline, .gr-pb-tags { margin: 0; color: var(--text-2); font-size: 13px; overflow-wrap: anywhere; }
+.gr-pb-tags { color: var(--text-3); font-size: 12px; }
+.gr-pb-facts { margin: 0; display: grid; gap: 2px; font-size: 13px; }
+.gr-pb-facts > div { display: flex; justify-content: space-between; gap: 12px; }
+.gr-pb-facts dt { color: var(--text-3); }
+.gr-pb-facts dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.gr-pb-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.gr-pb-actions .btn { min-height: 40px; }
+.gr-pb-check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--text-2); }
+.gr-pb-check input { width: 20px; height: 20px; flex: none; margin: 0; }
+.gr-pb-form { display: grid; gap: 14px; max-width: 560px; }
+.gr-pb-field { display: grid; gap: 4px; }
+.gr-pb-field.has-error input, .gr-pb-field.has-error select { border-color: var(--gr-neg); }
+.gr-pb-err { color: var(--gr-neg); font-size: 13px; margin: 0; }
+@media (max-width: 900px) {
+  .gr-pb-layout { grid-template-columns: minmax(0, 1fr); }
+  .gr-pb-side { position: static; }
+}
