@@ -36,6 +36,13 @@ export const CONCEPTS: Record<string, RouteName[]> = {
   "Deep Shot": ["post", "go", "seam", "flat"],
   "RB Screen": ["go", "go", "block", "screen"],
   Bubble: ["bubble", "block", "block", "block"],
+  Stick: ["hitch", "slant", "hitch", "flat"],
+  "Hitch-Seam": ["hitch", "seam", "hitch", "flat"],
+  Levels: ["dig", "drag", "dig", "flat"],
+  Flood: ["corner", "out", "flat", "flat"],
+  "Y-Cross": ["go", "corner", "dig", "flat"],
+  "Deep Cross": ["dig", "post", "go", "flat"],
+  "PA Cross": ["drag", "post", "dig", "flat"],
 };
 
 /** The route that best fits a target's depth: short, medium, deep, or a screen. */
