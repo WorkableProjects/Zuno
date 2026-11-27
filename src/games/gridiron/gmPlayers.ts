@@ -282,3 +282,25 @@ export const POS_GROUP: Record<Pos, "QB" | "RB" | "WR" | "OL" | "DL" | "LB" | "D
   QB: "QB", RB: "RB", FB: "RB", WR: "WR", TE: "WR", OT: "OL", OG: "OL", C: "OL",
   DE: "DL", DT: "DL", OLB: "LB", MLB: "LB", CB: "DB", FS: "DB", SS: "DB", K: "ST", P: "ST", LS: "ST",
 };
+
+export interface ContractSummary {
+  yearsLeft: number;
+  total: number;
+  guaranteed: number;
+  thisYear: number;
+  /** Cap hit by league-year offset, as stored. */
+  byYear: number[];
+}
+
+/** Contract totals straight from the stored years. Pure; no estimates. */
+export function contractSummary(p: Player): ContractSummary {
+  const ys = p.contract.years;
+  const r = (n: number) => Math.round(n * 10) / 10;
+  return {
+    yearsLeft: ys.length,
+    total: r(ys.reduce((s, y) => s + y.cap, 0)),
+    guaranteed: r(ys.reduce((s, y) => s + y.guar, 0)),
+    thisYear: ys[0]?.cap ?? 0,
+    byYear: ys.map((y) => y.cap),
+  };
+}

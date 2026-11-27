@@ -171,3 +171,35 @@ export function teamNeeds(c: Career, teamId: number): string[] {
   return out.sort((a, b) => a[1] - b[1]).slice(0, 3).map((x) => x[0]);
 }
 
+
+export interface DraftSlot {
+  overall: number;
+  round: number;
+  owner: number;
+  orig: number;
+  traded: boolean;
+}
+
+/** The next picks on the clock in order, with owner and whether the pick was traded. */
+export function upcomingPicks(c: Career, n = 8): DraftSlot[] {
+  return c.picks
+    .filter((p) => p.year === c.year && p.playerId === undefined && p.overall)
+    .sort((a, b) => a.overall! - b.overall!)
+    .slice(0, n)
+    .map((p) => ({ overall: p.overall!, round: p.round, owner: p.owner, orig: p.orig, traded: p.owner !== p.orig }));
+}
+
+/** Picks made so far versus total in the current draft. */
+export function draftProgress(c: Career): { made: number; total: number } {
+  const all = c.picks.filter((p) => p.year === c.year && p.overall);
+  return { made: all.filter((p) => p.playerId !== undefined).length, total: all.length };
+}
+
+/** Prospects at the positions this team is thinnest at, best-ranked first. Based on the same need rule the AI uses. */
+export function needProspects(c: Career, teamId: number, n = 5): Prospect[] {
+  const needs = new Set(teamNeeds(c, teamId));
+  return c.prospects
+    .filter((pr) => needs.has(POS_GROUP[c.players[pr.playerId].pos]))
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, n);
+}
